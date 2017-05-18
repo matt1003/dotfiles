@@ -71,7 +71,7 @@ Plug 'vim-airline/vim-airline-themes'
 Plug 'matt1003/cscope.vim'
 Plug 'matt1003/quickr-preview.vim'
 
-Plug 'morhetz/gruvbox'
+Plug 'matt1003/gruvbox'
 
 "Plug 'vim-scripts/fontsize' this doesn't work with quickr-preview, as they
 "have overlapping key bindings.
