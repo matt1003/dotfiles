@@ -1,0 +1,20 @@
+#!/bin/bash
+
+declare -A dotfiles=(
+  ["bash"]=".bash_aliases" 
+  ["term"]=".config/terminator/config"
+  ["tmux"]=".tmux.conf"
+  ["vim"]=".vimrc"
+)
+
+SCRIPT=$(readlink -f "$0")
+SCRIPTPATH=$(dirname "$SCRIPT")
+
+for file in "${!dotfiles[@]}"; do
+  path="$HOME/${dotfiles[$file]}"
+  if [ -f $path ] && [ ! -h $path ]; then
+    mv $path $path.orig
+  fi
+  ln -sfv $SCRIPTPATH/$file $path
+done
+
