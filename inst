@@ -8,14 +8,14 @@ SCRIPTPATH=$(dirname "$SCRIPT")
 # - tmux 2.3
 # - vim  7.4.1770
 
-echo -e "\e[34madding apt-get repositories...\e[0m"
+echo -e "\e[34madding apt repositories...\e[0m"
 sudo add-apt-repository -yu ppa:pi-rho/dev
 sudo add-apt-repository ppa:gnome-terminator/nightly-gtk3
 sudo add-apt-repository ppa:jonathonf/vim
 
-echo -e "\e[34minstalling apt-get packages...\e[0m"
-sudo apt-get update
-sudo apt-get install terminator tmux-next vim ctags cscope trash-cli
+echo -e "\e[34minstalling apt packages...\e[0m"
+sudo apt update
+sudo apt install terminator tmux-next vim ctags cscope trash-cli
 
 echo -e "\e[34minstalling powerline fonts...\e[0m"
 git clone https://github.com/powerline/fonts.git /tmp/powerline-fonts

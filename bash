@@ -67,7 +67,7 @@ alias pdu='powerbox 192.168.0.3'
 
 alias gvim='gvim -geometry 500x500'
 
-alias update='sudo apt-get update && sudo apt-get upgrade && echo -e "\e[32m** DONE **\e[0m"'
+alias update='sudo apt update && sudo apt upgrade && sudo apt auto-remove && echo -e "\e[34m** DONE **\e[0m"'
 
 cdback() { cd $(echo $PWD | sed -r "s/($1\w*\/).*/\1/") ; }
 
