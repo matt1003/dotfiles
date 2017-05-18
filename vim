@@ -63,7 +63,7 @@ Plug 'weihanglo/tmuxline.vim'
 Plug 'christoomey/vim-tmux-navigator'
 
 Plug 'vim-airline/vim-airline-themes'
-Plug 'powerline/fonts', { 'do' : './install.sh' }
+"Plug 'powerline/fonts', { 'do' : './install.sh' }
 
 "Plug 'vim-scripts/cscope.vim'
 "Plug 'ronakg/quickr-cscope.vim'
