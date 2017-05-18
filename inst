@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# required for true color support
+# - terminator 1.91
+# - tmux 2.3
+# - vim  7.4.1770
+
+add-apt-repository ppa:gnome-terminator/nightly-gtk3
+add-apt-repository ppa:jonathonf/vim
+
+apt-get update
+apt-get install terminator tmux-next vim
+
