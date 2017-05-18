@@ -1,4 +1,6 @@
 
+setxkbmap -option caps:escape
+
 HISTSIZE=5000
 HISTFILESIZE=50000
 
