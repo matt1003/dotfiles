@@ -92,7 +92,7 @@ else
 fi
 
 if [ "$SSH_CONNECTION" ]; then
-  export hname="\e[01;31m\h\e[m"
+  export hname="\e[01;31m@\h\e[m"
 else
   export hname="\e[01;32m@\h\e[m"
 fi
