@@ -15,7 +15,7 @@ sudo add-apt-repository ppa:jonathonf/vim
 
 echo -e "\e[34minstalling apt packages...\e[0m"
 sudo apt update
-sudo apt install terminator tmux-next vim ctags cscope trash-cli
+sudo apt install terminator tmux-next vim ctags cscope trash-cli xcape
 
 echo -e "\e[34minstalling powerline fonts...\e[0m"
 git clone https://github.com/powerline/fonts.git /tmp/powerline-fonts
