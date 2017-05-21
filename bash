@@ -87,18 +87,18 @@ alias tmux=tmux-next
 alias tmux-session="tmux-next new-session -A -s" 
 
 if [[ $USER =~ matthew.* ]]; then
-  export uname="\e[01;32m\u\e[m"
+  export uname="\[\e[01;32m\]\u\[\e[m\]"
 else
-  export uname="\e[01;31m\u\e[m"
+  export uname="\[\e[01;31m\]\u\[\e[m\]"
 fi
 
 if [ "$SSH_CONNECTION" ]; then
-  export hname="\e[01;31m@\h\e[m"
+  export hname="\[\e[01;31m\]@\h\[\e[m\]"
 else
-  export hname="\e[01;32m@\h\e[m"
+  export hname="\[\e[01;32m\]@\h\[\e[m\]"
 fi
 
-export cpath="\e[01;34m\w\e[m"
+export cpath="\[\e[01;34m\]\w\[\e[m\]"
 
 export PS1="$uname$hname:$cpath\$ "
 
