@@ -159,8 +159,8 @@ set guicursor+=a:blinkon0 " disable cursor blinking
 try
   set background=dark
   let g:gruvbox_contrast_dark = 'hard'
-  let g:gruvbox_number_column = 'bg0'
-  let g:gruvbox_sign_column = 'bg0'
+  let g:gruvbox_number_column = 'bgN'
+  let g:gruvbox_sign_column = 'bgN'
   let g:gruvbox_italic = 1
   colorscheme gruvbox
 catch
