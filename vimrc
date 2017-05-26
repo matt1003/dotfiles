@@ -187,6 +187,7 @@ else
 endif
 
 let g:quickfix_window_height = 12
+let g:airline#extensions#tmuxline#enabled = 0
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " file specific settings
@@ -216,10 +217,10 @@ let g:airline#extensions#tabline#enabled = 1
 " vim-gitgutter {{{
 let g:gitgutter_sign_column_always = 1
 
-"▶➕◆✚➕◆♦✖✚✜◆◆⬥•●⚫⬤◈∎⑆■▪►
+"▶➕◆✚➕◆♦✖✚✜◆◆⬥•●⚫⬤◈∎⑆■▪►x×X✕☓✖✗✘
 
-let g:gitgutter_sign_added = '✚'
-let g:gitgutter_sign_modified = '⬥'
+let g:gitgutter_sign_added = '▶'
+let g:gitgutter_sign_modified = '▶'
 let g:gitgutter_sign_modified_removed = '▼'
 let g:gitgutter_sign_removed = '▼'
 let g:gitgutter_sign_removed_first_line = '▲'

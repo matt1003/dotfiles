@@ -1,10 +1,4 @@
 
-setxkbmap -option caps:ctrl_modifier
-xcape -e Caps_Lock=Escape
-
-HISTSIZE=5000
-HISTFILESIZE=50000
-
 alias s0='minicom -D /dev/ttyS0   -C /home/matthewbr/minicom-s0'
 alias s1='minicom -D /dev/ttyS1   -C /home/matthewbr/minicom-s1'
 alias s2='minicom -D /dev/ttyS2   -C /home/matthewbr/minicom-s2'
@@ -56,7 +50,7 @@ alias gitg='git log --graph --abbrev-commit --decorate --format=format:"%C(bold 
 # see http://stackoverflow.com/questions/1057564/pretty-git-branch-graphs
 
 alias ll='ls --group-directories-first --time-style=long-iso -hl'
-alias lla='ls --group-directories-first --time-style=long-iso -hlA'
+alias la='ls --group-directories-first --time-style=long-iso -hlA'
 
 alias his="history | sed 's/^ *[0-9]* *//' | grep"
 
@@ -86,19 +80,5 @@ alias tmux=tmux-next
 
 alias tmux-session="tmux-next new-session -A -s" 
 
-if [[ $USER =~ matthew.* ]]; then
-  export uname="\[\e[01;32m\]\u\[\e[m\]"
-else
-  export uname="\[\e[01;31m\]\u\[\e[m\]"
-fi
-
-if [ "$SSH_CONNECTION" ]; then
-  export hname="\[\e[01;31m\]@\h\[\e[m\]"
-else
-  export hname="\[\e[01;32m\]@\h\[\e[m\]"
-fi
-
-export cpath="\[\e[01;34m\]\w\[\e[m\]"
-
-export PS1="$uname$hname:$cpath\$ "
+alias tmux-dev="terminator -l tmux && exit 0"
 
