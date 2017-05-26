@@ -9,6 +9,7 @@ scriptpath=$(dirname "$script")
 declare -A dotfiles=(
   [bashal]=.bash_aliases 
   [bashrc]=.bashrc
+  [minirc]=.minirc.dfl
   [profile]=.profile 
   [term.conf]=.config/terminator/config
   [tmux.conf]=.tmux.conf
@@ -21,6 +22,7 @@ declare -A dotfiles=(
 declare packages=(
   cscope 
   ctags
+  minicom
   terminator
   tmux-next 
   trash-cli 
