@@ -7,11 +7,12 @@ scriptpath=$(dirname "$script")
 # define dotfiles
 #
 declare -A dotfiles=(
-  [bashal]=.bash_aliases 
+  [bash_aliases]=.bash_aliases
+  [bash_profile]=.bash_profile
   [bashrc]=.bashrc
   [minirc]=.minirc.dfl
   [profile]=.profile 
-  [term.conf]=.config/terminator/config
+  [terminator.conf]=.config/terminator/config
   [tmux.conf]=.tmux.conf
   [vimrc]=.vimrc
 )
