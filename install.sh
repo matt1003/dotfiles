@@ -63,14 +63,22 @@ fi
 #
 # install dotfiles
 #
-echo -e "\e[34minstalling configuration files...\e[0m"
+echo -e "\e[34minstalling config files...\e[0m"
 for file in "${!dotfiles[@]}"; do
   path="$HOME/${dotfiles[$file]}"
   if [ -f $path ] && [ ! -h $path ]; then
-    mv $path $path.orig
+    mv -v $path $path.orig
   fi
   ln -sfv $scriptpath/$file $path
 done
+
+#
+# install binaries
+#
+echo -e "\e[34minstalling bin files...\e[0m"
+[ -h $HOME/bin ] && unlink $HOME/bin
+[ -d $HOME/bin ] && mv -v $HOME/bin $HOME/bin.orig
+ln -sv $scriptpath/bin $HOME/bin
 
 echo -e "\e[34m * COMPLETE * \e[0m"
 

@@ -1,0 +1,250 @@
+#!/bin/bash
+
+#
+# buildwrap provides a simple wrapper around buildsys,
+# intended to make build success and failures obvious.
+#
+
+################################################################################
+# script setup
+################################################################################
+
+set -o pipefail
+
+buildsys_dir="buildsys"
+buildsys_pid=".buildsys.pid"
+
+tmux_bld_file="$HOME/.tmux.build"
+
+specified_targets=()
+specified_packages=()
+
+restore_pwd=$PWD
+running_pid=0
+target_required=1
+
+################################################################################
+# script functions
+################################################################################
+
+exit_pass() {
+  echo -e "\n$color_pass*********************$color_none"
+  echo -e "$color_pass**  BUILD SUCCESS  **$color_none"
+  echo -e "$color_pass*********************$color_none\n"
+  if [ $TMUX ]; then
+    update_tmux_status "Build Success" "#b8bb26"
+  fi
+  cleanup
+  exit 0
+}
+
+exit_fail() {
+  echo -e "\n$color_fail*********************$color_none"
+  echo -e "$color_fail**  BUILD FAILURE  **$color_none"
+  echo -e "$color_fail*********************$color_none\n"
+  if [ $TMUX ]; then
+    update_tmux_status "Build Failure" "#fb4934"
+  fi
+  cleanup
+  exit 1
+}
+
+exit_warn() {
+  echo -e "\n$color_warn*********************$color_none"
+  echo -e "$color_warn**  BUILD ABORTED  **$color_none"
+  echo -e "$color_warn*********************$color_none\n"
+  if [ $TMUX ]; then
+    update_tmux_status "Build Aborted" "#fabd2f"
+  fi
+  cleanup
+  exit 2
+}
+
+array_contains () {
+  local e
+  for e in "${@:2}"; do [[ "$e" == "$1" ]] && return 0; done
+  return 1
+}
+
+hdl_sig_int() {
+  kill_buildsys
+  exit_warn
+}
+
+hdl_sig_abrt() {
+  sleep 0.50
+  exit_warn
+}
+
+kill_buildsys() {
+  if [ -f $buildsys_pid ]; then
+    pkill -SIGKILL -P `cat $buildsys_pid`
+    sleep 0.25
+    pkill -SIGKILL -P `cat $buildsys_pid`
+    sleep 0.25
+  fi
+}
+
+cleanup() {
+  [ $running_pid -ne 0 ] && rm -f $buildsys_pid
+  cd $restore_pwd
+}
+
+update_tmux_status() {
+  [ -z "$2" ] && local c="#f9f5d7" || local c="$2"
+  echo "#[fg=#a89984,bg=#3c3836]#[fg=$c,bg=#3c3836,bold] $1 " > $tmux_bld_file
+}
+
+clear_tmux_status() {
+  rm -f $tmux_bld_file
+}
+
+################################################################################
+# script main
+################################################################################
+
+#
+# define ansi color codes
+#
+if [ ! -z $1 ] && [ $1 == "--no-output-color" ]; then
+  strip_ansi=' | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g"'
+  shift
+else
+  color_fail="\e[31m"
+  color_pass="\e[32m"
+  color_warn="\e[33m"
+  color_info="\e[36m"
+  color_none="\e[0m"
+fi
+
+#
+# check for tmux clear command
+#
+if [ ! -z $1 ] && [ $1 == "clear" ]; then
+  clear_tmux_status
+  exit 0
+fi
+
+#
+# locate buildsys directory
+#
+while [ ! -f "./$buildsys_dir/.git" ]; do
+  cd ..
+  if [ $PWD == "/" ]; then
+     echo "error: unable to locate buildsys directory"
+     exit_fail
+  fi
+done
+cd "./$buildsys_dir/"
+
+#
+# check for kill command
+#
+if [ ! -z $1 ] && [ $1 == "kill" ]; then
+  kill_buildsys
+  exit 0
+fi
+
+#
+# ensure buildsys is not already running
+#
+if [ -f $buildsys_pid ]; then
+  if ps -p `cat $buildsys_pid` > /dev/null; then
+    echo "error: an instance of buildsys is already running"
+    exit_fail
+  else
+    rm -f $buildsys_pid
+  fi
+fi
+running_pid=1
+
+#
+# determine the known targets and packages
+#
+if [[ "`buildsys -L | tr '\n' ' '`" =~ "Known targets:"(.+)"Known packages:"(.+) ]]; then
+  read -r -a known_targets  <<< "${BASH_REMATCH[1]}"
+  read -r -a known_packages <<< "${BASH_REMATCH[2]}"
+else
+  echo "error: unable to determine known targets and known packages"
+  exit_fail
+fi
+
+#
+# check arguments exist
+#
+if [ $# -eq 0 ]; then
+  echo "error: no buildsys arguments specified"
+  exit_fail
+fi
+
+#
+# process buildsys arguments
+#
+for arg in $@; do
+  if [ $arg == "--" ]; then
+    break
+  elif [[ $arg == -* ]]; then
+    if [ $arg == '-h' ] || [ $arg == '--help' ]; then
+      eval "buildsys --help"
+      exit 0
+    elif [ $arg == '-L' ] || [ $arg == '--listpackages' ]; then
+      eval "buildsys --listpackages"
+      exit 0
+    elif [ $arg == "--clean" ]; then
+      target_required=0
+    fi
+  else
+    if array_contains $arg "${known_targets[@]}"; then
+      specified_targets+=($arg)
+    elif array_contains $arg "${known_packages[@]}"; then
+      specified_packages+=($arg)
+    else
+      echo "error: unknown buildsys package/target \"$arg\""
+      exit_fail
+    fi
+  fi
+done
+
+#
+# check target is specified
+#
+if [ $target_required -eq 1 ]; then
+  if [ ${#specified_targets[@]} -eq 0 ]; then
+     echo "error: no buildsys target specified"
+     exit_fail
+  fi
+fi
+
+#
+# update tmux status bar
+#
+if [ $TMUX ]; then
+  update_tmux_status "Building ${specified_targets[*]}"
+fi
+
+#
+# initialize buildsys setup
+#
+trap hdl_sig_int SIGINT
+trap hdl_sig_abrt SIGABRT
+
+#
+# execute buildsys command
+#
+echo -e "buildsys directory: $color_info\"$PWD\"$color_none"
+echo -e "executing command: $color_info\"buildsys "$@"\"$color_none"
+echo -e "build start time: $color_info`date`$color_none"
+eval "buildsys $@ 2>&1 & $strip_ansi"
+echo $! > $buildsys_pid
+wait `cat $buildsys_pid`
+
+#
+# check buildsys result
+#
+if [ $? -eq 0 ]; then
+  echo -e "\nBuild Success for targets ${specified_targets[*]}"
+  exit_pass
+else
+  echo -e "\nBuild Failure for targets ${specified_targets[*]}"
+  exit_fail
+fi
