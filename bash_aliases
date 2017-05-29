@@ -74,11 +74,13 @@ alias cpd=cpwdir
 
 alias gvimr='gvim --remote'
 
-alias reboot='confirm && confirm "Are you *REALLY* sure you want to reboot *THIS* workstation?" && reboot'
+alias reboot='confirm && confirm "Are you *REALLY* sure you want to reboot $HOSTNAME?" && reboot'
 
 alias tmux=tmux-next
 
 alias tmux-session="tmux-next new-session -A -s" 
 
 alias tmux-dev="terminator -l tmux && exit 0"
+
+alias build='buildwrap'
 
