@@ -92,11 +92,11 @@ cleanup() {
 
 update_tmux_status() {
   [ -z "$2" ] && local c="#f9f5d7" || local c="$2"
-  echo "#[fg=#a89984,bg=#3c3836]#[fg=$c,bg=#3c3836,bold] $1 " > $tmux_bld_file
+  echo "#[fg=#a89984,bg=#3c3836]#[fg=$c,bg=#3c3836,bold] $1 " > "$tmux_bld_file.${PWD//\//%}"
 }
 
 clear_tmux_status() {
-  rm -f $tmux_bld_file
+  rm -f "$tmux_bld_file.*"
 }
 
 ################################################################################
