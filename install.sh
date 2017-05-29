@@ -58,6 +58,9 @@ if [ ! -z $1 ] && [ $1 == "full" ]; then
   /tmp/powerlinefonts/install.sh
   rm -rf /tmp/powerlinefonts
 
+  # prevent gnome from stomping on xkb settings
+  gsettings set org.gnome.settings-daemon.plugins.keyboard active false
+
 fi
 
 #
