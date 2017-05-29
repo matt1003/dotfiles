@@ -19,6 +19,11 @@ tmux_bld_file="$HOME/.tmux.build"
 specified_targets=()
 specified_packages=()
 
+buildsys_args=()
+opt_color_none=0
+opt_clear_tmux=0
+opt_kill_build=0
+
 restore_pwd=$PWD
 running_pid=0
 target_required=1
@@ -104,9 +109,25 @@ clear_tmux_status() {
 ################################################################################
 
 #
+# process buildwrap arguments
+#
+for arg in $@; do
+  case $arg in
+    '--no-output-color')
+      opt_color_none=1 ;;
+    'clear')
+      opt_clear_tmux=1 ;;
+    'kill')
+      opt_kill_build=1 ;;
+    *)
+      buildsys_args+=($arg) ;;
+  esac
+done
+
+#
 # define ansi color codes
 #
-if [ ! -z $1 ] && [ $1 == "--no-output-color" ]; then
+if [ $opt_color_none -ne 0 ]; then
   strip_ansi=' | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g"'
   shift
 else
@@ -120,7 +141,7 @@ fi
 #
 # check for tmux clear command
 #
-if [ ! -z $1 ] && [ $1 == "clear" ]; then
+if [ $opt_clear_tmux -ne 0 ]; then
   clear_tmux_status
   exit 0
 fi
@@ -140,7 +161,7 @@ cd "./$buildsys_dir/"
 #
 # check for kill command
 #
-if [ ! -z $1 ] && [ $1 == "kill" ]; then
+if [ $opt_kill_build -ne 0 ]; then
   kill_buildsys
   exit 0
 fi
@@ -170,9 +191,9 @@ else
 fi
 
 #
-# check arguments exist
+# check buildsys arguments exist
 #
-if [ $# -eq 0 ]; then
+if [ ${#buildsys_args[@]} -eq 0 ]; then
   echo "error: no buildsys arguments specified"
   exit_fail
 fi
@@ -180,7 +201,7 @@ fi
 #
 # process buildsys arguments
 #
-for arg in $@; do
+for arg in "${buildsys_args[@]}"; do
   if [ $arg == "--" ]; then
     break
   elif [[ $arg == -* ]]; then
@@ -232,9 +253,9 @@ trap hdl_sig_abrt SIGABRT
 # execute buildsys command
 #
 echo -e "buildsys directory: $color_info\"$PWD\"$color_none"
-echo -e "executing command: $color_info\"buildsys "$@"\"$color_none"
+echo -e "executing command: $color_info\"buildsys "${buildsys_args[*]}"\"$color_none"
 echo -e "build start time: $color_info`date`$color_none"
-eval "buildsys $@ 2>&1 & $strip_ansi"
+eval "buildsys ${buildsys_args[*]} 2>&1 & $strip_ansi"
 echo $! > $buildsys_pid
 wait `cat $buildsys_pid`
 
