@@ -11,7 +11,7 @@ declare -A dotfiles=(
   [bash_profile]=.bash_profile
   [bashrc]=.bashrc
   [minirc]=.minirc.dfl
-  [profile]=.profile 
+  [profile]=.profile
   [terminator.conf]=.config/terminator/config
   [tmux.conf]=.tmux.conf
   [vimrc]=.vimrc
@@ -21,20 +21,21 @@ declare -A dotfiles=(
 # define packages
 #
 declare packages=(
-  cscope 
+  cscope
   ctags
   minicom
   terminator
-  tmux-next 
-  trash-cli 
+  tmux-next
+  trash-cli
   vim
   xcape
+  xclip
 )
 
 #
 # define fonts
 #
-fonts=https://github.com/powerline/fonts.git 
+fonts=https://github.com/powerline/fonts.git
 
 #
 # install packages and fonts
