@@ -44,10 +44,14 @@ alias gmed='git mergetool -t diffuse'
 alias gmek='git mergetool -t kdiff3'
 alias gmem='git mergetool -t meld'
 
-alias gitk='gitk --all &'
+gitkall () { gitk --all $@ & disown %1 ; }
+
+alias gitk=gitkall
 
 alias gitg='git log --graph --abbrev-commit --decorate --format=format:"%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)" --all'
 # see http://stackoverflow.com/questions/1057564/pretty-git-branch-graphs
+
+alias goa='vim $(git diff --name-only | tr "\n" " ")'
 
 alias ll='ls --group-directories-first --time-style=long-iso -hl'
 alias la='ls --group-directories-first --time-style=long-iso -hlA'
@@ -57,8 +61,6 @@ alias his="history | sed 's/^ *[0-9]* *//' | grep"
 alias rm='rm -i'
 
 alias tra='trash'
-
-alias pdu='powerbox 192.168.0.3'
 
 alias gvim='gvim -geometry 500x500'
 
@@ -76,11 +78,9 @@ alias gvimr='gvim --remote'
 
 alias reboot='confirm && confirm "Are you *REALLY* sure you want to reboot $HOSTNAME?" && reboot'
 
-alias tmux=tmux-next
+alias tmux-session='tmux new-session -A -s'
 
-alias tmux-session="tmux-next new-session -A -s" 
-
-alias tmux-dev="terminator -l tmux && exit 0"
+alias tmux-dev='terminator -l tmux && exit 0'
 
 alias build='buildwrap'
 

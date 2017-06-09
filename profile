@@ -25,13 +25,13 @@ fi
 
 # load bashrc when running bash
 if [ -n "$BASH_VERSION" ]; then
-    if [ -f "$HOME/.bashrc" ]; then
-      source "$HOME/.bashrc"
-    fi
+  if [ -f "$HOME/.bashrc" ]; then
+    source "$HOME/.bashrc"
+  fi
 fi
 
 # set to includes user's private bin
 if [ -d "$HOME/bin" ] ; then
-    export PATH="$HOME/bin:$PATH"
+  export PATH="$HOME/bin:$PATH"
 fi
 

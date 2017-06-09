@@ -255,7 +255,7 @@ trap hdl_sig_abrt SIGABRT
 echo -e "buildsys directory: $color_info\"$PWD\"$color_none"
 echo -e "executing command: $color_info\"buildsys "${buildsys_args[*]}"\"$color_none"
 echo -e "build start time: $color_info`date`$color_none"
-eval "buildsys ${buildsys_args[*]} 2>&1 & $strip_ansi"
+eval "buildsys ${buildsys_args[*]} 2>&1 $strip_ansi &"
 echo $! > $buildsys_pid
 wait `cat $buildsys_pid`
 
