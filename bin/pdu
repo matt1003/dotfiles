@@ -22,4 +22,4 @@ while read -r line; do
   fi
 done <<< "$(powerbox $ip status all)"
 
-echo "$str" > $HOME/.tmux.power
+echo "$str" > $HOME/.tmux/power-${ip//\./%}
