@@ -17,8 +17,10 @@ fi
 
 # remap caps-lock to ctrl+esc
 if [ $SESSION_TYPE = "local" ]; then
-  setxkbmap -option caps:ctrl_modifier
-  xcape -e Caps_Lock=Escape
+  if [ -n "$DISPLAY" ]; then
+    setxkbmap -option caps:ctrl_modifier
+    xcape -e Caps_Lock=Escape
+  fi
 fi
 
 # load bashrc when running bash
