@@ -1,6 +1,13 @@
 #!/bin/bash
 
-ip=192.168.0.3
+set -e
+
+if [[ $1 =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  ip=$1 ; shift
+else
+  ip=192.168.0.3
+fi
+
 powerbox $ip $@
 
 str="#[fg=#a89984,bg=#3c3836,nobold] "
