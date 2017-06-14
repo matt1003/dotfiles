@@ -10,6 +10,7 @@
 ################################################################################
 
 set -o pipefail
+shopt -s nullglob
 
 buildsys_dir="buildsys"
 buildsys_pid=".buildsys.pid"
@@ -101,7 +102,11 @@ update_tmux_status() {
 }
 
 clear_tmux_status() {
-  rm -f $tmux_bld_file-*
+  for file in $tmux_bld_file-*; do
+    if grep -q 'Success\|Failure\|Aborted' $file; then
+      rm $file
+    fi
+  done
 }
 
 ################################################################################
