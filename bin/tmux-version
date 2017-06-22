@@ -1,0 +1,15 @@
+#!/bin/bash
+
+V=$(tmux -V | cut -d ' ' -f2)
+
+if [ "$#" -ne 2 ]; then
+  echo $V
+  exit 0
+fi
+
+if (( $(echo "$V $1 $2" | bc) )); then
+  exit 0
+else
+  exit 1
+fi
+
