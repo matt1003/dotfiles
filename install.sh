@@ -30,6 +30,7 @@ declare packages=(
   vim
   xcape
   xclip
+  xsel
 )
 
 #
