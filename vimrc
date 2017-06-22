@@ -3,14 +3,22 @@ set nocompatible
 set encoding=utf-8
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" vim directories
+" operating system configuration
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 if has('win32') || has ('win64')
-  let $VIMHOME = $HOME.'/vimfiles'
+  set shell=powershell
+  set shellcmdflag=-command
+  let $VIMHOME=$HOME.'/vimfiles'
 else
-  let $VIMHOME = $HOME.'/.vim'
+  set shell=/bin/bash
+  set shellcmdflag=-c
+  let $VIMHOME=$HOME.'/.vim'
 endif
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" vim directories
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 set viminfo+=n$VIMHOME/viminfo
 
@@ -35,77 +43,6 @@ set undofile
 if !isdirectory($VIMHOME.'/autoload')
   call mkdir($VIMHOME.'/autoload', 'p')
 endif
-
-let g:yankring_history_dir=$VIMHOME
-
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" vim-plug
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-if has('win32') || has ('win64')
-  set shell=powershell
-  set shellcmdflag=-command
-endif
-
-if !isdirectory($VIMHOME.'/autoload')
-  call mkdir($VIMHOME.'/autoload', 'p')
-endif
-
-if !filereadable($VIMHOME.'/autoload/plug.vim')
-  silent !wget -O "$VIMHOME/autoload/plug.vim"
-    \ "https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim"
-  autocmd VimEnter * nested PlugInstall --sync | source $MYVIMRC
-endif
-
-call plug#begin()
-
-Plug 'weihanglo/tmuxline.vim'
-Plug 'christoomey/vim-tmux-navigator'
-
-Plug 'vim-airline/vim-airline-themes'
-"Plug 'powerline/fonts', { 'do' : './install.sh' }
-
-"Plug 'vim-scripts/cscope.vim'
-"Plug 'ronakg/quickr-cscope.vim'
-"Plug 'ronakg/quickr-preview.vim'
-Plug 'matt1003/cscope.vim'
-Plug 'matt1003/quickr-preview.vim'
-
-Plug 'matt1003/gruvbox'
-
-"Plug 'vim-scripts/fontsize' this doesn't work with quickr-preview, as they
-"have overlapping key bindings.
-"Plug 'vim-scripts/errormarker.vim'
-
-Plug 'henrik/vim-indexed-search'       " display search count
-"Plug 'justinmk/vim-matchparenalways'   " always highlight parentheses
-"Plug 'qstrahl/vim-matchmaker'          " always highlight current word
-"Plug 'matt1003/vim-better-whitespace'  " highlight trailing white-space
-"Plug 'terryma/vim-expand-region'
-"Plug 'jiangmiao/auto-pairs'            " insert brackets/quotes in pairs
-Plug 'justinmk/vim-syntax-extra'       " improved c syntax highlighting
-Plug 'vim-scripts/ifdef-highlighting'  " highlighting of #ifdef blocks
-"Plug 'bronson/vim-visual-star-search'  " search visual mode selection
-Plug 'tpope/vim-sleuth'                " auto detect file indentation
-Plug 'lifepillar/vim-mucomplete'       " auto complete in insert mode
-"Plug 'xolox/vim-session'               " auto load/save vim sessions
-"Plug 'xolox/vim-misc'                  " needed by xolox plugins
-
-Plug 'vim-scripts/bufexplorer.zip'     " buffexplorer
-Plug 'vim-airline/vim-airline'         " airline
-Plug 'airblade/vim-gitgutter'          " gitgutter
-Plug 'tpope/vim-fugitive'              " fugitive
-"Plug 'gregsexton/gitv'                 " gitv
-"Plug 'mbbill/undotree'                 " undotree
-Plug 'vim-scripts/YankRing.vim'        " yankring
-Plug 'scrooloose/nerdtree'             " nerdtree
-Plug 'vim-scripts/taglist.vim'         " taglist
-Plug 'takac/vim-hardtime'              " hardtime
-
-Plug 'qpkorr/vim-bufkill'
-Plug 'skywind3000/asyncrun.vim'
-
-call plug#end()
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " general settings
@@ -151,17 +88,188 @@ catch
 endtry
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" vim-plug
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+if !filereadable($VIMHOME.'/autoload/plug.vim')
+  silent !wget -O "$VIMHOME/autoload/plug.vim"
+    \ "https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim"
+  autocmd VimEnter * nested PlugInstall --sync | source $MYVIMRC
+endif
+
+call plug#begin()
+
+" powerline-fonts {{{
+Plug 'powerline/fonts', { 'do' : './install.sh' }
+"}}}
+
+" cscope {{{
+ if executable('cscope')
+  "Plug 'vim-scripts/cscope.vim'
+  Plug 'matt1003/cscope.vim'
+  let g:cscope_no_jump = 1
+endif
+"}}}
+
+" quickr-preview {{{
+"Plug 'ronakg/quickr-preview.vim'
+Plug 'matt1003/quickr-preview.vim'
+let g:quickr_preview_on_cursor = 0
+"}}}
+
+" gruvbox {{{
+"Plug 'morhetz/gruvbox'
+Plug 'matt1003/gruvbox'
+let g:gruvbox_contrast_dark = 'hard'
+let g:gruvbox_number_column = 'bgN'
+let g:gruvbox_sign_column = 'bgN'
+let g:gruvbox_italic = 1
+"}}}
+
+"Plug 'vim-scripts/fontsize' this doesn't work with quickr-preview, as they
+"have overlapping key bindings.
+
+" indexed-search {{{
+Plug 'henrik/vim-indexed-search'
+let g:indexed_search_numbered_only = 1
+"}}}
+
+" gitv {{{
+"Plug 'gregsexton/gitv'
+"let g:Gitv_OpenHorizontal=1
+"}}}
+
+"Plug 'justinmk/vim-matchparenalways'   " always highlight parentheses
+
+" matchmaker (highlight current word) {{{
+"Plug 'qstrahl/vim-matchmaker'
+"highlight MatchMaker ctermbg=238 guibg=#585858
+"let g:matchmaker_enable_startup = 1
+"let g:matchmaker_matchpriority = -1
+"}}}
+
+"Plug 'terryma/vim-expand-region'
+"Plug 'jiangmiao/auto-pairs'            " insert brackets/quotes in pairs
+"Plug 'bronson/vim-visual-star-search'  " search visual mode selection
+
+" better whitespace (highlight trailing whitespace) {{{
+"Plug 'ntpeters/vim-better-whitespace'
+Plug 'matt1003/vim-better-whitespace'
+let g:match_spaces_that_precede_tabs = 1
+"}}}
+
+" syntax-extra (improved c syntax highlighting) {{{
+Plug 'justinmk/vim-syntax-extra'
+"}}}
+
+" ifdef-highlighting (highlighting of c #ifdef blocks) {{{
+Plug 'vim-scripts/ifdef-highlighting'
+"}}}
+
+" sleuth (auto detect file indentation) {{{
+Plug 'tpope/vim-sleuth'
+"}}}
+
+" mucomplete (insert mode auto completion) {{{
+Plug 'lifepillar/vim-mucomplete'
+let g:mucomplete#enable_auto_at_startup = 1
+set completeopt+=menuone
+if version >= 800
+  set completeopt+=noinsert
+endif
+"}}}
+
+" dispatch {{{
+Plug 'tpope/vim-dispatch'
+"}}}
+
+" buffexplorer {{{
+Plug 'vim-scripts/bufexplorer.zip'
+nmap <silent> <leader>bl :BufExplorer<CR>
+"}}}
+
+" airline {{{
+Plug 'vim-airline/vim-airline'
+Plug 'vim-airline/vim-airline-themes'
+Plug 'weihanglo/tmuxline.vim'
+let g:airline_powerline_fonts = 1
+let g:airline#extensions#tabline#enabled = 1
+let g:airline#extensions#tmuxline#enabled = 0
+"}}}
+
+" gitgutter {{{
+Plug 'airblade/vim-gitgutter'
+let g:gitgutter_sign_column_always = 1
+let g:gitgutter_sign_added = '▶'
+let g:gitgutter_sign_modified = '▶'
+let g:gitgutter_sign_modified_removed = '▼'
+let g:gitgutter_sign_removed = '▼'
+let g:gitgutter_sign_removed_first_line = '▲'
+nmap <leader>hn :GitGutterNextHunk<CR>
+nmap <leader>hp :GitGutterPrevHunk<CR>
+nmap <leader>hu :GitGutterUndoHunk<CR>
+"}}}
+
+" fugitive {{{
+Plug 'tpope/vim-fugitive'
+"}}}
+
+" undotree {{{
+Plug 'mbbill/undotree'
+"}}}
+
+" yankring {{{
+Plug 'vim-scripts/YankRing.vim'
+let g:yankring_history_dir = $VIMHOME
+let g:yankring_max_history = 1000
+let g:yankring_window_height = 12
+nmap <leader>yr :YRShow<CR>
+nmap <leader>ys :YRSearch<CR>
+"}}}
+
+" nerdtree {{{
+Plug 'scrooloose/nerdtree'
+let g:NERDTreeWinSize = 50
+"}}}
+
+" taglist {{{
+if executable('ctags')
+  Plug 'vim-scripts/taglist.vim'
+  let g:Tlist_Use_Right_Window = 1
+  let g:Tlist_Enable_Fold_Column = 0
+  let g:Tlist_WinWidth = 50
+  let g:Tlist_Show_One_File = 1
+  let g:Tlist_Compact_Format = 1
+endif
+"}}}
+
+" hardtime {{{
+Plug 'takac/vim-hardtime'
+let g:hardtime_default_on = 1
+let g:hardtime_allow_different_key = 1
+let g:hardtime_maxcount = 3
+let g:list_of_normal_keys = ["h", "l", "x"]
+let g:list_of_visual_keys = ["h", "l", "x"]
+let g:list_of_insert_keys = []
+let g:list_of_disabled_keys = ["<UP>", "<DOWN>", "<LEFT>", "<RIGHT>"]
+"}}}
+
+" tmux-navigator {{{
+Plug 'christoomey/vim-tmux-navigator'
+"}}}
+
+Plug 'qpkorr/vim-bufkill'
+Plug 'skywind3000/asyncrun.vim'
+
+call plug#end()
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " gui settings
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-set guicursor+=a:blinkon0 " disable cursor blinking
-
+" set the color scheme
 try
   set background=dark
-  let g:gruvbox_contrast_dark = 'hard'
-  let g:gruvbox_number_column = 'bgN'
-  let g:gruvbox_sign_column = 'bgN'
-  let g:gruvbox_italic = 1
   colorscheme gruvbox
 catch
   colorscheme slate
@@ -183,15 +291,21 @@ if has("gui_running")
   set mousemodel=popup " right mouse button opens menu
 else
   set mouse=a
-  set termguicolors
+  if version >= 800
+    set termguicolors
+  else
+    hi Normal ctermbg=None
+    hi LineNr ctermbg=None
+    hi SignColumn ctermbg=None
+  endi
 endif
 
 let g:quickfix_window_height = 12
-let g:airline#extensions#tmuxline#enabled = 0
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " file specific settings
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
 augroup file_specific_settings
   autocmd!
   " git commit message
@@ -203,78 +317,6 @@ augroup file_specific_settings
 augroup END
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" plugin settings
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-" vim-airline {{{
-let g:airline_powerline_fonts = 1
-if !exists('g:airline_symbols')
-  let g:airline_symbols = {}
-endif
-let g:airline#extensions#tabline#enabled = 1
-"}}}
-
-" vim-gitgutter {{{
-let g:gitgutter_sign_column_always = 1
-
-"▶➕◆✚➕◆♦✖✚✜◆◆⬥•●⚫⬤◈∎⑆■▪►x×X✕☓✖✗✘
-
-let g:gitgutter_sign_added = '▶'
-let g:gitgutter_sign_modified = '▶'
-let g:gitgutter_sign_modified_removed = '▼'
-let g:gitgutter_sign_removed = '▼'
-let g:gitgutter_sign_removed_first_line = '▲'
-
-nmap <leader>hn <Plug>GitGutterNextHunk
-nmap <leader>hp <Plug>GitGutterPrevHunk
-nmap <leader>hu <Plug>GitGutterUndoHunk
-"}}}
-
-" vim-matchmaker {{{
-highlight MatchMaker ctermbg=238 guibg=#585858
-let g:matchmaker_enable_startup = 1
-let g:matchmaker_matchpriority = -1
-"}}}
-
-" vim-indexed-search {{{
-let g:indexed_search_numbered_only=1
-"}}}
-
-" vim-better-whitespace {{{
-let g:match_spaces_that_precede_tabs = 1
-"}}}
-
-" vim-hardtime {{{
-let g:hardtime_default_on = 1
-let g:hardtime_allow_different_key = 1
-let g:hardtime_maxcount = 3
-let g:list_of_normal_keys = ["h", "l", "x"]
-let g:list_of_visual_keys = ["h", "l", "x"]
-let g:list_of_insert_keys = []
-let g:list_of_disabled_keys = ["<UP>", "<DOWN>", "<LEFT>", "<RIGHT>"]
-"}}}
-
-" vim-session {{{
-let g:session_autoload='yes'
-let g:session_autosave='yes'
-"}}}
-
-" vim-mucomplete {{{
-set completeopt+=menuone
-set completeopt+=noinsert
-let g:mucomplete#enable_auto_at_startup = 1
-"}}}
-
-" buffexplorer {{{
-let g:bufExplorerSortBy='extension'
-let g:bufExplorerDisableDefaultKeyMapping=1
-"}}}
-
-" gitv {{{
-let g:Gitv_OpenHorizontal=1
-"}}}
-
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " custom keybindings
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
@@ -283,20 +325,9 @@ nmap <leader>o :<C-U>call append(line("."), repeat([''], v:count1))<CR>
 nmap <leader>O :<C-U>call append(line(".")-1, repeat([''], v:count1))<CR>
 "}}}
 
-let g:yankring_window_height = 12
-nmap <leader>yr :YRShow<CR>
-nmap <leader>ys :YRSearch<CR>
-
-nmap <silent> <leader>wk :wincmd k<CR>
-nmap <silent> <leader>wj :wincmd j<CR>
-nmap <silent> <leader>wh :wincmd h<CR>
-nmap <silent> <leader>wl :wincmd l<CR>
-nmap <silent> <leader>wd :wincmd q<CR>
-
 nmap <silent> <leader>bd :bd<CR>
 nmap <silent> <leader>bn :bn<CR>
 nmap <silent> <leader>bp :bp<CR>
-nmap <silent> <leader>bl :BufExplorer<CR>
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Auto Detect Binary Files
@@ -350,9 +381,6 @@ nnoremap <silent> <leader>fe :call cscope#find('e', expand('<cword>'))<CR>
 nnoremap <silent> <leader>ff :call cscope#find('f', expand('<cword>'))<CR>
 nnoremap <silent> <leader>fi :call cscope#find('i', expand('<cword>'))<CR>
 
-let g:cscope_no_jump = 1
-let g:quickr_preview_on_cursor = 0
-
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " power box
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -372,7 +400,7 @@ fun! s:ExecutePowerBox(PowerBoxCmd, PowerBoxArgs)
   exe "!".a:PowerBoxCmd." ".s:PowerBoxAddr." ".a:PowerBoxArgs
 endfun
 
-command! -nargs=+ PowerBox call <SID>ExecutePowerBox("powerbox", <q-args>)
+command! -nargs=+ PowerBox call <SID>ExecutePowerBox("pdu", <q-args>)
 cabbrev pdu PowerBox
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -434,16 +462,16 @@ endfun
 
 fun! s:ExecuteBuildSys(BuildSysArgs)
   if a:BuildSysArgs == "stop"
-    exe "AsyncStop"
-    cclose
+    "exe "AsyncStop"
+    "cclose
   else
     call <SID>UpdateBuildSysPath()
-    exe "AsyncRun cd ".s:BuildSysPath." && ".s:BuildSysCmd." ".a:BuildSysArgs
-    botright copen 12
-    call <SID>SetBuildSysSyntax()
-    setlocal nonumber
-    cbottom
-    wincmd p
+    exe "Dispatch! -compiler=make -dir=".s:BuildSysPath." ".s:BuildSysCmd." ".a:BuildSysArgs
+    "botright copen 12
+    "call <SID>SetBuildSysSyntax()
+    "setlocal nonumber
+    "cbottom
+    "wincmd p
   endif
 endfun
 
@@ -488,19 +516,18 @@ fun! s:ExecuteGrep(GrepCmd, GrepArgs)
   call <SID>UpdateGrepOpts(s:GrepOpts)
   echon "Searching for ".s:GrepWord." ..."
   exe "silent ".a:GrepCmd." ".s:GrepOpts." ".s:GrepWord." ".s:GrepPath
+  redraw!
   let total = len(getloclist(0))
   if total == 0
     echohl GruvboxRedBold
     echon "Search for ".s:GrepWord." returned no results."
     echohl Normal
   elseif total == 1
+    lwindow 12
     echon "Search for ".s:GrepWord." returned 1 result."
-    lwindow 12
-    "botright copen 12
   else
-    echon "Search for ".s:GrepWord." returned ".total." results."
     lwindow 12
-    "botright copen 12
+    echon "Search for ".s:GrepWord." returned ".total." results."
   endif
 endfun
 
@@ -510,6 +537,8 @@ cabbrev grep Grep
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " random crap
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+"▶➕◆✚➕◆♦✖✚✜◆◆⬥•●⚫⬤◈∎⑆■▪►x×X✕☓✖✗✘
 
 function! s:Log(eventName) abort
   let bufnr = bufnr('%')
@@ -533,16 +562,6 @@ augroup EventLoggin
     "autocmd BufEnter    * call input("enter to continue ", getwinvar(winnr(), "&pvw"), 'dir')
   endif
 augroup END
-
-" vim tag list options
-let Tlist_Use_Right_Window = 1
-let Tlist_Enable_Fold_Column = 0
-let Tlist_WinWidth = 50
-let Tlist_Show_One_File = 1
-let Tlist_Compact_Format = 1
-
-" nerd tree options
-let g:NERDTreeWinSize = 50
 
 if has("gui_running")
   augroup ide_mode
