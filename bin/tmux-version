@@ -2,14 +2,47 @@
 
 V=$(tmux -V | cut -d ' ' -f2)
 
+gt() { test "$(printf '%s\n' "$@" | sort -V | head -n1)" != "$1" ; }
+ge() { test "$(printf '%s\n' "$@" | sort -V | tail -n1)" == "$1" ; }
+lt() { test "$(printf '%s\n' "$@" | sort -V | tail -n1)" != "$1" ; }
+le() { test "$(printf '%s\n' "$@" | sort -V | head -n1)" == "$1" ; }
+assert() { [ "$1" = "$2" ] || echo "test case failire (line $3)" ; }
+
 if [ "$#" -ne 2 ]; then
+
+  gt 2.4 2.5 ; assert $? 1 $LINENO
+  gt 2.5 2.5 ; assert $? 1 $LINENO
+  gt 2.6 2.5 ; assert $? 0 $LINENO
+
+  ge 2.4 2.5 ; assert $? 1 $LINENO
+  ge 2.5 2.5 ; assert $? 0 $LINENO
+  ge 2.6 2.5 ; assert $? 0 $LINENO
+
+  lt 2.4 2.5 ; assert $? 0 $LINENO
+  lt 2.5 2.5 ; assert $? 1 $LINENO
+  lt 2.6 2.5 ; assert $? 1 $LINENO
+
+  le 2.4 2.5 ; assert $? 0 $LINENO
+  le 2.5 2.5 ; assert $? 0 $LINENO
+  le 2.6 2.5 ; assert $? 1 $LINENO
+
   echo $V
   exit 0
+
 fi
 
-if (( $(echo "$V $1 $2" | bc) )); then
-  exit 0
-else
-  exit 1
-fi
+case $1 in
+  '>')
+    gt $V $2 ;;
+  '>=')
+    ge $V $2 ;;
+  '<')
+    lt $V $2 ;;
+  '<=')
+    le $V $2 ;;
+  *)
+    echo "invalid operator" ;;
+esac
+
+exit $?
 
