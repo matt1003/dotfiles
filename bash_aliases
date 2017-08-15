@@ -2,9 +2,11 @@
 alias s0='minicom -D /dev/ttyS0   -C /home/matthewbr/minicom-s0'
 alias s1='minicom -D /dev/ttyS1   -C /home/matthewbr/minicom-s1'
 alias s2='minicom -D /dev/ttyS2   -C /home/matthewbr/minicom-s2'
+alias s3='minicom -D /dev/ttyS3   -C /home/matthewbr/minicom-s2'
 alias u0='minicom -D /dev/ttyUSB0 -C /home/matthewbr/minicom-u0'
 alias u1='minicom -D /dev/ttyUSB1 -C /home/matthewbr/minicom-u1'
 alias u2='minicom -D /dev/ttyUSB2 -C /home/matthewbr/minicom-u2'
+alias u3='minicom -D /dev/ttyUSB3 -C /home/matthewbr/minicom-u2'
 
 alias gad='git add'
 alias gbi='git bisect'
