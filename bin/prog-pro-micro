@@ -1,0 +1,50 @@
+#!/bin/bash
+
+set -e
+
+dev='/dev/ttyACM0'
+
+#
+# determine flash/eeprom binary
+#
+echo -n "checking hex file..."
+if [[ $1 == *.hex ]] ; then
+  dest='flash'
+elif [[ $1 == *.eep ]] ; then
+  dest='eeprom'
+else
+  echo -e "failed!\nerror: invalid hex file $1"
+  exit 1
+fi
+echo "done"
+
+#
+# reset the device to boot loader mode
+#
+if [ -e $dev ] ; then
+  echo -n "resetting boot loader..."
+  stty -F $dev 1200 && sleep 0.5
+  echo "done"
+else
+  echo "device must be reset manually"
+fi
+
+#
+# wait for the device to come back up
+#
+echo -n "waiting for boot loader..."
+while [ ! -e $dev ] ; do
+  sleep 0.5 && echo -n "."
+  if [ $((i++)) -ge 20 ]; then
+    echo -e "timeout!\nerror: timeout waiting for boot loader"
+    exit 1
+  fi
+done
+echo "done"
+
+#
+# flash the hex file into the device
+#
+echo "writing binary to $dest..."
+avrdude -p atmega32u4 -P $dev -c avr109 -U $dest:w:$1
+
