@@ -1,1 +1,2 @@
- - add crontab
+ - add crontab for the cli-trash auto empty
+ - tmux status bar config needs cleaning up
