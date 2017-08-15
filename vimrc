@@ -465,9 +465,9 @@ fun! s:UpdateBuildSysPath()
 endfun
 
 fun! s:ExecuteBuildSys(BuildSysArgs)
-  if a:BuildSysArgs == "stop"
-    "exe "AsyncStop"
-    "cclose
+  if a:BuildSysArgs == "error"
+    Copen
+    let @/ = 'error:'
   else
     call <SID>UpdateBuildSysPath()
     exe "Dispatch! -compiler=make -dir=".s:BuildSysPath." ".s:BuildSysCmd." ".a:BuildSysArgs
