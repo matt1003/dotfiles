@@ -13,7 +13,11 @@ if has('win32') || has ('win64')
 else
   set shell=/bin/bash
   set shellcmdflag=-c
-  let $VIMHOME=$HOME.'/.vim'
+  if has ('nvim')
+    let $VIMHOME=$HOME.'/.config/nvim'
+  else
+    let $VIMHOME=$HOME.'/.vim'
+  endif
 endif
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -174,7 +178,7 @@ Plug 'tpope/vim-sleuth'
 Plug 'lifepillar/vim-mucomplete'
 let g:mucomplete#enable_auto_at_startup = 1
 set completeopt+=menuone
-if version >= 800
+if version >= 800 || has ('nvim')
   set completeopt+=noinsert
 endif
 "}}}
@@ -291,7 +295,7 @@ if has("gui_running")
   set mousemodel=popup " right mouse button opens menu
 else
   set mouse=a
-  if version >= 800
+  if version >= 800 || has ('nvim')
     set termguicolors
   else
     hi Normal ctermbg=None

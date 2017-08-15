@@ -52,6 +52,7 @@ alias gitg='git log --graph --abbrev-commit --decorate --format=format:"%C(bold 
 # see http://stackoverflow.com/questions/1057564/pretty-git-branch-graphs
 
 alias goa='vim $(git diff --name-only | tr "\n" " ")'
+alias ngoa='nvim $(git diff --name-only | tr "\n" " ")'
 
 alias ll='ls --group-directories-first --time-style=long-iso -hl'
 alias la='ls --group-directories-first --time-style=long-iso -hlA'
