@@ -435,6 +435,23 @@ fun! s:SetBuildSysSyntax()
   syntax match HiBuildSysErr /Building: Failed/
 endfun
 
+fun! s:CheckForModifiedBuffers()
+  let buflist = filter(range(1, bufnr('$')), 'buflisted(v:val)')
+  for bufnr in buflist
+    if getbufvar(bufnr, '&modified')
+      while 1
+        let anwser = input("Modified files detected! Save all? [Y/N]: ")
+        if anwser == "Y"
+          wa
+          return
+        elseif anwser == "N"
+          return
+        endif
+      endwhile
+    endif
+  endfor
+endfun
+
 fun! s:IsBuildSysPath(path)
   if filereadable(a:path."/toolchain_version")
     return 1
@@ -469,6 +486,7 @@ fun! s:ExecuteBuildSys(BuildSysArgs)
     Copen
     let @/ = 'error:'
   else
+    call <SID>CheckForModifiedBuffers()
     call <SID>UpdateBuildSysPath()
     exe "Dispatch! -compiler=make -dir=".s:BuildSysPath." ".s:BuildSysCmd." ".a:BuildSysArgs
     "botright copen 12
