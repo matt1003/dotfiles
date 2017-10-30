@@ -16,6 +16,8 @@ buildsys_dir="buildsys"
 buildsys_pid=".buildsys.pid"
 
 tmux_bld_file="$HOME/.tmux/build"
+tmux_bld_name="unknown"
+tmux_bld_path="unknown"
 
 specified_targets=()
 specified_packages=()
@@ -98,7 +100,8 @@ cleanup() {
 
 update_tmux_status() {
   [ -z "$2" ] && local c="#f9f5d7" || local c="$2"
-  echo "#[fg=#a89984,bg=#3c3836]#[fg=$c,bg=#3c3836,bold] $1 " > "$tmux_bld_file-${PWD//\//%}"
+  echo "#[fg=#a89984,bg=#3c3836] $tmux_bld_name:#[fg=$c,bg=#3c3836,bold] $1 " \
+    > "$tmux_bld_file-$tmux_bld_path"
 }
 
 clear_tmux_status() {
@@ -161,6 +164,8 @@ while [ ! -f "./$buildsys_dir/.git" ]; do
      exit_fail
   fi
 done
+tmux_bld_name=$(basename $PWD)
+tmux_bld_path=${PWD//\//%}
 cd "./$buildsys_dir/"
 
 #
