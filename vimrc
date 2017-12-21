@@ -195,7 +195,7 @@ nmap <silent> <leader>bl :BufExplorer<CR>
 " airline {{{
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
-Plug 'weihanglo/tmuxline.vim'
+Plug 'edkolev/tmuxline.vim'
 let g:airline_powerline_fonts = 1
 let g:airline#extensions#tabline#enabled = 1
 let g:airline#extensions#tmuxline#enabled = 0
@@ -203,7 +203,7 @@ let g:airline#extensions#tmuxline#enabled = 0
 
 " gitgutter {{{
 Plug 'airblade/vim-gitgutter'
-let g:gitgutter_sign_column_always = 1
+set signcolumn=yes
 let g:gitgutter_sign_added = '▶'
 let g:gitgutter_sign_modified = '▶'
 let g:gitgutter_sign_modified_removed = '▼'
@@ -263,7 +263,6 @@ Plug 'christoomey/vim-tmux-navigator'
 "}}}
 
 Plug 'qpkorr/vim-bufkill'
-Plug 'skywind3000/asyncrun.vim'
 
 call plug#end()
 
@@ -440,7 +439,9 @@ fun! s:CheckForModifiedBuffers()
   for bufnr in buflist
     if getbufvar(bufnr, '&modified')
       while 1
+        echohl Question
         let anwser = input("Modified files detected! Save all? [Y/N]: ")
+        echohl None
         if anwser == "Y"
           wa
           return
