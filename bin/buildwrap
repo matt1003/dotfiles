@@ -128,7 +128,9 @@ for arg in $@; do
     'kill')
       opt_kill_build=1 ;;
     *)
-      buildsys_args+=($arg) ;;
+      # split out comma separated args
+      IFS=',' read -r -a sarg <<< $arg
+      buildsys_args+=(${sarg[@]}) ;;
   esac
 done
 
