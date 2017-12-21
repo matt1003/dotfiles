@@ -504,31 +504,40 @@ cabbrev build BuildSys
 " grep
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-let s:DefaultGrepPath = getcwd()
-let s:DefaultGrepOpts = "--binary-files=without-match --exclude-dir=buildsys"
+if executable('ag')
+  " use the silver searcher
+  set grepprg=ag\ --vimgrep
+  set grepformat=%f:%l:%c:%m
+  let s:DefaultGrepPath = getcwd()
+  let s:DefaultGrepOpts = "-w"
+else
+  " use standard old grep
+  let s:DefaultGrepPath = getcwd()
+  let s:DefaultGrepOpts = "-I -w"
+endif
 
 let s:GrepPath = s:DefaultGrepPath
 let s:GrepOpts = s:DefaultGrepOpts
 
 fun! s:UpdateGrepWord(word)
   if a:word != ""
-    let s:GrepWord = input("grep pattern: ", "\"".a:word."\"", 'dir')
+    let s:GrepWord = input("search pattern: ", "\"".a:word."\"", 'dir')
   else
-    let s:GrepWord = input("grep pattern: ", "\"".expand("<cword>")."\"", 'dir')
+    let s:GrepWord = input("search pattern: ", "\"".expand("<cword>")."\"", 'dir')
   endif
 endfun
 
 fun! s:UpdateGrepPath(path)
-  let s:GrepPath = input("grep path: ", a:path, 'dir')
+  let s:GrepPath = input("search path: ", a:path, 'dir')
   if s:GrepPath == "reset"
-    let s:GrepPath = input("grep path: ", s:DefaultGrepPath, 'dir')
+    let s:GrepPath = input("search path: ", s:DefaultGrepPath, 'dir')
   endif
 endfun
 
 fun! s:UpdateGrepOpts(opts)
-  let s:GrepOpts = input("grep flags: ", a:opts, 'dir')
+  let s:GrepOpts = input("search flags: ", a:opts, 'dir')
   if s:GrepOpts == "reset"
-    let s:GrepOpts = input("grep flags: ", s:DefaultGrepOpts, 'dir')
+    let s:GrepOpts = input("search flags: ", s:DefaultGrepOpts, 'dir')
   endif
 endfun
 
@@ -541,7 +550,7 @@ fun! s:ExecuteGrep(GrepCmd, GrepArgs)
   redraw!
   let total = len(getloclist(0))
   if total == 0
-    echohl GruvboxRedBold
+    echohl WarningMsg
     echon "Search for ".s:GrepWord." returned no results."
     echohl Normal
   elseif total == 1
@@ -553,8 +562,9 @@ fun! s:ExecuteGrep(GrepCmd, GrepArgs)
   endif
 endfun
 
-command! -nargs=* Grep call <SID>ExecuteGrep("lgrep! -r", <q-args>)
-cabbrev grep Grep
+command! -nargs=* Search call <SID>ExecuteGrep("lgrep! -r", <q-args>)
+cabbrev grep Search
+cabbrev ag Search
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " random crap

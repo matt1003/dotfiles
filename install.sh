@@ -24,6 +24,7 @@ declare packages=(
   cscope
   ctags
   minicom
+  silversearcher-ag
   terminator
   tmux-next
   trash-cli
