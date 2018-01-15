@@ -178,6 +178,7 @@ Plug 'tpope/vim-sleuth'
 Plug 'lifepillar/vim-mucomplete'
 let g:mucomplete#enable_auto_at_startup = 1
 set completeopt+=menuone
+set completeopt-=preview
 if version >= 800 || has ('nvim')
   set completeopt+=noinsert
 endif
@@ -190,6 +191,7 @@ Plug 'tpope/vim-dispatch'
 " buffexplorer {{{
 Plug 'vim-scripts/bufexplorer.zip'
 nmap <silent> <leader>bl :BufExplorer<CR>
+nmap <silent> <c-b> :BufExplorer<CR>
 "}}}
 
 " airline {{{
