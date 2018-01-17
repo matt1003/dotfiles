@@ -191,7 +191,7 @@ Plug 'tpope/vim-dispatch'
 " buffexplorer {{{
 Plug 'vim-scripts/bufexplorer.zip'
 nmap <silent> <leader>bl :BufExplorer<CR>
-nmap <silent> <c-b> :BufExplorer<CR>
+nmap <silent> <c-m> :BufExplorer<CR>
 "}}}
 
 " airline {{{
@@ -214,6 +214,7 @@ let g:gitgutter_sign_removed_first_line = '▲'
 nmap <leader>hn :GitGutterNextHunk<CR>
 nmap <leader>hp :GitGutterPrevHunk<CR>
 nmap <leader>hu :GitGutterUndoHunk<CR>
+nmap <silent> <c-n> :GitGutterNextHunk<CR>
 "}}}
 
 " fugitive {{{
@@ -227,10 +228,14 @@ Plug 'mbbill/undotree'
 " yankring {{{
 Plug 'vim-scripts/YankRing.vim'
 let g:yankring_history_dir = $VIMHOME
+let g:yankring_min_element_length=2
 let g:yankring_max_history = 1000
 let g:yankring_window_height = 12
+let g:yankring_replace_n_pkey=1
+let g:yankring_replace_n_nkey=1
 nmap <leader>yr :YRShow<CR>
 nmap <leader>ys :YRSearch<CR>
+nmap <silent> <c-y> :YRShow<CR>
 "}}}
 
 " nerdtree {{{
