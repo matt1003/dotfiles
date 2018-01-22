@@ -170,6 +170,10 @@ Plug 'justinmk/vim-syntax-extra'
 Plug 'vim-scripts/ifdef-highlighting'
 "}}}
 
+" replace with register (delete and paste) {{{
+Plug 'vim-scripts/ReplaceWithRegister'
+"}}}
+
 " sleuth (auto detect file indentation) {{{
 Plug 'tpope/vim-sleuth'
 "}}}
@@ -188,10 +192,19 @@ endif
 Plug 'tpope/vim-dispatch'
 "}}}
 
+" surround {{{
+Plug 'tpope/vim-surround'
+"}}}
+
+" capslock {{{
+Plug 'tpope/vim-capslock'
+imap <c-c> <Plug>CapsLockToggle
+"}}}
+
 " buffexplorer {{{
 Plug 'vim-scripts/bufexplorer.zip'
 nmap <silent> <leader>bl :BufExplorer<CR>
-nmap <silent> <c-m> :BufExplorer<CR>
+nmap <silent> <c-u> :BufExplorer<CR>
 "}}}
 
 " airline {{{
