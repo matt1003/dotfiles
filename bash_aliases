@@ -1,12 +1,10 @@
 
-alias s0='minicom -D /dev/ttyS0   -C /home/matthewbr/minicom-s0'
-alias s1='minicom -D /dev/ttyS1   -C /home/matthewbr/minicom-s1'
-alias s2='minicom -D /dev/ttyS2   -C /home/matthewbr/minicom-s2'
-alias s3='minicom -D /dev/ttyS3   -C /home/matthewbr/minicom-s2'
-alias u0='minicom -D /dev/ttyUSB0 -C /home/matthewbr/minicom-u0'
-alias u1='minicom -D /dev/ttyUSB1 -C /home/matthewbr/minicom-u1'
-alias u2='minicom -D /dev/ttyUSB2 -C /home/matthewbr/minicom-u2'
-alias u3='minicom -D /dev/ttyUSB3 -C /home/matthewbr/minicom-u2'
+alias s0='minicom -D /dev/ttyS0   -C ~/minicom-s0'
+alias s1='minicom -D /dev/ttyS1   -C ~/minicom-s1'
+alias s2='minicom -D /dev/ttyS2   -C ~/minicom-s2'
+alias u0='minicom -D /dev/ttyUSB0 -C ~/minicom-u0'
+alias u1='minicom -D /dev/ttyUSB1 -C ~/minicom-u1'
+alias u2='minicom -D /dev/ttyUSB2 -C ~/minicom-u2'
 
 alias gad='git add'
 alias gbi='git bisect'
@@ -54,7 +52,6 @@ alias gitg='git log --graph --abbrev-commit --decorate --format=format:"%C(bold 
 # see http://stackoverflow.com/questions/1057564/pretty-git-branch-graphs
 
 alias goa='vim $(git diff --name-only | tr "\n" " ")'
-alias ngoa='nvim $(git diff --name-only | tr "\n" " ")'
 
 alias ll='ls --group-directories-first --time-style=long-iso -hl'
 alias la='ls --group-directories-first --time-style=long-iso -hlA'
@@ -64,8 +61,6 @@ alias his="history | sed 's/^ *[0-9]* *//' | grep"
 alias rm='rm -i'
 
 alias tra='trash'
-
-alias gvim='gvim -geometry 500x500'
 
 alias update='sudo apt update && sudo apt upgrade && sudo apt auto-remove && echo -e "\e[34m** DONE **\e[0m"'
 
@@ -77,11 +72,9 @@ cpwdir() { mkdir -p -- "$(dirname -- "$2")" && cp -- "$1" "$2" ; }
 
 alias cpd=cpwdir
 
-alias gvimr='gvim --remote'
-
 alias reboot='confirm && confirm "Are you *REALLY* sure you want to reboot $HOSTNAME?" && reboot'
 
-alias tmux-session='tmux new-session -A -s'
+alias tmux-new='tmux-next new-session -A -s'
 
 alias tmux-dev='terminator -l tmux && exit 0'
 

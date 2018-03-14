@@ -18,8 +18,8 @@ fi
 # remap caps-lock to ctrl+esc
 if [ $SESSION_TYPE = "local" ]; then
   if [ -n "$DISPLAY" ]; then
-    setxkbmap -option caps:ctrl_modifier
-    xcape -e Caps_Lock=Escape
+#    setxkbmap -option caps:ctrl_modifier
+#    xcape -e Caps_Lock=Escape
   fi
 fi
 

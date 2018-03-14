@@ -269,7 +269,7 @@ endif
 
 " hardtime {{{
 Plug 'takac/vim-hardtime'
-let g:hardtime_default_on = 1
+let g:hardtime_default_on = 0
 let g:hardtime_allow_different_key = 1
 let g:hardtime_maxcount = 3
 let g:list_of_normal_keys = ["h", "l", "x"]

@@ -1,7 +1,45 @@
 #!/bin/bash
+set -e
+
+if [ -z $1 ]; then
+  echo -e "\e[31merror: must specify arg: cli/gui/dot/bin/font/git/full"
+  exit 1
+fi
 
 script=$(readlink -f "$0")
 scriptpath=$(dirname "$script")
+
+#
+# define cli applications
+#
+declare cli_apps=(
+  cscope
+  ctags
+  git
+  minicom
+  silversearcher-ag
+  tmux-next
+  trash-cli
+  tree
+  vim
+  xcape
+  xclip
+  xsel
+)
+
+#
+# define gui applications
+#
+declare gui_apps=(
+  firefox
+  gedit
+  gnome-tweak-tool
+  meld
+  pinta
+  speedcrunch
+  terminator
+  wireshark
+)
 
 #
 # define dotfiles
@@ -10,6 +48,7 @@ declare -A dotfiles=(
   [bash_aliases]=.bash_aliases
   [bash_profile]=.bash_profile
   [bashrc]=.bashrc
+  [inputrc]=.inputrc
   [minirc]=.minirc.dfl
   [profile]=.profile
   [terminator.conf]=.config/terminator/config
@@ -18,73 +57,98 @@ declare -A dotfiles=(
 )
 
 #
-# define packages
-#
-declare packages=(
-  cscope
-  ctags
-  minicom
-  silversearcher-ag
-  terminator
-  tmux-next
-  trash-cli
-  vim
-  xcape
-  xclip
-  xsel
-)
-
-#
 # define fonts
 #
 fonts=https://github.com/powerline/fonts.git
 
 #
-# install packages and fonts
+# define get info
 #
-if [ ! -z $1 ] && [ $1 == "full" ]; then
+git_name=matt1003
+git_email=matt1003@gmail.com
 
+#
+# install cli apps
+#
+if [ $1 == "cli" ] || [ $1 == "full" ]; then
   echo -e "\e[34madding apt repositories...\e[0m"
-  # required for terminator 1.91 ...
-  sudo add-apt-repository ppa:gnome-terminator/nightly-gtk3
   # required for tmux 2.3 ...
-  sudo add-apt-repository -yu ppa:pi-rho/dev
+  sudo add-apt-repository -y ppa:pi-rho/dev
   # required for vim 8.0 ...
-  sudo add-apt-repository ppa:jonathonf/vim
-
-  echo -e "\e[34minstalling apt packages...\e[0m"
-  sudo apt update
-  sudo apt install ${packages[*]}
-
-  echo -e "\e[34minstalling powerline fonts...\e[0m"
-  git clone $fonts /tmp/powerlinefonts
-  /tmp/powerlinefonts/install.sh
-  rm -rf /tmp/powerlinefonts
-
+  sudo add-apt-repository -y ppa:jonathonf/vim
+  echo -e "\e[34minstalling apt cli apps...\e[0m"
+  sudo apt update && sudo apt install ${cli_apps[*]}
   # prevent gnome from stomping on xkb settings
   gsettings set org.gnome.settings-daemon.plugins.keyboard active false
+fi
 
+#
+# install gui apps
+#
+if [ $1 == "gui" ] || [ $1 == "full" ]; then
+  echo -e "\e[34madding apt repositories...\e[0m"
+  # required for terminator 1.91 ...
+  sudo add-apt-repository -y ppa:gnome-terminator/nightly-gtk3
+  echo -e "\e[34minstalling apt gui apps...\e[0m"
+  sudo apt update && sudo apt install ${gui_apps[*]}
 fi
 
 #
 # install dotfiles
 #
-echo -e "\e[34minstalling config files...\e[0m"
-for file in "${!dotfiles[@]}"; do
-  path="$HOME/${dotfiles[$file]}"
-  if [ -f $path ] && [ ! -h $path ]; then
-    mv -v $path $path.orig
-  fi
-  ln -sfv $scriptpath/$file $path
-done
+if [ $1 == "dot" ] || [ $1 == "full" ]; then
+  echo -e "\e[34minstalling config files...\e[0m"
+  for file in "${!dotfiles[@]}"; do
+    path="$HOME/${dotfiles[$file]}"
+    if [ ! -d $(dirname $path) ]; then
+      mkdir -p $(dirname $path)
+    elif [ -f $path ] && [ ! -h $path ]; then
+      if [ -f $path.orig ]; then
+        echo -e "\e[31merror: $path.orig already exists\e[0m"
+        exit 1
+      fi
+      mv -v $path $path.orig
+    fi
+    ln -sfv $scriptpath/$file $path
+  done
+fi
 
 #
 # install binaries
 #
-echo -e "\e[34minstalling bin files...\e[0m"
-[ -h $HOME/bin ] && unlink $HOME/bin
-[ -d $HOME/bin ] && mv -v $HOME/bin $HOME/bin.orig
-ln -sv $scriptpath/bin $HOME/bin
+if [ $1 == "bin" ] || [ $1 == "full" ]; then
+  echo -e "\e[34minstalling bin files...\e[0m"
+  [ -h $HOME/bin ] && unlink $HOME/bin
+  [ -d $HOME/bin ] && mv -v $HOME/bin $HOME/bin.orig
+  ln -sv $scriptpath/bin $HOME/bin
+fi
+
+#
+# install fonts
+#
+if [ $1 == "font" ] || [ $1 == "full" ]; then
+  echo -e "\e[34minstalling powerline fonts...\e[0m"
+  git clone $fonts /tmp/powerlinefonts
+  /tmp/powerlinefonts/install.sh
+  rm -rf /tmp/powerlinefonts
+fi
+
+#
+# configure local git
+#
+if [ $1 == "git" ] || [ $1 == "full" ]; then
+  echo -e "\e[34mconfiguring local git...\e[0m"
+  git config user.name "$git_name"
+  git config user.email "$git_email"
+  echo "name=$git_name email=$git_email"
+fi
 
 echo -e "\e[34m * COMPLETE * \e[0m"
+
+#
+# TODO
+# - edit /etc/sudoers so that password is not required for sudo
+# - edit /etc/group so that username is added to minicom and wireshark
+# - edit /etc/default/grub so that there is no splash screen during boot
+#
 
