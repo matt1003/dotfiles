@@ -291,12 +291,14 @@ call plug#end()
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 " set the color scheme
-try
-  set background=dark
-  colorscheme gruvbox
-catch
-  colorscheme slate
-endtry
+if &term != "linux"
+  try
+    set background=dark
+    colorscheme gruvbox
+  catch
+    colorscheme slate
+  endtry
+endif
 
 if has("gui_running")
   if has('win32') || has ('win64')
