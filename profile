@@ -15,6 +15,11 @@ else
   export SESSION_TYPE=local
 fi
 
+# enable num lock on login
+if [ $SESSION_TYPE = "local" ]; then
+  numlockx on
+fi
+
 # remap caps-lock to ctrl+esc
 if [ -f "$HOME/.caps_to_ctrl_esc" ]; then
   if [ -n "$DISPLAY" ]; then

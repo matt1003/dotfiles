@@ -17,6 +17,7 @@ declare cli_apps=(
   ctags
   git
   minicom
+  numlockx
   silversearcher-ag
   tmux-next
   trash-cli
