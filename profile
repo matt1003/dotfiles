@@ -16,22 +16,20 @@ else
 fi
 
 # remap caps-lock to ctrl+esc
-if [ $SESSION_TYPE = "local" ]; then
+if [ -f "$HOME/.caps_to_ctrl_esc" ]; then
   if [ -n "$DISPLAY" ]; then
-#    setxkbmap -option caps:ctrl_modifier
-#    xcape -e Caps_Lock=Escape
+    setxkbmap -option caps:ctrl_modifier
+    xcape -e Caps_Lock=Escape
   fi
 fi
 
-# load bashrc when running bash
+# if running bash
 if [ -n "$BASH_VERSION" ]; then
-  if [ -f "$HOME/.bashrc" ]; then
-    source "$HOME/.bashrc"
-  fi
+    # include .bashrc if it exists
+    if [ -f "$HOME/.bashrc" ]; then
+	. "$HOME/.bashrc"
+    fi
 fi
 
-# set to includes user's private bin
-if [ -d "$HOME/bin" ] ; then
-  export PATH="$HOME/bin:$PATH"
-fi
-
+# set PATH so it includes user's private bin directories
+PATH="$HOME/bin:$HOME/.local/bin:$PATH"
