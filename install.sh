@@ -67,6 +67,7 @@ fonts=https://github.com/powerline/fonts.git
 #
 git_name=matt1003
 git_email=matt1003@gmail.com
+git_editor=vim
 
 #
 # install cli apps
@@ -140,8 +141,11 @@ fi
 if [ $1 == "git" ] || [ $1 == "full" ]; then
   echo -e "\e[34mconfiguring local git...\e[0m"
   git config user.name "$git_name"
+  echo "name: $git_name"
   git config user.email "$git_email"
-  echo "name=$git_name email=$git_email"
+  echo "email: $git_email"
+  git config core.editor "$git_editor"
+  echo "editor: $git_editor"
 fi
 
 echo -e "\e[34m * COMPLETE * \e[0m"
