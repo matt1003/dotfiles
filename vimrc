@@ -682,6 +682,46 @@ augroup pvw_swp
   autocmd SwapExists * if &l:pvw | let v:swapchoice = "o" | endif
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" nerd tree auto trace current buffer
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+func! s:NERDTreeIsOpen()
+  return exists("t:NERDTreeBufName") && (bufwinnr(t:NERDTreeBufName) != -1)
+endfunc
+
+func! s:NERDTreeSync()
+  " check if nerdtree is open
+  if !s:NERDTreeIsOpen()
+    return
+  endif
+  " ignore the preview window
+  if getwinvar(winnr(), "&pvw")
+    return
+  endif
+  " ignore non-modifiable buffers
+  if !&modifiable
+    return
+  endif
+  " ignore non-existing buffers
+  if strlen(expand('%')) == 0
+    return
+  endif
+  " highlight the current file
+  let l:win_id = win_getid()
+  NERDTreeFind
+  execute 'sign unplace 27'
+  execute 'sign place 27 name=NERDTreeCurrentFile line='.line('.').' buffer='.bufnr('%')
+  call win_gotoid(l:win_id)
+endfunc
+
+augroup nerdtree_au()
+  autocmd!
+  autocmd BufEnter * call s:NERDTreeSync()
+augroup END
+
+sign define NERDTreeCurrentFile linehl=Search
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " ide view
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
