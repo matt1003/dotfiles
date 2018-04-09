@@ -657,6 +657,11 @@ augroup reload_vimrc " {
     autocmd BufWritePost $MYVIMRC nested source $MYVIMRC
 augroup END " }
 
+" select read only when opening a swap file in the preview window
+augroup pvw_swp
+  autocmd!
+  autocmd SwapExists * if &l:pvw | let v:swapchoice = "o" | endif
+augroup END
 
 " enable the cursor line and relative numbering in the active window only
 augroup CursorLineOnlyInActiveWindow
