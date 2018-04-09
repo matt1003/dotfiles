@@ -28,6 +28,14 @@ if [ -f "$HOME/.caps_to_ctrl_esc" ]; then
   fi
 fi
 
+# clean out old build results
+if [ -d "$HOME/.tmux" ]; then
+  if [ -x "$HOME/bin/buildwrap" ]; then
+    $HOME/bin/buildwrap clear
+  fi
+fi
+
+
 # if running bash
 if [ -n "$BASH_VERSION" ]; then
     # include .bashrc if it exists
