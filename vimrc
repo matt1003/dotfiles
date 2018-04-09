@@ -120,6 +120,7 @@ endif
 "Plug 'ronakg/quickr-preview.vim'
 Plug 'matt1003/quickr-preview.vim'
 let g:quickr_preview_on_cursor = 0
+let g:quickr_preview_sign_enable = 0
 "}}}
 
 " gruvbox {{{
@@ -342,7 +343,7 @@ augroup file_specific_settings
   " git commit message
   autocmd FileType gitcommit setlocal colorcolumn=73
   " source code files
-  autocmd FileType c,cpp,dts,kconfig,lua,make,python,sh,vim,vhdl,xml setlocal list colorcolumn=81
+  autocmd FileType c,cpp,dts,kconfig,javascript,lua,make,python,sh,vim,vhdl,xml setlocal list colorcolumn=81
   " quickfix buffer
   autocmd FileType qf,tagbar,nerdtree,help setlocal nospell norelativenumber
 augroup END
