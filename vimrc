@@ -83,6 +83,7 @@ set wildmode=longest,list    " setup bash-like auto-complete
 set formatoptions+=j         " delete comment char when joining commented lines
 
 set foldmethod=marker
+set lazyredraw
 
 " define white-space visible characters
 try
@@ -136,6 +137,7 @@ let g:gruvbox_italic = 1
 " indexed-search {{{
 Plug 'henrik/vim-indexed-search'
 let g:indexed_search_numbered_only = 1
+let g:indexed_search_dont_move = 1
 "}}}
 
 " gitv {{{
@@ -662,9 +664,6 @@ augroup reload_vimrc " {
     autocmd BufWritePost $MYVIMRC nested source $MYVIMRC
 augroup END " }
 
-" do not jump when doing '*' search
-" todo ... this is being overwritten by vim-indexed-search
-nnoremap <silent> * :let @/='\<<C-R>=expand("<cword>")<CR>\>'<CR>:set hls<CR>
 
 " close all quickfix/location windows
 func! CloseAllQfLocWins()
