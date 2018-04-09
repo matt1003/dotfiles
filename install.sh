@@ -49,6 +49,7 @@ declare -A dotfiles=(
   [bash_aliases]=.bash_aliases
   [bash_profile]=.bash_profile
   [bashrc]=.bashrc
+  [gitignore]=.gitignore
   [inputrc]=.inputrc
   [minirc]=.minirc.dfl
   [profile]=.profile
@@ -155,5 +156,6 @@ echo -e "\e[34m * COMPLETE * \e[0m"
 # - edit /etc/sudoers so that password is not required for sudo
 # - edit /etc/group so that username is added to minicom and wireshark
 # - edit /etc/default/grub so that there is no splash screen during boot
+# - git config --global core.excludesfile '~/.gitignore'
 #
 
