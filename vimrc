@@ -145,13 +145,18 @@ let g:indexed_search_dont_move = 1
 "let g:Gitv_OpenHorizontal=1
 "}}}
 
-"Plug 'justinmk/vim-matchparenalways'   " always highlight parentheses
+" always highlight parentheses {{{
+Plug 'matt1003/surrparen'
+"}}}
 
 " matchmaker (highlight current word) {{{
-"Plug 'qstrahl/vim-matchmaker'
-"highlight MatchMaker ctermbg=238 guibg=#585858
-"let g:matchmaker_enable_startup = 1
-"let g:matchmaker_matchpriority = -1
+Plug 'qstrahl/vim-matchmaker'
+let g:matchmaker_enable_startup = 1
+let g:matchmaker_matchpriority = -1
+augroup MatchMakerColor
+  autocmd!
+  autocmd ColorScheme * highlight MatchMaker ctermbg=241 guibg=#665c54
+augroup END
 "}}}
 
 "Plug 'terryma/vim-expand-region'
