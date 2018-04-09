@@ -541,6 +541,7 @@ endif
 
 let s:GrepPath = s:DefaultGrepPath
 let s:GrepOpts = s:DefaultGrepOpts
+let s:GrepShow = "loc" " qf/loc
 
 fun! s:UpdateGrepWord(word)
   if a:word != ""
@@ -568,26 +569,40 @@ fun! s:ExecuteGrep(GrepCmd, GrepArgs)
   call <SID>UpdateGrepWord(a:GrepArgs)
   call <SID>UpdateGrepPath(s:GrepPath)
   call <SID>UpdateGrepOpts(s:GrepOpts)
+  call CloseAllQfLocWins()
   echon "Searching for ".s:GrepWord." ..."
   exe "silent ".a:GrepCmd." ".s:GrepOpts." ".s:GrepWord." ".s:GrepPath
   redraw!
-  let total = len(getloclist(0))
+  if s:GrepShow == "qf"
+    let total = len(getqflist())
+  else
+    let total = len(getloclist(0))
+  endif
   if total == 0
     echohl WarningMsg
     echon "Search for ".s:GrepWord." returned no results."
     echohl Normal
+    return
   elseif total == 1
-    lwindow 12
     echon "Search for ".s:GrepWord." returned 1 result."
   else
-    lwindow 12
     echon "Search for ".s:GrepWord." returned ".total." results."
+  endif
+  if s:GrepShow == "qf"
+    botright copen 12
+  else
+    botright lwindow 12
   endif
 endfun
 
-command! -nargs=* Search call <SID>ExecuteGrep("lgrep! -r", <q-args>)
-cabbrev grep Search
-cabbrev ag Search
+if s:GrepShow == "qf"
+  command! -nargs=* MySearch call <SID>ExecuteGrep("grep! -r", <q-args>)
+else
+  command! -nargs=* MySearch call <SID>ExecuteGrep("lgrep! -r", <q-args>)
+endif
+
+cabbrev grep MySearch
+cabbrev ag MySearch
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " random crap
@@ -642,6 +657,12 @@ augroup END " }
 " do not jump when doing '*' search
 " todo ... this is being overwritten by vim-indexed-search
 nnoremap <silent> * :let @/='\<<C-R>=expand("<cword>")<CR>\>'<CR>:set hls<CR>
+
+" close all quickfix/location windows
+func! CloseAllQfLocWins()
+  windo if &ft == "qf" | bd | endif
+endfunc
+silent! map <F2> :call CloseAllQfLocWins()<CR>
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " useful method to determine QuickFix vs Location List
