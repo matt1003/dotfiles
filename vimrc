@@ -258,15 +258,11 @@ Plug 'scrooloose/nerdtree'
 let g:NERDTreeWinSize = 50
 "}}}
 
-" taglist {{{
-if executable('ctags')
-  Plug 'vim-scripts/taglist.vim'
-  let g:Tlist_Use_Right_Window = 1
-  let g:Tlist_Enable_Fold_Column = 0
-  let g:Tlist_WinWidth = 50
-  let g:Tlist_Show_One_File = 1
-  let g:Tlist_Compact_Format = 1
-endif
+" tagbar {{{
+Plug 'majutsushi/tagbar'
+let g:tagbar_compact = 1
+let g:tagbar_indent = 1
+let g:tagbar_silent = 1
 "}}}
 
 " hardtime {{{
@@ -340,7 +336,7 @@ augroup file_specific_settings
   " source code files
   autocmd FileType c,cpp,dts,kconfig,lua,make,python,sh,vim,vhdl,xml setlocal list colorcolumn=81
   " quickfix buffer
-  autocmd FileType qf,taglist setlocal nospell norelativenumber
+  autocmd FileType qf,tagbar,nerdtree,help setlocal nospell norelativenumber
 augroup END
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
