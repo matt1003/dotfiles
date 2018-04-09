@@ -34,6 +34,7 @@ declare cli_apps=(
 declare gui_apps=(
   firefox
   gedit
+  git-git
   gnome-tweak-tool
   meld
   pinta
