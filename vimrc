@@ -621,8 +621,6 @@ cabbrev ag MySearch
 " random crap
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-"▶➕◆✚➕◆♦✖✚✜◆◆⬥•●⚫⬤◈∎⑆■▪►x×X✕☓✖✗✘
-
 function! s:Log(eventName) abort
   let bufnr = bufnr('%')
   let bufname = bufname(bufnr)
@@ -646,10 +644,9 @@ augroup EventLoggin
   endif
 augroup END
 
-" restore last session
-"if argc() == 0
-"  silent! source session.vim
-"endif
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" useful stuff
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 " auto load vimrc
 augroup reload_vimrc " {
