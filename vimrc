@@ -437,8 +437,8 @@ cabbrev pdu PowerBox
 " build system
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-let s:BuildSysCmd = "buildwrap --no-output-color --no-output-prefix --fast"
-let s:BuildSysDir = "buildsys"
+let s:BuildSysCmd = "buildwrap"
+let s:BuildSysDir = "docker"
 let s:BuildSysPath = 0
 
 " build result color
@@ -489,7 +489,7 @@ fun! s:CheckForModifiedBuffers()
 endfun
 
 fun! s:IsBuildSysPath(path)
-  if filereadable(a:path."/toolchain_version")
+  if filereadable(a:path."/build.sh")
     return 1
   endif
   return 0
