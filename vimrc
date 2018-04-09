@@ -236,6 +236,7 @@ nmap <leader>hn :GitGutterNextHunk<CR>
 nmap <leader>hp :GitGutterPrevHunk<CR>
 nmap <leader>hu :GitGutterUndoHunk<CR>
 nmap <silent> <c-n> :GitGutterNextHunk<CR>
+autocmd FileType help,tagbar,nerdtree,qf setlocal signcolumn=no
 "}}}
 
 " fugitive {{{
