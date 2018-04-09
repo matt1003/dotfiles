@@ -1,0 +1,120 @@
+#!/usr/bin/env python
+
+from __future__ import print_function
+from rbtools.api.client import RBClient
+
+import datetime
+import optparse
+import sys
+
+def parse_time_string(ts):
+    return datetime.datetime.strptime(ts, "%Y-%m-%dT%H:%M:%SZ")
+
+def get_latest_diff_for_review(review):
+    diffs = review.get_diffs()
+    ndiffs = diffs.total_results
+    for diff in diffs:
+        if diff.revision == ndiffs:
+            return diff
+    return None
+
+def display_current_reviews(url, user, pwrd, max, cmd):
+
+    # get all open reviews for the user
+    args = {}
+    args[cmd] = user
+    args['status'] = 'pending'
+    args['max_results'] = max
+
+    # connect to reviewboard
+    try:
+        client = RBClient(url, username=user, password=pwrd)
+        root = client.get_root()
+    except:
+        print("ERROR: Unable to connect to \"%s\", please ensure url is correct." % url)
+        sys.exit(2)
+
+    # download the reviews
+    try:
+        review_list = root.get_review_requests(**args)
+    except:
+        print("ERROR: Unable to locate \"%s\", please ensure username is correct." % user)
+        sys.exit(2)
+    if review_list.total_results == 0:
+        print ("(none)\n")
+        return
+
+    # process each review
+    processed_reviews = {}
+    for review in review_list:
+
+        # grab the listed reviewers
+        ship_it = {}
+        for person in review.target_people:
+            ship_it[person.title] = 'none'
+
+        # get the latest diff for the review
+        diff = get_latest_diff_for_review(review)
+        diff_time = parse_time_string(diff.timestamp)
+
+        # check each review comment for a "ship it"
+        for comment in review.get_reviews():
+            if comment.public is False:
+                #print "skipping non-public comment"
+                continue
+            if comment.get_user().username not in ship_it:
+                #print "skipping ship it from user"
+                continue
+            if parse_time_string(comment.timestamp) <= diff_time:
+                #print "skipping ship it from old diff"
+                continue
+            if comment.ship_it:
+                ship_it[comment.get_user().username] = 'shipit'
+            else:
+                ship_it[comment.get_user().username] = 'comment'
+
+        submitter = review.get_submitter().username
+        processed_reviews[review.id] = [review.summary, ship_it, submitter]
+
+    for id in sorted(processed_reviews.iterkeys()):
+        summary = processed_reviews[id][0]
+        ship_it = processed_reviews[id][1]
+        submitter = processed_reviews[id][2]
+        print ("%s - %s - %s - ship it:" % (id, submitter, summary), end='')
+        for reviewer in sorted(ship_it.iterkeys()):
+            if ship_it[reviewer] == 'comment':
+                color = " \033[91m"
+            elif ship_it[reviewer] == 'shipit':
+                color = " \033[92m"
+            else:
+                color = " \033[93m"
+            print (" %s%s\033[0m" % (color, reviewer), end='')
+        print ('\n')
+
+if __name__ == '__main__':
+
+    parser = optparse.OptionParser()
+
+    parser.add_option('-s', '--server', dest='url', action="store", type="string",
+                       help='reviewboard server url')
+    parser.add_option('-u', '--username', dest='user', action="store", type="string",
+                      help='reviewboard username')
+    parser.add_option('-p', '--password', dest='pwrd', action="store", type="string",
+                      help='reviewboard password')
+    parser.add_option('-m', '--max', dest='max', action="store", type="int", default=50,
+                      help='the maximum number of reviews to display')
+    options, args = parser.parse_args()
+
+    if not options.url:
+        print("ERROR: You must specify the reviewboard server url (-s|--server) to find reviews from.")
+        sys.exit(1)
+    if not options.user:
+        print("ERROR: You must specify the reviewboard username (-u|--username) to find reviews for.")
+        sys.exit(1)
+
+    print ("*** My Review Requests ***\n")
+    display_current_reviews(options.url, options.user, options.pwrd, options.max, 'from_user')
+
+    print ("*** Other Review Requests ***\n")
+    display_current_reviews(options.url, options.user, options.pwrd, options.max, 'to_users')
+
