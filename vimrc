@@ -658,6 +658,13 @@ augroup reload_vimrc " {
 augroup END " }
 
 
+" enable the cursor line and relative numbering in the active window only
+augroup CursorLineOnlyInActiveWindow
+  autocmd!
+  autocmd VimEnter,WinEnter,BufWinEnter * setlocal cursorline | if (&ft!='help' && &ft!='nerdtree' && &ft!='tagbar' && &ft!='qf') | setlocal relativenumber | endif
+  autocmd WinLeave * setlocal nocursorline norelativenumber
+augroup END
+
 " override airline status line to print straight lines when inactive
 set fillchars+=vert:│,stlnc:─
 function! Render_Only_File(...)
