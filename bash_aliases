@@ -74,7 +74,7 @@ alias cpd=cpwdir
 
 alias reboot='confirm && confirm "Are you *REALLY* sure you want to reboot $HOSTNAME?" && reboot'
 
-alias tmux-new='tmux-next new-session -A -s'
+alias tmux-new='tmux new-session -A -s'
 
 alias tmux-dev='terminator -l tmux && exit 0'
 
