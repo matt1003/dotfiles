@@ -210,7 +210,7 @@ imap <c-c> <Plug>CapsLockToggle
 
 " buffexplorer {{{
 Plug 'vim-scripts/bufexplorer.zip'
-nmap <silent> <leader>bl :BufExplorer<CR>
+nmap <silent> <leader>bl :call win_gotoid(g:main_win_id)<CR>:BufExplorer<CR>
 nmap <silent> <c-u> :BufExplorer<CR>
 "}}}
 
@@ -684,27 +684,28 @@ endfunc
 silent! map <F2> :call CloseAllQfLocWins()<CR>
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" useful method to determine QuickFix vs Location List
+" tracking the main window
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-" " returns 1 if the window with the given number is a location window
-" "         0 if the window with the given number is not a location window
-function! IsLocWindow(nmbr)
-  return getbufvar(winbufnr(a:nmbr), "isLoc") == 1
-endfunction
-"
-" " returns 1 if the window with the given number is a quickfix window
-" "         0 if the window with the given number is not a quickfix window
-function! IsQfWindow(nmbr)
-  if getwinvar(a:nmbr, "&filetype") == "qf"
-    return IsLocWindow(a:nmbr) ? 0 : 1
-  endif
-  return 0
-endfunction
+let g:main_win_tm = -1
+let g:main_win_id = -1
 
-augroup pvw_swp
+func! MainWinHandler(...)
+  if &modifiable
+    let g:main_win_id = win_getid()
+  endif
+  "echo " main=".g:main_win_id." (win=".win_getid().",mod=".&modifiable.",ft=".&ft.")"
+endfunc
+
+func! MainWinTimer()
+  call timer_stop(g:main_win_tm)
+  let g:main_win_tm = timer_start(250, 'MainWinHandler')
+endfunc
+
+augroup main_win_au()
   autocmd!
-  autocmd SwapExists * if &l:pvw | let v:swapchoice = "o" | endif
+  autocmd VimEnter,WinEnter * call MainWinTimer()
+augroup END
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " nerd tree auto trace current buffer
