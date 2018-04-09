@@ -458,21 +458,29 @@ endfun
 
 fun! s:CheckForModifiedBuffers()
   let buflist = filter(range(1, bufnr('$')), 'buflisted(v:val)')
+  let unsavbuflist = []
   for bufnr in buflist
     if getbufvar(bufnr, '&modified')
-      while 1
-        echohl Question
-        let anwser = input("Modified files detected! Save all? [Y/N]: ")
-        echohl None
-        if anwser == "Y"
-          wa
-          return
-        elseif anwser == "N"
-          return
-        endif
-      endwhile
+      call add(unsavbuflist, bufnr)
     endif
   endfor
+  if empty(unsavbuflist)
+    return
+  endif
+  for bufnr in unsavbuflist
+    echo bufname(bufnr)
+  endfor
+  while 1
+    echohl Question
+    let anwser = input("Modified files detected! Save all? [Y/N]: ")
+    echohl None
+    if anwser == "Y"
+      write all
+      return
+    elseif anwser == "N"
+      return
+    endif
+  endwhile
 endfun
 
 fun! s:IsBuildSysPath(path)
