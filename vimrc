@@ -221,6 +221,7 @@ Plug 'edkolev/tmuxline.vim'
 let g:airline_powerline_fonts = 1
 let g:airline#extensions#tabline#enabled = 1
 let g:airline#extensions#tmuxline#enabled = 0
+let g:airline#extensions#tabline#fnamemod = ':t'
 "}}}
 
 " gitgutter {{{
@@ -656,6 +657,13 @@ augroup reload_vimrc " {
     autocmd BufWritePost $MYVIMRC nested source $MYVIMRC
 augroup END " }
 
+
+" override airline status line to print straight lines when inactive
+set fillchars+=vert:│,stlnc:─
+function! Render_Only_File(...)
+  return 1   " modify the statusline with the current contents of the builder
+endfunction
+call airline#add_inactive_statusline_func('Render_Only_File')
 
 " close all quickfix/location windows
 func! CloseAllQfLocWins()
