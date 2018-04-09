@@ -255,7 +255,8 @@ nmap <silent> <c-y> :YRShow<CR>
 
 " nerdtree {{{
 Plug 'scrooloose/nerdtree'
-let g:NERDTreeWinSize = 50
+let g:NERDTreeWinSize = 40
+let g:NERDTreeMinimalUI = 1
 "}}}
 
 " tagbar {{{
@@ -639,16 +640,6 @@ augroup EventLoggin
   endif
 augroup END
 
-if has("gui_running")
-  augroup ide_mode
-    autocmd!
-    autocmd VimEnter * Tlist
-    autocmd VimEnter * NERDTree
-    autocmd VimEnter * wincmd p
-    "autocmd BufEnter * if &modifiable | NERDTreeFind | wincmd p | endif
-  augroup END
-endif
-
 " restore last session
 "if argc() == 0
 "  silent! source session.vim
@@ -689,5 +680,31 @@ endfunction
 augroup pvw_swp
   autocmd!
   autocmd SwapExists * if &l:pvw | let v:swapchoice = "o" | endif
+
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" ide view
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+let s:ide_view = 0
+
+func! IdeViewToggle(...)
+  if s:ide_view
+    TagbarClose
+    NERDTreeClose
+    let s:ide_view = 0
+  else
+    let l:win_id = win_getid()
+    NERDTree
+    Tagbar
+    call win_gotoid(l:win_id)
+    let s:ide_view = 1
+  endif
+endfunc
+
+augroup ide_view_au
+  autocmd!
+  autocmd VimEnter * if winwidth(0) > 160 | call timer_start(200, 'IdeViewToggle') | endif
 augroup END
+
+silent! map <F3> :call IdeViewToggle()<CR>
 
