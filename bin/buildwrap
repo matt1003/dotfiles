@@ -4,6 +4,12 @@
 # buildwrap provides a simple wrapper around buildsys,
 # intended to make build success and failures obvious.
 #
+# A buildsys configuration file is required to specify
+# support build commands. This should be a csv file in
+# the following format:
+#
+# target name, build directory, build command
+#
 
 ################################################################################
 # script setup
@@ -12,17 +18,13 @@
 set -o pipefail
 shopt -s nullglob
 
-buildsys_dir="buildsys"
 buildsys_pid=".buildsys.pid"
+buildsys_config="$HOME/.buildcmds"
 
 tmux_bld_file="$HOME/.tmux/build"
 tmux_bld_name="unknown"
 tmux_bld_path="unknown"
 
-specified_targets=()
-specified_packages=()
-
-buildsys_args=()
 opt_color_none=0
 opt_clear_tmux=0
 opt_kill_build=0
@@ -116,6 +118,26 @@ clear_tmux_status() {
 # script main
 ################################################################################
 
+declare -A buildsys_dir_list
+declare -A buildsys_cmd_list
+specified_targets=()
+
+#
+# check the buildsys config exists
+#
+if [ ! -f $buildsys_config ]; then
+  echo "error: can not locate buildsys config \"$buildsys_config\""
+  exit_fail
+fi
+
+#
+# process the buildsys config
+#
+while IFS=, read -r target dir cmd; do
+  buildsys_dir_list["$target"]="$dir"
+  buildsys_cmd_list["$target"]="$cmd"
+done < $buildsys_config
+
 #
 # process buildwrap arguments
 #
@@ -130,7 +152,7 @@ for arg in $@; do
     *)
       # split out comma separated args
       IFS=',' read -r -a sarg <<< $arg
-      buildsys_args+=(${sarg[@]}) ;;
+      specified_targets+=(${sarg[@]}) ;;
   esac
 done
 
@@ -138,6 +160,7 @@ done
 # define ansi color codes
 #
 if [ $opt_color_none -ne 0 ]; then
+ # TODO: this needs to be fixed, as it is not working currently
   strip_ansi=' | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g"'
   shift
 else
@@ -157,9 +180,34 @@ if [ $opt_clear_tmux -ne 0 ]; then
 fi
 
 #
+# check target is specified
+#
+if [ $target_required -eq 1 ]; then
+  if [ ${#specified_targets[@]} -eq 0 ]; then
+     echo "error: no buildsys target specified"
+     exit_fail
+  fi
+fi
+
+#
+# process specified targets
+#
+for target in "${specified_targets[@]}"; do
+  if [[ -v buildsys_cmd_list[${target^^}] ]]; then
+    # TODO: this needs to be update to handle multiple targets,
+    #       rather than simply taking the last specified target
+    buildsys_dir=${buildsys_dir_list[${target^^}]}
+    buildsys_cmd=${buildsys_cmd_list[${target^^}]}
+  else
+    echo "error: unknown buildsys target \"$target\""
+    exit_fail
+  fi
+done
+
+#
 # locate buildsys directory
 #
-while [ ! -f "./$buildsys_dir/.git" ]; do
+while [ ! -d "$PWD/$buildsys_dir" ]; do
   cd ..
   if [ $PWD == "/" ]; then
      echo "error: unable to locate buildsys directory"
@@ -192,63 +240,6 @@ fi
 running_pid=1
 
 #
-# determine the known targets and packages
-#
-if [[ "`buildsys -L | tr '\n' ' '`" =~ "Known targets:"(.+)"Known packages:"(.+) ]]; then
-  read -r -a known_targets  <<< "${BASH_REMATCH[1]}"
-  read -r -a known_packages <<< "${BASH_REMATCH[2]}"
-else
-  echo "error: unable to determine known targets and known packages"
-  exit_fail
-fi
-
-#
-# check buildsys arguments exist
-#
-if [ ${#buildsys_args[@]} -eq 0 ]; then
-  echo "error: no buildsys arguments specified"
-  exit_fail
-fi
-
-#
-# process buildsys arguments
-#
-for arg in "${buildsys_args[@]}"; do
-  if [ $arg == "--" ]; then
-    break
-  elif [[ $arg == -* ]]; then
-    if [ $arg == '-h' ] || [ $arg == '--help' ]; then
-      eval "buildsys --help"
-      exit 0
-    elif [ $arg == '-L' ] || [ $arg == '--listpackages' ]; then
-      eval "buildsys --listpackages"
-      exit 0
-    elif [ $arg == "--clean" ]; then
-      target_required=0
-    fi
-  else
-    if array_contains $arg "${known_targets[@]}"; then
-      specified_targets+=($arg)
-    elif array_contains $arg "${known_packages[@]}"; then
-      specified_packages+=($arg)
-    else
-      echo "error: unknown buildsys package/target \"$arg\""
-      exit_fail
-    fi
-  fi
-done
-
-#
-# check target is specified
-#
-if [ $target_required -eq 1 ]; then
-  if [ ${#specified_targets[@]} -eq 0 ]; then
-     echo "error: no buildsys target specified"
-     exit_fail
-  fi
-fi
-
-#
 # update tmux status bar
 #
 if [ $TMUX ]; then
@@ -265,11 +256,9 @@ trap hdl_sig_abrt SIGABRT
 # execute buildsys command
 #
 echo -e "buildsys directory: $color_info\"$PWD\"$color_none"
-echo -e "executing command: $color_info\"buildsys "${buildsys_args[*]}"\"$color_none"
+echo -e "executing command: $color_info\"$buildsys_cmd$color_none"
 echo -e "build start time: $color_info`date`$color_none"
-eval "buildsys ${buildsys_args[*]} 2>&1 $strip_ansi &"
-echo $! > $buildsys_pid
-wait `cat $buildsys_pid`
+eval ./$buildsys_cmd 2>&1 $strip_ansi
 
 #
 # check buildsys result
