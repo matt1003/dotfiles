@@ -8,7 +8,7 @@
 # support build commands. This should be a csv file in
 # the following format:
 #
-# target name, build directory, build command
+# target name, build directory, build command, target aliases
 #
 
 ################################################################################
@@ -120,6 +120,7 @@ clear_tmux_status() {
 
 declare -A buildsys_dir_list
 declare -A buildsys_cmd_list
+declare -A buildsys_aliases
 specified_targets=()
 
 #
@@ -133,9 +134,12 @@ fi
 #
 # process the buildsys config
 #
-while IFS=, read -r target dir cmd; do
-  buildsys_dir_list["$target"]="$dir"
-  buildsys_cmd_list["$target"]="$cmd"
+while IFS=, read -r target dir cmd aliases; do
+  if [ -n  "$target" ]; then
+    buildsys_dir_list["$target"]="$dir"
+    buildsys_cmd_list["$target"]="$cmd"
+    buildsys_aliases["$target"]="$target $aliases"
+  fi
 done < $buildsys_config
 
 #
@@ -187,22 +191,29 @@ if [ $target_required -eq 1 ]; then
      echo "error: no buildsys target specified"
      exit_fail
   fi
+  # TODO: update buildwrap to handle multiple targets
+  if [ ${#specified_targets[@]} -gt 1 ]; then
+     echo "error: buildwrap only support one build target"
+     exit_fail
+   fi
 fi
 
 #
 # process specified targets
 #
-for target in "${specified_targets[@]}"; do
-  if [[ -v buildsys_cmd_list[${target^^}] ]]; then
-    # TODO: this needs to be update to handle multiple targets,
-    #       rather than simply taking the last specified target
-    buildsys_dir=${buildsys_dir_list[${target^^}]}
-    buildsys_cmd=${buildsys_cmd_list[${target^^}]}
-  else
-    echo "error: unknown buildsys target \"$target\""
-    exit_fail
-  fi
+for target in ${!buildsys_cmd_list[@]}; do
+  for alias in ${buildsys_aliases[$target]}; do
+    if [ "${specified_targets[0]}" == "$alias" ]; then
+      buildsys_dir=${buildsys_dir_list[$target]}
+      buildsys_cmd=${buildsys_cmd_list[$target]}
+      buildsys_target=$target
+    fi
+  done
 done
+if [ -z $buildsys_target ]; then
+  echo "error: unknown buildsys target \"${specified_targets[0]}\""
+  exit_fail
+fi
 
 #
 # locate buildsys directory
@@ -243,7 +254,7 @@ running_pid=1
 # update tmux status bar
 #
 if [ $TMUX ]; then
-  update_tmux_status "Building ${specified_targets[*]}"
+  update_tmux_status "Building $buildsys_target"
 fi
 
 #
@@ -264,9 +275,9 @@ eval ./$buildsys_cmd 2>&1 $strip_ansi
 # check buildsys result
 #
 if [ $? -eq 0 ]; then
-  echo -e "\nBuild Success for targets ${specified_targets[*]}"
+  echo -e "\nBuild Success for targets $buildsys_target"
   exit_pass
 else
-  echo -e "\nBuild Failure for targets ${specified_targets[*]}"
+  echo -e "\nBuild Failure for targets $buildsys_target"
   exit_fail
 fi
