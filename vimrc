@@ -289,6 +289,12 @@ let g:list_of_disabled_keys = ["<UP>", "<DOWN>", "<LEFT>", "<RIGHT>"]
 Plug 'christoomey/vim-tmux-navigator'
 "}}}
 
+" multiple-search {{{
+Plug 'vim-scripts/MultipleSearch'
+silent! map <F5> :call MultipleSearch#MultipleSearch(bufnr('%'), expand('<cword>'))<CR>
+silent! map <F6> :SearchReset<CR>
+"}}}
+
 Plug 'qpkorr/vim-bufkill'
 
 call plug#end()
