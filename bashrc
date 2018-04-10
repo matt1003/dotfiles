@@ -19,6 +19,9 @@ shopt -s histappend
 HISTSIZE=-1
 HISTFILESIZE=-1
 
+# immediately write to bash history and make it available to all terminals
+export PROMPT_COMMAND="history -a; history -c; history -r; $PROMPT_COMMAND"
+
 # check the window size after each command and, if necessary,
 # update the values of LINES and COLUMNS.
 shopt -s checkwinsize
