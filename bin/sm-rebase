@@ -1,0 +1,20 @@
+#!/bin/bash -e
+
+if [ $# -gt 0 ]; then
+  branch=$1
+else
+  branch='master'
+fi
+
+echo "rebasing all sub-modules to tip of '$branch'"
+
+git fetch
+git fetch --recurse-submodules
+
+git checkout $branch
+git submodule init
+git pull --rebase
+
+git submodule foreach --recursive "git checkout $branch;:"
+git submodule foreach --recursive git pull --rebase
+
