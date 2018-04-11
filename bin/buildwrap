@@ -203,7 +203,7 @@ fi
 #
 for target in ${!buildsys_cmd_list[@]}; do
   for alias in ${buildsys_aliases[$target]}; do
-    if [ "${specified_targets[0]}" == "$alias" ]; then
+    if [ "${specified_targets[0]^^}" == "${alias^^}" ]; then
       buildsys_dir=${buildsys_dir_list[$target]}
       buildsys_cmd=${buildsys_cmd_list[$target]}
       buildsys_target=$target
