@@ -108,7 +108,7 @@ update_tmux_status() {
 }
 
 clear_tmux_status() {
-  for file in $tmux_bld_file-*; do
+  for file in $tmux_bld_file-$1; do
     if grep -q 'Success\|Failure\|Aborted' $file; then
       rm $file
     fi
@@ -195,7 +195,7 @@ fi
 # check for tmux clear command
 #
 if [ $opt_clear_tmux -ne 0 ]; then
-  clear_tmux_status
+  clear_tmux_status '*'
   exit 0
 fi
 
