@@ -28,6 +28,7 @@ tmux_bld_path="unknown"
 opt_color_none=0
 opt_clear_tmux=0
 opt_kill_build=0
+opt_ls_targets=0
 
 restore_pwd=$PWD
 running_pid=0
@@ -153,6 +154,8 @@ for arg in $@; do
       opt_clear_tmux=1 ;;
     'kill')
       opt_kill_build=1 ;;
+    'list')
+      opt_ls_targets=1 ;;
     *)
       # split out comma separated args
       IFS=',' read -r -a sarg <<< $arg
@@ -173,6 +176,19 @@ else
   color_warn="\e[33m"
   color_info="\e[36m"
   color_none="\e[0m"
+fi
+
+#
+# check for list targets command
+#
+if [ $opt_ls_targets -ne 0 ]; then
+  printf "%-15s %s\n" "---------" "---------"
+  printf "%-15s %s\n" " targets " " aliases "
+  printf "%-15s %s\n" "---------" "---------"
+  for target in ${!buildsys_cmd_list[@]}; do
+    printf "%-15s %s\n" "$target" "${buildsys_aliases[$target]}"
+  done | sort
+  exit 0
 fi
 
 #
