@@ -76,7 +76,5 @@ alias reboot='confirm && confirm "Are you *REALLY* sure you want to reboot $HOST
 
 alias tmux-new='tmux new-session -A -s'
 
-alias tmux-dev='terminator -l tmux && exit 0'
-
 alias build='buildwrap'
 

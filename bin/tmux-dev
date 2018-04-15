@@ -1,0 +1,14 @@
+#!/bin/bash
+
+terminator -l tmux
+
+while true; do
+  if wmctrl -l | grep -q '/bin/bash'; then
+    break;
+  fi
+done
+
+wmctrl -r '/bin/bash' -b add,below
+
+kill -9 $PPID
+
