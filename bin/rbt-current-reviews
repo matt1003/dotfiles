@@ -5,7 +5,27 @@ from rbtools.api.client import RBClient
 
 import datetime
 import optparse
+import os
+import re
 import sys
+
+def parse_config(path):
+    config = {}
+    if os.path.isfile(path):
+        for line in open (path):
+            # parse server url
+            match = re.match('REVIEWBOARD_URL\s*=\s*"(.*)"', line)
+            if match:
+                config['url'] = match.group(1)
+            # parse username
+            match = re.match('USERNAME\s*=\s*"(.*)"', line)
+            if match:
+                config['user'] = match.group(1)
+            # parse password
+            match = re.match('PASSWORD\s*=\s*"(.*)"', line)
+            if match:
+                config['pwrd'] = match.group(1)
+    return config
 
 def parse_time_string(ts):
     return datetime.datetime.strptime(ts, "%Y-%m-%dT%H:%M:%SZ")
@@ -80,7 +100,7 @@ def display_current_reviews(url, user, pwrd, max, cmd):
         summary = processed_reviews[id][0]
         ship_it = processed_reviews[id][1]
         submitter = processed_reviews[id][2]
-        print ("%s - %s - %s - ship it:" % (id, submitter, summary), end='')
+        print ("%s/r/%s - %s - %s - ship it:" % (url.strip('/'), id, submitter, summary), end='')
         for reviewer in sorted(ship_it.iterkeys()):
             if ship_it[reviewer] == 'comment':
                 color = " \033[91m"
@@ -93,16 +113,18 @@ def display_current_reviews(url, user, pwrd, max, cmd):
 
 if __name__ == '__main__':
 
+    config = parse_config("/home/mbright/.reviewboardrc")
+
     parser = optparse.OptionParser()
 
     parser.add_option('-s', '--server', dest='url', action="store", type="string",
-                       help='reviewboard server url')
+                      default=config.get('url'), help='reviewboard server url')
     parser.add_option('-u', '--username', dest='user', action="store", type="string",
-                      help='reviewboard username')
+                      default=config.get('user'), help='reviewboard username')
     parser.add_option('-p', '--password', dest='pwrd', action="store", type="string",
-                      help='reviewboard password')
-    parser.add_option('-m', '--max', dest='max', action="store", type="int", default=50,
-                      help='the maximum number of reviews to display')
+                      default=config.get('pwrd'), help='reviewboard password')
+    parser.add_option('-m', '--max', dest='max', action="store", type="int",
+                      default=50, help='the maximum number of reviews to display')
     options, args = parser.parse_args()
 
     if not options.url:
