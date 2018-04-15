@@ -8,7 +8,7 @@
 # support build commands. This should be a csv file in
 # the following format:
 #
-# target name, build directory, build command, target aliases
+# target name, build directory, build command, upgrade command, target aliases
 #
 
 ################################################################################
@@ -26,65 +26,84 @@ tmux_bld_name="unknown"
 tmux_bld_path="unknown"
 
 opt_color_none=0
+opt_en_upgrade=0
 opt_clear_tmux=0
-opt_kill_build=0
 opt_ls_targets=0
 
 restore_pwd=$PWD
 running_pid=0
 target_required=1
 
+declare -A buildsys_dir_list
+declare -A buildsys_cmd_list
+declare -A upgrade_cmd_list
+declare -A buildsys_aliases
+specified_targets=()
+
 ################################################################################
 # script functions
 ################################################################################
 
-exit_pass() {
-  echo -e "\n$color_pass*********************$color_none"
-  echo -e "$color_pass**  BUILD SUCCESS  **$color_none"
-  echo -e "$color_pass*********************$color_none\n"
+echo_error() {
+  # arguments
+  message=$1
+  # print error message
+  echo -e "${color_fail}error:${color_none} ${message}"
+}
+
+print_status() {
+  # arguments
+  phase=$1; status=$2; bash_color=$3; tmux_color=$4
+  # print banner
+  len=$((${#phase}+${#status}+7))
+  printf "\n$bash_color"
+  printf "%0.s*" $(seq 1 $len)
+  printf "\n** ${phase^^} ${status^^} **\n"
+  printf "%0.s*" $(seq 1 $len)
+  printf "\n$color_none"
+  # update tmux status
   if [ $TMUX ]; then
-    update_tmux_status "Build Success" "#b8bb26"
+    update_tmux_status "$phase $status" "$tmux_color"
   fi
+}
+
+status_success() {
+  print_status $buildsys_phase "Success" "$color_pass" "#b8bb26"
+}
+
+status_failure() {
+  print_status $buildsys_phase "Failure" "$color_fail" "#fb4934"
+}
+
+status_aborted() {
+  print_status $buildsys_phase "Aborted" "$color_warn" "#fabd2f"
+}
+
+exit_pass() {
   cleanup
   exit 0
 }
 
 exit_fail() {
-  echo -e "\n$color_fail*********************$color_none"
-  echo -e "$color_fail**  BUILD FAILURE  **$color_none"
-  echo -e "$color_fail*********************$color_none\n"
-  if [ $TMUX ]; then
-    update_tmux_status "Build Failure" "#fb4934"
-  fi
   cleanup
   exit 1
 }
 
-exit_warn() {
-  echo -e "\n$color_warn*********************$color_none"
-  echo -e "$color_warn**  BUILD ABORTED  **$color_none"
-  echo -e "$color_warn*********************$color_none\n"
-  if [ $TMUX ]; then
-    update_tmux_status "Build Aborted" "#fabd2f"
-  fi
+exit_abort() {
   cleanup
   exit 2
 }
 
-array_contains () {
-  local e
-  for e in "${@:2}"; do [[ "$e" == "$1" ]] && return 0; done
-  return 1
-}
-
 hdl_sig_int() {
   kill_buildsys
-  exit_warn
+  status_aborted
+  exit_abort
 }
 
 hdl_sig_abrt() {
   sleep 0.50
-  exit_warn
+  status_aborted
+  exit_abort
 }
 
 kill_buildsys() {
@@ -119,41 +138,23 @@ clear_tmux_status() {
 # script main
 ################################################################################
 
-declare -A buildsys_dir_list
-declare -A buildsys_cmd_list
-declare -A buildsys_aliases
-specified_targets=()
+#
+# setup signal catching
+#
+trap hdl_sig_int SIGINT
+trap hdl_sig_abrt SIGABRT
 
 #
-# check the buildsys config exists
-#
-if [ ! -f $buildsys_config ]; then
-  echo "error: can not locate buildsys config \"$buildsys_config\""
-  exit_fail
-fi
-
-#
-# process the buildsys config
-#
-while IFS=, read -r target dir cmd aliases; do
-  if [ -n  "$target" ]; then
-    buildsys_dir_list["$target"]="$dir"
-    buildsys_cmd_list["$target"]="$cmd"
-    buildsys_aliases["$target"]="$target $aliases"
-  fi
-done < $buildsys_config
-
-#
-# process buildwrap arguments
+# process arguments
 #
 for arg in $@; do
   case $arg in
     '--no-output-color')
       opt_color_none=1 ;;
+    '--upgrade')
+      opt_en_upgrade=1 ;;
     'clear')
       opt_clear_tmux=1 ;;
-    'kill')
-      opt_kill_build=1 ;;
     'list')
       opt_ls_targets=1 ;;
     *)
@@ -167,7 +168,6 @@ done
 # define ansi color codes
 #
 if [ $opt_color_none -ne 0 ]; then
- # TODO: this needs to be fixed, as it is not working currently
   strip_ansi=' | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g"'
   shift
 else
@@ -176,6 +176,34 @@ else
   color_warn="\e[33m"
   color_info="\e[36m"
   color_none="\e[0m"
+fi
+
+#
+# check the config exists
+#
+if [ ! -f $buildsys_config ]; then
+  echo_error "can not locate buildsys config \"$buildsys_config\""
+  exit_fail
+fi
+
+#
+# process the config
+#
+while IFS=, read -r target dir cmd upgrade aliases; do
+  if [ -n  "$target" ]; then
+    buildsys_dir_list["$target"]="$dir"
+    buildsys_cmd_list["$target"]="$cmd"
+    upgrade_cmd_list["$target"]="$upgrade"
+    buildsys_aliases["$target"]="$target $aliases"
+  fi
+done < $buildsys_config
+
+#
+# check for tmux clear command
+#
+if [ $opt_clear_tmux -ne 0 ]; then
+  clear_tmux_status '*'
+  exit_pass
 fi
 
 #
@@ -188,15 +216,7 @@ if [ $opt_ls_targets -ne 0 ]; then
   for target in ${!buildsys_cmd_list[@]}; do
     printf "%-15s %s\n" "$target" "${buildsys_aliases[$target]}"
   done | sort
-  exit 0
-fi
-
-#
-# check for tmux clear command
-#
-if [ $opt_clear_tmux -ne 0 ]; then
-  clear_tmux_status '*'
-  exit 0
+  exit_pass
 fi
 
 #
@@ -204,12 +224,12 @@ fi
 #
 if [ $target_required -eq 1 ]; then
   if [ ${#specified_targets[@]} -eq 0 ]; then
-     echo "error: no buildsys target specified"
+     echo_error "no target specified"
      exit_fail
   fi
-  # TODO: update buildwrap to handle multiple targets
+  # TODO: update script to handle multiple targets
   if [ ${#specified_targets[@]} -gt 1 ]; then
-     echo "error: buildwrap only support one build target"
+     echo_error "only one target can be specified"
      exit_fail
    fi
 fi
@@ -220,24 +240,25 @@ fi
 for target in ${!buildsys_cmd_list[@]}; do
   for alias in ${buildsys_aliases[$target]}; do
     if [ "${specified_targets[0]^^}" == "${alias^^}" ]; then
+      buildsys_target=$target
       buildsys_dir=${buildsys_dir_list[$target]}
       buildsys_cmd=${buildsys_cmd_list[$target]}
-      buildsys_target=$target
+      upgrade_cmd=${upgrade_cmd_list[$target]}
     fi
   done
 done
 if [ -z $buildsys_target ]; then
-  echo "error: unknown buildsys target \"${specified_targets[0]}\""
+  echo_error "unknown buildsys target \"${specified_targets[0]}\""
   exit_fail
 fi
 
 #
-# locate buildsys directory
+# locate build directory
 #
 while [ ! -d "$PWD/$buildsys_dir" ]; do
   cd ..
   if [ $PWD == "/" ]; then
-     echo "error: unable to locate buildsys directory"
+     echo_error "unable to locate buildsys directory"
      exit_fail
   fi
 done
@@ -246,19 +267,11 @@ tmux_bld_path=${PWD//\//%}
 cd "./$buildsys_dir/"
 
 #
-# check for kill command
-#
-if [ $opt_kill_build -ne 0 ]; then
-  kill_buildsys
-  exit 0
-fi
-
-#
-# ensure buildsys is not already running
+# ensure build is not already running
 #
 if [ -f $buildsys_pid ]; then
   if ps -p `cat $buildsys_pid` > /dev/null; then
-    echo "error: an instance of buildsys is already running"
+    echo_error "an instance of buildsys is already running"
     exit_fail
   else
     rm -f $buildsys_pid
@@ -266,34 +279,82 @@ if [ -f $buildsys_pid ]; then
 fi
 running_pid=1
 
+################################################################################
+# kick off the build
+################################################################################
+
 #
 # update tmux status bar
 #
 if [ $TMUX ]; then
   update_tmux_status "Building $buildsys_target"
 fi
+buildsys_phase="Build"
 
 #
-# initialize buildsys setup
+# execute build command
 #
-trap hdl_sig_int SIGINT
-trap hdl_sig_abrt SIGABRT
-
 #
-# execute buildsys command
-#
-echo -e "buildsys directory: $color_info\"$PWD\"$color_none"
-echo -e "executing command: $color_info\"$buildsys_cmd$color_none"
+echo -e "building target: $color_info\"$buildsys_target\"$color_none"
+echo -e "build directory: $color_info\"$PWD\"$color_none"
+echo -e "build command: $color_info\"$buildsys_cmd$color_none"
 echo -e "build start time: $color_info`date`$color_none"
-eval ./$buildsys_cmd 2>&1 $strip_ansi
+eval "$buildsys_cmd 2>&1 $strip_ansi"
 
 #
-# check buildsys result
+# check build result
 #
 if [ $? -eq 0 ]; then
-  echo -e "\nBuild Success for targets $buildsys_target"
-  exit_pass
+  echo -e "\nBuild Success for target $buildsys_target"
+  status_success
 else
-  echo -e "\nBuild Failure for targets $buildsys_target"
+  echo -e "\nBuild Failure for target $buildsys_target"
+  status_failure
   exit_fail
 fi
+
+#
+# build complete
+#
+if [ $opt_en_upgrade -eq 0 ]; then
+  exit_pass
+fi
+
+################################################################################
+# kick off the upgrade
+################################################################################
+
+#
+# update tmux status bar
+#
+if [ $TMUX ]; then
+  update_tmux_status "Upgrading $buildsys_target"
+fi
+buildsys_phase="Upgrade"
+
+#
+# execute upgrade command
+#
+echo -e "upgrading target: $color_info\"$buildsys_target\"$color_none"
+echo -e "upgrade directory: $color_info\"$PWD\"$color_none"
+echo -e "upgrade command: $color_info\"$upgrade_cmd$color_none"
+echo -e "upgrade start time: $color_info`date`$color_none"
+eval "$upgrade_cmd 2>&1 $strip_ansi"
+
+#
+# check upgrade result
+#
+if [ $? -eq 0 ]; then
+  echo -e "\nUpgrade Success for target $buildsys_target"
+  status_success
+else
+  echo -e "\nUpgrade Failure for target $buildsys_target"
+  status_failure
+  exit_fail
+fi
+
+#
+# upgrade complete
+#
+exit_pass
+
