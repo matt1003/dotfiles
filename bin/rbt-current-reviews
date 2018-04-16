@@ -9,6 +9,12 @@ import os
 import re
 import sys
 
+def print_error(msg):
+    print ("\033[91mERROR:\033[0m %s\n" % msg)
+
+def print_warning(msg):
+    print ("\033[93mWARNING:\033[0m %s\n" % msg)
+
 def parse_config(path):
     config = {}
     if os.path.isfile(path):
@@ -38,7 +44,19 @@ def get_latest_diff_for_review(review):
             return diff
     return None
 
+def update_progress(current, total):
+    barLength = 40 # progress bar length
+    block = int(round(barLength*(float(current)/float(total))))
+    text = "\rProgress: [{0}] {1}/{2}".format( "#"*block + "-"*(barLength-block), current, total)
+    sys.stdout.write(text)
+    sys.stdout.flush()
+
+def clear_progress():
+    sys.stdout.write('\x1b[2K\r')
+    sys.stdout.flush()
+
 def display_current_reviews(url, user, pwrd, max, cmd):
+    count=0 ; total=0
 
     # get all open reviews for the user
     args = {}
@@ -51,22 +69,29 @@ def display_current_reviews(url, user, pwrd, max, cmd):
         client = RBClient(url, username=user, password=pwrd)
         root = client.get_root()
     except:
-        print("ERROR: Unable to connect to \"%s\", please ensure url is correct." % url)
+        print_error("Unable to connect to \"%s\", please ensure url is correct." % url)
         sys.exit(2)
 
     # download the reviews
     try:
         review_list = root.get_review_requests(**args)
     except:
-        print("ERROR: Unable to locate \"%s\", please ensure username is correct." % user)
+        print_error("Unable to locate \"%s\", please ensure username is correct." % user)
         sys.exit(2)
-    if review_list.total_results == 0:
+
+    # check how many we have
+    total = review_list.total_results
+    if total == 0:
         print ("(none)\n")
         return
+    if total > max:
+        print_warning("Found %d open reviews, but will only process max %d. Use --max to change this." % (total, max))
+        total = max
 
     # process each review
     processed_reviews = {}
     for review in review_list:
+        count+=1; update_progress (count, total)
 
         # grab the listed reviewers
         ship_it = {}
@@ -75,28 +100,39 @@ def display_current_reviews(url, user, pwrd, max, cmd):
 
         # get the latest diff for the review
         diff = get_latest_diff_for_review(review)
-        diff_time = parse_time_string(diff.timestamp)
+        if diff:
+            diff_time = parse_time_string(diff.timestamp)
+        else:
+            diff_time = parse_time_string("2000-01-01T00:00:00Z")
 
         # check each review comment for a "ship it"
         for comment in review.get_reviews():
-            if comment.public is False:
-                #print "skipping non-public comment"
+            try:
+                reviewer = comment.get_user().username
+            except:
+                # print ("skipping invalid username")
                 continue
-            if comment.get_user().username not in ship_it:
-                #print "skipping ship it from user"
+            if comment.public is False:
+                #print ("skipping non-public comment")
+                continue
+            if reviewer not in ship_it:
+                #print ("skipping ship it from user")
                 continue
             if parse_time_string(comment.timestamp) <= diff_time:
-                #print "skipping ship it from old diff"
+                #print ("skipping ship it from old diff")
                 continue
             if comment.ship_it:
-                ship_it[comment.get_user().username] = 'shipit'
+                ship_it[reviewer] = 'shipit'
             else:
-                ship_it[comment.get_user().username] = 'comment'
+                ship_it[reviewer] = 'comment'
 
         submitter = review.get_submitter().username
         processed_reviews[review.id] = [review.summary, ship_it, submitter]
 
-    for id in sorted(processed_reviews.iterkeys()):
+    clear_progress()
+
+    # print out the results
+    for id in sorted(processed_reviews.iterkeys(), reverse=True):
         summary = processed_reviews[id][0]
         ship_it = processed_reviews[id][1]
         submitter = processed_reviews[id][2]
@@ -109,7 +145,14 @@ def display_current_reviews(url, user, pwrd, max, cmd):
             else:
                 color = " \033[93m"
             print (" %s%s\033[0m" % (color, reviewer), end='')
-        print ('\n')
+        print ('\r')
+
+    # print out the total count
+    if total != review_list.total_results:
+        warn = " (however only showing the first %d)" % total
+    else:
+        warn = ''
+    print ("total number of open reviews is %d%s\n" % (review_list.total_results, warn))
 
 if __name__ == '__main__':
 
@@ -124,14 +167,14 @@ if __name__ == '__main__':
     parser.add_option('-p', '--password', dest='pwrd', action="store", type="string",
                       default=config.get('pwrd'), help='reviewboard password')
     parser.add_option('-m', '--max', dest='max', action="store", type="int",
-                      default=50, help='the maximum number of reviews to display')
+                      default=15, help='the maximum number of reviews to display')
     options, args = parser.parse_args()
 
     if not options.url:
-        print("ERROR: You must specify the reviewboard server url (-s|--server) to find reviews from.")
+        print_error("You must specify the reviewboard server url (-s|--server) to find reviews from.")
         sys.exit(1)
     if not options.user:
-        print("ERROR: You must specify the reviewboard username (-u|--username) to find reviews for.")
+        print_error("You must specify the reviewboard username (-u|--username) to find reviews for.")
         sys.exit(1)
 
     print ("*** My Review Requests ***\n")
