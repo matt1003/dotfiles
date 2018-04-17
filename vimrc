@@ -688,6 +688,13 @@ func! CloseAllQfLocWins()
 endfunc
 silent! map <F2> :call CloseAllQfLocWins()<CR>
 
+" write file with sudo rights
+func! SudoWrite()
+  write !sudo tee % > /dev/null
+  edit!
+endfunc
+command! Write call SudoWrite()
+
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " tracking the main window
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
