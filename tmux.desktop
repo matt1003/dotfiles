@@ -1,0 +1,7 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Tmux
+Exec=/home/@user@/bin/tmux-dev --no-kill
+Icon=/home/@user@/Pictures/tmux.png
+Type=Application
+Categories=Development;

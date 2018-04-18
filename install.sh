@@ -2,7 +2,7 @@
 set -e
 
 if [ -z $1 ]; then
-  echo -e "\e[31merror: must specify arg: cli/gui/dot/bin/font/git/full"
+  echo -e "\e[31merror: must specify arg: cli/gui/dot/gnome/bin/font/git/full"
   exit 1
 fi
 
@@ -60,6 +60,13 @@ declare -A dotfiles=(
 )
 
 #
+# define launchers
+#
+declare gnome_launchers=(
+  tmux.desktop
+)
+
+#
 # define fonts
 #
 fonts=https://github.com/powerline/fonts.git
@@ -114,6 +121,17 @@ if [ $1 == "dot" ] || [ $1 == "full" ]; then
       mv -v $path $path.orig
     fi
     ln -sfv $scriptpath/$file $path
+  done
+fi
+
+#
+# install gnome launchers
+#
+if [ $1 == "gnome" ] || [ $1 == "full" ]; then
+  echo -e "\e[34minstalling gnome launchers...\e[0m"
+  for launcher in "${gnome_launchers[@]}"; do
+    cat $launcher | sed "s/@user@/$USER/g" | tee $HOME/.local/share/applications/$launcher
+    chmod 775 $HOME/.local/share/applications/$launcher
   done
 fi
 
