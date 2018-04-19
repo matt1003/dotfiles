@@ -1,0 +1,201 @@
+#!/usr/bin/env python
+
+from __future__ import print_function
+from rbtools.api.client import RBClient
+
+import git
+import os
+import re
+import sys
+
+id_list = []
+commit_list = []
+review_list = []
+
+publish = False
+dryrun = False
+help = False
+
+help_string  = """
+usage: %s [--dry-run|-d ][--publish|-p] <commit-range>
+
+Extends the "rbt post" functionality as follows:
+  1. Handles multiple commits, creating a review request for each. Commits are
+     specified as a comma separated list of commit IDs, or a commit ID range.
+  2. Attempts to locate and update existing review requests on the ReviewBoard
+     server before creating a new review request.
+  3. Scans the commit message for "Reviewed-by:" and automatically adds those
+     reviewers to the review request on the Reviewed server.
+
+Options:
+  --dryrun     : Prints the ReviewBoard commands rather than executing them.
+  --publish    : Publishes the review requests immediately after posting them.
+
+Arguments:
+  commit-range : The range of commits to be sent to ReviewBoard. This may take
+                 the following formats:
+                     - single commit: "ac0fe165e4"
+                     - multiple commits: "ac0fe165e4,6e1d0eb268"
+                     - range of commits: "ac0fe165e4..6e1d0eb268"
+                     - previous 5 commits: "HEAD~5"
+                 If no commit-range is specified, the current commit will be used.
+""" % os.path.basename(__file__)
+
+
+def print_error(msg):
+    print("\033[91mERROR:\033[0m %s\n" % msg)
+
+def print_warning(msg):
+    print("\033[93mWARNING:\033[0m %s\n" % msg)
+
+def parse_config(path):
+    config = {}
+    if os.path.isfile(path):
+        for line in open (path):
+            # parse server url
+            match = re.match('REVIEWBOARD_URL\s*=\s*"(.*)"', line)
+            if match:
+                config['url'] = match.group(1)
+    return config
+
+def get_git(path):
+    try:
+        return git.Git(git.Repo(path).git_dir)
+    except:
+        print_error("must be executed from inside a git repository")
+        sys.exit(1)
+
+def get_git_commit_ids(args):
+    try:
+        commit_ids = []
+        for arg in args.split(','):
+            if re.match("^[0-9a-f]{10,40}$", arg):
+                # look for a single commit
+                commit_ids += g.show(arg, "--no-patch", "--pretty=%H").split("\n")
+            else:
+                # look for a range of commits
+                commit_ids += g.log(arg, "--pretty=%H").split("\n")
+        return commit_ids
+    except:
+        print_error("unable to locate commits \"%s\"" % arg)
+        sys.exit(1)
+
+def get_existing_reviews(config):
+    try:
+        args = {'from_user':os.environ['USER'],'status':'pending','max_results':100}
+        root = RBClient(config['url']).get_root()
+        return root.get_review_requests(**args)
+    except:
+        print_error("unable to connect to ReviewBoard server")
+        sys.exit(1)
+
+def get_commit_details(commit):
+    commit['author'] = g.show(id, "--no-patch", "--pretty=%an")
+    commit['summary'] = g.show(id, "--no-patch", "--pretty=%s")
+    commit['description'] = g.show(id, "--no-patch", "--pretty=%b")
+
+def get_commit_reviewers(commit):
+    commit['reviewers'] = []
+    for reviewer in re.findall('Reviewed-by: (.*)<.*>', commit['description']):
+        username = (reviewer[0]+reviewer.split(' ')[1]).lower()
+        commit['reviewers'].append(username)
+
+def get_commit_review_id(commit):
+    commit['review_id'] = ''
+    for review in review_list:
+        if review.summary == commit['summary']:
+            commit['review_id'] = review.id
+
+def get_commit(id):
+    commit = { 'id' : id }
+    get_commit_details(commit)
+    get_commit_reviewers(commit)
+    get_commit_review_id(commit)
+    return commit
+
+def print_commit(commit):
+    commit_id = commit['id']
+    author = commit['author']
+    summary = commit['summary']
+    if commit['review_id']:
+        action = "\033[92mupdate %s\033[0m" % commit['review_id']
+    else:
+        action = "\033[93mcreate new\033[0m"
+    print("%s: %s - %s - %s" % (action.ljust(20), commit_id[:10], author, summary))
+
+g = get_git('./')
+
+for arg in sys.argv[1:]:
+    if re.match("^[0-9a-f]{10,40}(?:,[0-9a-f]{10,40})*$", arg):
+        id_list += get_git_commit_ids(arg)
+        continue
+    if re.match("^[0-9a-f]{10,40}\^{0,1}\.{2,3}(?:[0-9a-f]{10,40})?$", arg):
+        id_list += get_git_commit_ids(arg)
+        continue
+    if re.match("^HEAD~[0-9]+$", arg):
+        id_list += get_git_commit_ids("-%s" % arg.split('~')[1])
+        continue
+    if re.match("^-{1,2}p(?:u(?:b(?:l(?:i(?:s(?:h)?)?)?)?)?)?$", arg):
+        publish = True
+        continue
+    if re.match("^-{1,2}d(?:r(?:y(?:-(?:r(?:u(?:n)?)?)?)?)?)?$", arg):
+        dryrun = True
+        continue
+    if re.match("^-{1,2}h(?:e(?:l(?:p?)?)?)?$", arg):
+        help = True
+        continue
+    print_error("invalid argument \"%s\"" % arg)
+    sys.exit(1)
+
+if help:
+    print(help_string)
+    sys.exit(1)
+
+if not id_list:
+    id_list = get_git_commit_ids("-1")
+
+config = parse_config("/home/mbright/.reviewboardrc")
+
+review_list = get_existing_reviews(config)
+
+for id in id_list:
+    commit_list.append(get_commit(id))
+
+for commit in reversed(commit_list):
+    print_commit(commit)
+
+print("\033[94mPost %s commits to review board?\033[0m " % len(commit_list), end='')
+if dryrun:
+    print("\033[94m(dry-run)\033[0m ", end='')
+
+try:
+    anwser = raw_input().lower()
+except:
+    print("\n * OPERATION CANCELLED *")
+    sys.exit(1)
+
+if anwser != 'yes' and anwser != 'yeah':
+    print(" * OPERATION CANCELLED *")
+    sys.exit(1)
+
+for commit in reversed(commit_list):
+
+    cmd = "pbt post"
+
+    if publish:
+        cmd += " --publish"
+
+    if commit['reviewers']:
+        cmd += " --target-people=%s" % ",".join(commit['reviewers'])
+
+    if commit['review_id']:
+        cmd += " --review-request-id %s" % commit['review_id']
+
+    if commit['id']:
+        cmd += " %s" % commit['id']
+
+    if dryrun:
+        print(cmd)
+    else:
+        os.system(cmd)
+
