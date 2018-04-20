@@ -62,8 +62,6 @@ alias rm='rm -i'
 
 alias tra='trash'
 
-alias update='sudo apt update && sudo apt upgrade && sudo apt auto-remove && echo -e "\e[34m** DONE **\e[0m"'
-
 cdback() { cd $(echo $PWD | sed -r "s/($1\w*\/).*/\1/") ; }
 
 alias cdb=cdback
