@@ -1,17 +1,42 @@
 #!/bin/bash
 
-if wmctrl -l | grep -q '/bin/bash'; then
-  wmctrl -a '/bin/bash'
+#
+# terminator/tmux
+#
+if wmctrl -l | grep -q 'tmux-dev'; then
+  wmctrl -a 'tmux-dev'
 else
-  terminator -l tmux
+  terminator -T tmux-dev -l tmux
   while true; do
-    if wmctrl -l | grep -q '/bin/bash'; then
+    if wmctrl -l | grep -q 'tmux-dev'; then
       break;
     fi
   done
-  wmctrl -r '/bin/bash' -b add,below
+  wmctrl -r 'tmux-dev' -b add,below
 fi
 
+#
+# firefox
+#
+if ! wmctrl -l | grep -q 'Mozilla Firefox'; then
+  firefox &
+fi
+
+#
+# update/upgrade
+#
+if [ -f $HOME/.last-update ]; then
+  last=$(cat $HOME/.last-update)
+else
+  last=$(date -d 2000-01-01 +%Y%m%d)
+fi
+if [ $(date +%Y%m%d) -gt $last ]; then
+  terminator --geometry=1200x800 -T update -e "update --prompt-on-exit"
+fi
+
+#
+# exit
+#
 if [[ $1 != "--no-kill" ]]; then
   kill -9 $PPID
 fi
