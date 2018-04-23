@@ -1,6 +1,6 @@
 
-set nocompatible
 set encoding=utf-8
+scriptencoding utf-8
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " operating system configuration
@@ -382,7 +382,7 @@ fun! TestBinFile()
   if &binary || search('\%u0000', 'wn', 0, 200)
     set binary
     silent %!xxd
-    set fenc&
+    set fileencoding&
     let b:hexdump=1
     echon ', ' | echohl WarningMsg | echon '(hex dump of binary file)' | echohl None
   endif
@@ -411,8 +411,8 @@ augroup END
 " Cscope / Ctags
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-set cscopetag    " use ctags and cscope
-set csto=0       " search cscope first
+set cscopetag        " use ctags and cscope
+set cscopetagorder=0 " search cscope first
 
 nnoremap <silent> <leader>fa :call cscope#findInteractive(expand('<cword>'))<CR>
 nnoremap <silent> <leader>l :call ToggleLocationList()<CR>
