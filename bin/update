@@ -2,12 +2,23 @@
 
 from __future__ import print_function
 
+import fcntl
 import os
 import re
 import sys
+import time
 
-pkg_list = {'install':[],'upgrade':[],'remove':[]}
-prompt_on_exit = False
+if os.geteuid() == 0:
+    for lock in ['/var/lib/dpkg/lock', '/var/lib/apt/lists/lock']:
+        with open(lock, 'w') as handle:
+            try:
+                fcntl.lockf(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except IOError:
+                sys.exit(1)
+    sys.exit(0)
+
+def is_dpkg_active():
+    return os.WEXITSTATUS(os.system("sudo %s" % os.path.realpath(__file__)))
 
 def exit(status):
     if prompt_on_exit:
@@ -49,9 +60,16 @@ def print_apt_packages():
         print("The following packages will be removed:")
         print("\033[91m  %s\033[0m" % ' '.join(pkg_list['remove']))
 
+pkg_list = {'install':[],'upgrade':[],'remove':[]}
+prompt_on_exit = False
+
 for arg in sys.argv[1:]:
     if arg == "--prompt-on-exit":
         prompt_on_exit = True
+
+while is_dpkg_active():
+    print("waiting for apt lock")
+    time.sleep(1)
 
 exe("sudo apt-get update")
 
