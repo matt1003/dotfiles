@@ -99,7 +99,10 @@ endtry
 if !filereadable($VIMHOME.'/autoload/plug.vim')
   silent !wget -O '$VIMHOME/autoload/plug.vim'
     \ 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
-  autocmd VimEnter * nested PlugInstall --sync | source $MYVIMRC
+  augroup InstallPlugins
+    autocmd!
+    autocmd VimEnter * nested PlugInstall --sync | source $MYVIMRC
+  augroup END
 endif
 
 call plug#begin()
@@ -238,7 +241,10 @@ nmap <leader>hn :GitGutterNextHunk<CR>
 nmap <leader>hp :GitGutterPrevHunk<CR>
 nmap <leader>hu :GitGutterUndoHunk<CR>
 nmap <silent> <c-n> :GitGutterNextHunk<CR>
-autocmd FileType help,tagbar,nerdtree,qf setlocal signcolumn=no
+augroup SignColumnEnable
+  autocmd!
+  autocmd FileType help,tagbar,nerdtree,qf setlocal signcolumn=no
+augroup END
 "}}}
 
 " fugitive {{{
@@ -345,7 +351,7 @@ let g:quickfix_window_height = 12
 " file specific settings
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-augroup file_specific_settings
+augroup FileSpecificSettings
   autocmd!
   " git commit message
   autocmd FileType gitcommit setlocal colorcolumn=73
@@ -649,7 +655,6 @@ augroup EventLoggin
     autocmd BufEnter    * call s:Log('BufEnter ----')
     autocmd User        * call s:Log('User --------')
     autocmd SwapExists  * call s:Log('SwapExists---')
-    "autocmd BufEnter    * call input('enter to continue ', getwinvar(winnr(), '&pvw'), 'dir')
   endif
 augroup END
 
@@ -658,13 +663,13 @@ augroup END
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 " auto load vimrc
-augroup reload_vimrc " {
-    autocmd!
-    autocmd BufWritePost $MYVIMRC nested source $MYVIMRC
-augroup END " }
+augroup ReloadVimrc
+  autocmd!
+  autocmd BufWritePost $MYVIMRC nested source $MYVIMRC
+augroup END
 
 " select read only when opening a swap file in the preview window
-augroup pvw_swp
+augroup PreviewWindowSwapChoice
   autocmd!
   autocmd SwapExists * if &l:pvw | let v:swapchoice = 'o' | endif
 augroup END
@@ -716,7 +721,7 @@ func! MainWinTimer()
   let g:main_win_tm = timer_start(250, 'MainWinHandler')
 endfunc
 
-augroup main_win_au()
+augroup MainWindowTracking
   autocmd!
   autocmd VimEnter,WinEnter * call MainWinTimer()
 augroup END
@@ -754,7 +759,7 @@ func! s:NERDTreeSync()
   call win_gotoid(l:win_id)
 endfunc
 
-augroup nerdtree_au()
+augroup NERDTreeTracking
   autocmd!
   autocmd BufEnter * call s:NERDTreeSync()
 augroup END
@@ -781,7 +786,7 @@ func! IdeViewToggle(...)
   endif
 endfunc
 
-augroup ide_view_au
+augroup IdeView
   autocmd!
   autocmd VimEnter * if winwidth(0) > 160 | call timer_start(200, 'IdeViewToggle') | endif
 augroup END
