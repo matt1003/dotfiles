@@ -305,7 +305,7 @@ call plug#end()
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 " set the color scheme
-if &term != 'linux'
+if &term !=? 'linux'
   try
     set background=dark
     colorscheme gruvbox
@@ -429,7 +429,7 @@ let s:PowerBoxAddr = s:DefaultPowerBoxAddr
 
 fun! s:UpdatePowerBoxAddr(addr)
   let s:PowerBoxAddr = input('address: ', a:addr, 'dir')
-  if s:PowerBoxAddr == 'reset'
+  if s:PowerBoxAddr ==? 'reset'
     let s:PowerBoxAddr = input('address: ', s:DefaultPowerBoxAddr, 'dir')
   endif
 endfun
@@ -488,10 +488,10 @@ fun! s:CheckForModifiedBuffers()
     echohl Question
     let l:anwser = input('Modified files detected! Save all? [Y/N]: ')
     echohl None
-    if l:anwser == 'Y'
+    if l:anwser ==? 'Y'
       write all
       return
-    elseif l:anwser == 'N'
+    elseif l:anwser ==? 'N'
       return
     endif
   endwhile
@@ -511,7 +511,7 @@ fun! s:LocateBuildSysPath()
   endif
   " 2) attempt to locate the build system directory
   let l:path = getcwd()
-  while l:path != '/'
+  while l:path !=? '/'
       if <SID>IsBuildSysPath(l:path.'/'.s:BuildSysDir)
         return l:path.'/'.s:BuildSysDir
     endif
@@ -527,7 +527,7 @@ fun! s:UpdateBuildSysPath()
 endfun
 
 fun! s:ExecuteBuildSys(BuildSysArgs)
-  if a:BuildSysArgs == 'error'
+  if a:BuildSysArgs ==? 'error'
     Copen
     let @/ = 'error:'
   else
@@ -566,7 +566,7 @@ let s:GrepOpts = s:DefaultGrepOpts
 let s:GrepShow = 'loc' " qf/loc
 
 fun! s:UpdateGrepWord(word)
-  if a:word != ''
+  if a:word !=? ''
     let s:GrepWord = input('search pattern: ', '"'.a:word.'"', 'dir')
   else
     let s:GrepWord = input('search pattern: ', '"'.expand('<cword>').'"', 'dir')
@@ -575,14 +575,14 @@ endfun
 
 fun! s:UpdateGrepPath(path)
   let s:GrepPath = input('search path: ', a:path, 'dir')
-  if s:GrepPath == 'reset'
+  if s:GrepPath ==? 'reset'
     let s:GrepPath = input('search path: ', s:DefaultGrepPath, 'dir')
   endif
 endfun
 
 fun! s:UpdateGrepOpts(opts)
   let s:GrepOpts = input('search flags: ', a:opts, 'dir')
-  if s:GrepOpts == 'reset'
+  if s:GrepOpts ==? 'reset'
     let s:GrepOpts = input('search flags: ', s:DefaultGrepOpts, 'dir')
   endif
 endfun
@@ -595,7 +595,7 @@ fun! s:ExecuteGrep(GrepCmd, GrepArgs)
   echon 'Searching for '.s:GrepWord.' ...'
   exe 'silent '.a:GrepCmd.' '.s:GrepOpts.' '.s:GrepWord.' '.s:GrepPath
   redraw!
-  if s:GrepShow == 'qf'
+  if s:GrepShow ==? 'qf'
     let l:total = len(getqflist())
   else
     let l:total = len(getloclist(0))
@@ -610,14 +610,14 @@ fun! s:ExecuteGrep(GrepCmd, GrepArgs)
   else
     echon 'Search for '.s:GrepWord.' returned '.l:total.' results.'
   endif
-  if s:GrepShow == 'qf'
+  if s:GrepShow ==? 'qf'
     botright copen 12
   else
     botright lwindow 12
   endif
 endfun
 
-if s:GrepShow == 'qf'
+if s:GrepShow ==? 'qf'
   command! -nargs=* MySearch call <SID>ExecuteGrep('grep! -r', <q-args>)
 else
   command! -nargs=* MySearch call <SID>ExecuteGrep('lgrep! -r', <q-args>)
