@@ -55,7 +55,7 @@ endif
 syntax on                    " enable syntax highlighting
 
 nnoremap <space> <nop>
-let mapleader="\<space>"     " use space bar at leader
+let mapleader='\<space>'     " use space bar at leader
 
 set hidden                   " allow easier switching between buffers
 set confirm                  " confirmation prompt on unsaved buffers
@@ -97,8 +97,8 @@ endtry
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 if !filereadable($VIMHOME.'/autoload/plug.vim')
-  silent !wget -O "$VIMHOME/autoload/plug.vim"
-    \ "https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim"
+  silent !wget -O '$VIMHOME/autoload/plug.vim'
+    \ 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
   autocmd VimEnter * nested PlugInstall --sync | source $MYVIMRC
 endif
 
@@ -280,10 +280,10 @@ Plug 'takac/vim-hardtime'
 let g:hardtime_default_on = 0
 let g:hardtime_allow_different_key = 1
 let g:hardtime_maxcount = 3
-let g:list_of_normal_keys = ["h", "l", "x"]
-let g:list_of_visual_keys = ["h", "l", "x"]
+let g:list_of_normal_keys = ['h', 'l', 'x']
+let g:list_of_visual_keys = ['h', 'l', 'x']
 let g:list_of_insert_keys = []
-let g:list_of_disabled_keys = ["<UP>", "<DOWN>", "<LEFT>", "<RIGHT>"]
+let g:list_of_disabled_keys = ['<UP>', '<DOWN>', '<LEFT>', '<RIGHT>']
 "}}}
 
 " tmux-navigator {{{
@@ -305,7 +305,7 @@ call plug#end()
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 " set the color scheme
-if &term != "linux"
+if &term != 'linux'
   try
     set background=dark
     colorscheme gruvbox
@@ -314,7 +314,7 @@ if &term != "linux"
   endtry
 endif
 
-if has("gui_running")
+if has('gui_running')
   if has('win32') || has ('win64')
   set guifont=DejaVu_Sans_Mono_for_Powerline:h10:cANSI
   else
@@ -360,8 +360,8 @@ augroup END
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 " insert new line {{{
-nmap <leader>o :<C-U>call append(line("."), repeat([''], v:count1))<CR>
-nmap <leader>O :<C-U>call append(line(".")-1, repeat([''], v:count1))<CR>
+nmap <leader>o :<C-U>call append(line('.'), repeat([''], v:count1))<CR>
+nmap <leader>O :<C-U>call append(line('.')-1, repeat([''], v:count1))<CR>
 "}}}
 
 nmap <silent> <leader>bd :bd<CR>
@@ -378,18 +378,18 @@ fun! TestBinFile()
     silent %!xxd
     set fenc&
     let b:hexdump=1
-    echon ", " | echohl WarningMsg | echon "(hex dump of binary file)" | echohl None
+    echon ', ' | echohl WarningMsg | echon '(hex dump of binary file)' | echohl None
   endif
 endfun
 
 fun! ToBinFile()
-  if exists("b:hexdump")
+  if exists('b:hexdump')
     silent %!xxd -r
   endif
 endfun
 
 fun! ToHexFile()
-  if exists("b:hexdump")
+  if exists('b:hexdump')
     silent %!xxd
   endif
 endfun
@@ -428,26 +428,26 @@ let s:DefaultPowerBoxAddr = '192.168.0.3'
 let s:PowerBoxAddr = s:DefaultPowerBoxAddr
 
 fun! s:UpdatePowerBoxAddr(addr)
-  let s:PowerBoxAddr = input("address: ", a:addr, 'dir')
-  if s:PowerBoxAddr == "reset"
-    let s:PowerBoxAddr = input("address: ", s:DefaultPowerBoxAddr, 'dir')
+  let s:PowerBoxAddr = input('address: ', a:addr, 'dir')
+  if s:PowerBoxAddr == 'reset'
+    let s:PowerBoxAddr = input('address: ', s:DefaultPowerBoxAddr, 'dir')
   endif
 endfun
 
 fun! s:ExecutePowerBox(PowerBoxCmd, PowerBoxArgs)
   call <SID>UpdatePowerBoxAddr(s:PowerBoxAddr)
-  exe "!".a:PowerBoxCmd." ".s:PowerBoxAddr." ".a:PowerBoxArgs
+  exe '!'.a:PowerBoxCmd.' '.s:PowerBoxAddr.' '.a:PowerBoxArgs
 endfun
 
-command! -nargs=+ PowerBox call <SID>ExecutePowerBox("pdu", <q-args>)
+command! -nargs=+ PowerBox call <SID>ExecutePowerBox('pdu', <q-args>)
 cabbrev pdu PowerBox
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " build system
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-let s:BuildSysCmd = "buildwrap"
-let s:BuildSysDir = "docker"
+let s:BuildSysCmd = 'buildwrap'
+let s:BuildSysDir = 'docker'
 let s:BuildSysPath = 0
 
 " build result color
@@ -486,19 +486,19 @@ fun! s:CheckForModifiedBuffers()
   endfor
   while 1
     echohl Question
-    let anwser = input("Modified files detected! Save all? [Y/N]: ")
+    let anwser = input('Modified files detected! Save all? [Y/N]: ')
     echohl None
-    if anwser == "Y"
+    if anwser == 'Y'
       write all
       return
-    elseif anwser == "N"
+    elseif anwser == 'N'
       return
     endif
   endwhile
 endfun
 
 fun! s:IsBuildSysPath(path)
-  if filereadable(a:path."/build.sh")
+  if filereadable(a:path.'/build.sh')
     return 1
   endif
   return 0
@@ -511,29 +511,29 @@ fun! s:LocateBuildSysPath()
   endif
   " 2) attempt to locate the build system directory
   let path = getcwd()
-  while path != "/"
-      if <SID>IsBuildSysPath(path."/".s:BuildSysDir)
-        return path."/".s:BuildSysDir
+  while path != '/'
+      if <SID>IsBuildSysPath(path.'/'.s:BuildSysDir)
+        return path.'/'.s:BuildSysDir
     endif
     let path = fnamemodify(path, ':h')
   endwhile
   " 3) give up and use the current working directory
-  echohl WarningMsg | echo "Unable to locate buildsys path ..." | echohl None
+  echohl WarningMsg | echo 'Unable to locate buildsys path ...' | echohl None
   return getcwd()
 endfunction
 
 fun! s:UpdateBuildSysPath()
-  let s:BuildSysPath = input("buildsys path: ", <SID>LocateBuildSysPath(), 'dir')
+  let s:BuildSysPath = input('buildsys path: ', <SID>LocateBuildSysPath(), 'dir')
 endfun
 
 fun! s:ExecuteBuildSys(BuildSysArgs)
-  if a:BuildSysArgs == "error"
+  if a:BuildSysArgs == 'error'
     Copen
     let @/ = 'error:'
   else
     call <SID>CheckForModifiedBuffers()
     call <SID>UpdateBuildSysPath()
-    exe "Dispatch! -compiler=make -dir=".s:BuildSysPath." ".s:BuildSysCmd." ".a:BuildSysArgs
+    exe 'Dispatch! -compiler=make -dir='.s:BuildSysPath.' '.s:BuildSysCmd.' '.a:BuildSysArgs
     "botright copen 12
     "call <SID>SetBuildSysSyntax()
     "setlocal nonumber
@@ -554,36 +554,36 @@ if executable('ag')
   set grepprg=ag\ --vimgrep
   set grepformat=%f:%l:%c:%m
   let s:DefaultGrepPath = getcwd()
-  let s:DefaultGrepOpts = "-w"
+  let s:DefaultGrepOpts = '-w'
 else
   " use standard old grep
   let s:DefaultGrepPath = getcwd()
-  let s:DefaultGrepOpts = "-I -w"
+  let s:DefaultGrepOpts = '-I -w'
 endif
 
 let s:GrepPath = s:DefaultGrepPath
 let s:GrepOpts = s:DefaultGrepOpts
-let s:GrepShow = "loc" " qf/loc
+let s:GrepShow = 'loc' " qf/loc
 
 fun! s:UpdateGrepWord(word)
-  if a:word != ""
-    let s:GrepWord = input("search pattern: ", "\"".a:word."\"", 'dir')
+  if a:word != ''
+    let s:GrepWord = input('search pattern: ', '"'.a:word.'"', 'dir')
   else
-    let s:GrepWord = input("search pattern: ", "\"".expand("<cword>")."\"", 'dir')
+    let s:GrepWord = input('search pattern: ', '"'.expand('<cword>').'"', 'dir')
   endif
 endfun
 
 fun! s:UpdateGrepPath(path)
-  let s:GrepPath = input("search path: ", a:path, 'dir')
-  if s:GrepPath == "reset"
-    let s:GrepPath = input("search path: ", s:DefaultGrepPath, 'dir')
+  let s:GrepPath = input('search path: ', a:path, 'dir')
+  if s:GrepPath == 'reset'
+    let s:GrepPath = input('search path: ', s:DefaultGrepPath, 'dir')
   endif
 endfun
 
 fun! s:UpdateGrepOpts(opts)
-  let s:GrepOpts = input("search flags: ", a:opts, 'dir')
-  if s:GrepOpts == "reset"
-    let s:GrepOpts = input("search flags: ", s:DefaultGrepOpts, 'dir')
+  let s:GrepOpts = input('search flags: ', a:opts, 'dir')
+  if s:GrepOpts == 'reset'
+    let s:GrepOpts = input('search flags: ', s:DefaultGrepOpts, 'dir')
   endif
 endfun
 
@@ -592,35 +592,35 @@ fun! s:ExecuteGrep(GrepCmd, GrepArgs)
   call <SID>UpdateGrepPath(s:GrepPath)
   call <SID>UpdateGrepOpts(s:GrepOpts)
   call CloseAllQfLocWins()
-  echon "Searching for ".s:GrepWord." ..."
-  exe "silent ".a:GrepCmd." ".s:GrepOpts." ".s:GrepWord." ".s:GrepPath
+  echon 'Searching for '.s:GrepWord.' ...'
+  exe 'silent '.a:GrepCmd.' '.s:GrepOpts.' '.s:GrepWord.' '.s:GrepPath
   redraw!
-  if s:GrepShow == "qf"
+  if s:GrepShow == 'qf'
     let total = len(getqflist())
   else
     let total = len(getloclist(0))
   endif
   if total == 0
     echohl WarningMsg
-    echon "Search for ".s:GrepWord." returned no results."
+    echon 'Search for '.s:GrepWord.' returned no results.'
     echohl Normal
     return
   elseif total == 1
-    echon "Search for ".s:GrepWord." returned 1 result."
+    echon 'Search for '.s:GrepWord.' returned 1 result.'
   else
-    echon "Search for ".s:GrepWord." returned ".total." results."
+    echon 'Search for '.s:GrepWord.' returned '.total.' results.'
   endif
-  if s:GrepShow == "qf"
+  if s:GrepShow == 'qf'
     botright copen 12
   else
     botright lwindow 12
   endif
 endfun
 
-if s:GrepShow == "qf"
-  command! -nargs=* MySearch call <SID>ExecuteGrep("grep! -r", <q-args>)
+if s:GrepShow == 'qf'
+  command! -nargs=* MySearch call <SID>ExecuteGrep('grep! -r', <q-args>)
 else
-  command! -nargs=* MySearch call <SID>ExecuteGrep("lgrep! -r", <q-args>)
+  command! -nargs=* MySearch call <SID>ExecuteGrep('lgrep! -r', <q-args>)
 endif
 
 cabbrev grep MySearch
@@ -633,7 +633,7 @@ cabbrev ag MySearch
 function! s:Log(eventName) abort
   let bufnr = bufnr('%')
   let bufname = bufname(bufnr)
-  let ispvw = getwinvar(winnr(), "&pvw")
+  let ispvw = getwinvar(winnr(), '&pvw')
   silent execute '!echo '.a:eventName.' '.bufnr.'-'.ispvw.' '.bufname.' >>'.$VIMHOME.'/vimlog'
 endfunction
 
@@ -649,7 +649,7 @@ augroup EventLoggin
     autocmd BufEnter    * call s:Log('BufEnter ----')
     autocmd User        * call s:Log('User --------')
     autocmd SwapExists  * call s:Log('SwapExists---')
-    "autocmd BufEnter    * call input("enter to continue ", getwinvar(winnr(), "&pvw"), 'dir')
+    "autocmd BufEnter    * call input('enter to continue ', getwinvar(winnr(), '&pvw'), 'dir')
   endif
 augroup END
 
@@ -666,7 +666,7 @@ augroup END " }
 " select read only when opening a swap file in the preview window
 augroup pvw_swp
   autocmd!
-  autocmd SwapExists * if &l:pvw | let v:swapchoice = "o" | endif
+  autocmd SwapExists * if &l:pvw | let v:swapchoice = 'o' | endif
 augroup END
 
 " enable the cursor line and relative numbering in the active window only
@@ -685,7 +685,7 @@ call airline#add_inactive_statusline_func('Render_Only_File')
 
 " close all quickfix/location windows
 func! CloseAllQfLocWins()
-  windo if &ft == "qf" | bd | endif
+  windo if &ft == 'qf' | bd | endif
   call win_gotoid(g:main_win_id)
 endfunc
 silent! map <F2> :call CloseAllQfLocWins()<CR>
@@ -708,7 +708,7 @@ func! MainWinHandler(...)
   if &modifiable
     let g:main_win_id = win_getid()
   endif
-  "echo " main=".g:main_win_id." (win=".win_getid().",mod=".&modifiable.",ft=".&ft.")"
+  "echo ' main='.g:main_win_id.' (win='.win_getid().',mod='.&modifiable.',ft='.&ft.')'
 endfunc
 
 func! MainWinTimer()
@@ -726,7 +726,7 @@ augroup END
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 func! s:NERDTreeIsOpen()
-  return exists("t:NERDTreeBufName") && (bufwinnr(t:NERDTreeBufName) != -1)
+  return exists('t:NERDTreeBufName') && (bufwinnr(t:NERDTreeBufName) != -1)
 endfunc
 
 func! s:NERDTreeSync()
@@ -735,7 +735,7 @@ func! s:NERDTreeSync()
     return
   endif
   " ignore the preview window
-  if getwinvar(winnr(), "&pvw")
+  if getwinvar(winnr(), '&pvw')
     return
   endif
   " ignore non-modifiable buffers
