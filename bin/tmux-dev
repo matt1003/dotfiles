@@ -1,37 +1,62 @@
 #!/bin/bash
 
+if [[ $(xrandr | grep -swc 'connected') -eq 1 ]]; then
+  exit
+fi
+
+if [ ! -f $HOME/.last-update ]; then
+  echo "20000101" > $HOME/.last-update
+fi
+
 #
-# terminator/tmux
+# launch terminator/tmux
 #
-if wmctrl -l | grep -q 'tmux-dev'; then
-  wmctrl -a 'tmux-dev'
-else
-  terminator -T tmux-dev -l tmux
+if ! wmctrl -l | grep -q 'tmux-dev'; then
+  echo "launching terminator/tmux"
+  terminator -T tmux-dev -l tmux &
   while true; do
     if wmctrl -l | grep -q 'tmux-dev'; then
       break;
     fi
   done
+  sleep 0.2
   wmctrl -r 'tmux-dev' -b add,below
+else
+  echo "terminator/tmux already running"
 fi
 
 #
-# firefox
+# launch firefox
 #
 if ! wmctrl -l | grep -q 'Mozilla Firefox'; then
+  echo "launching firefox"
   firefox &
+  while true; do
+    if wmctrl -l | grep -q 'Mozilla Firefox'; then
+      break;
+    fi
+  done
+  sleep 0.2
+  wmctrl -r 'Firefox' -b add,maximized_vert,maximized_horz
+else
+  echo "firefox already running"
 fi
 
 #
-# update/upgrade
+# launch update/upgrade
 #
-if [ -f $HOME/.last-update ]; then
-  last=$(cat $HOME/.last-update)
+if [ $(date +%Y%m%d) -gt $(cat $HOME/.last-update) ]; then
+  echo "launching update/upgrade"
+  terminator --geometry=1200x800 -T update -e "update --prompt-on-exit" &
+  while true; do
+    if wmctrl -l | grep -q 'update'; then
+      break;
+    fi
+  done
+  sleep 0.2
+  wmctrl -r 'update' -b add,above
 else
-  last=$(date -d 2000-01-01 +%Y%m%d)
-fi
-if [ $(date +%Y%m%d) -gt $last ]; then
-  terminator --geometry=1200x800 -T update -e "update --prompt-on-exit"
+  echo "update/upgrade already ran"
 fi
 
 #
