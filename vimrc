@@ -55,7 +55,7 @@ endif
 syntax on                    " enable syntax highlighting
 
 nnoremap <space> <nop>
-let mapleader='\<space>'     " use space bar at leader
+let g:mapleader='\<space>'     " use space bar at leader
 
 set hidden                   " allow easier switching between buffers
 set confirm                  " confirmation prompt on unsaved buffers
@@ -192,7 +192,7 @@ Plug 'lifepillar/vim-mucomplete'
 let g:mucomplete#enable_auto_at_startup = 1
 set completeopt+=menuone
 set completeopt-=preview
-if version >= 800 || has ('nvim')
+if v:version >= 800 || has ('nvim')
   set completeopt+=noinsert
 endif
 "}}}
@@ -330,7 +330,7 @@ if has('gui_running')
   set mousemodel=popup " right mouse button opens menu
 else
   set mouse=a
-  if version >= 800 || has ('nvim')
+  if v:version >= 800 || has ('nvim')
     set termguicolors
   else
     hi Normal ctermbg=None
@@ -471,27 +471,27 @@ fun! s:SetBuildSysSyntax()
 endfun
 
 fun! s:CheckForModifiedBuffers()
-  let buflist = filter(range(1, bufnr('$')), 'buflisted(v:val)')
-  let unsavbuflist = []
-  for bufnr in buflist
-    if getbufvar(bufnr, '&modified')
-      call add(unsavbuflist, bufnr)
+  let l:buflist = filter(range(1, bufnr('$')), 'buflisted(v:val)')
+  let l:unsavbuflist = []
+  for l:bufnr in l:buflist
+    if getbufvar(l:bufnr, '&modified')
+      call add(l:unsavbuflist, l:bufnr)
     endif
   endfor
-  if empty(unsavbuflist)
+  if empty(l:unsavbuflist)
     return
   endif
-  for bufnr in unsavbuflist
-    echo bufname(bufnr)
+  for l:bufnr in l:unsavbuflist
+    echo bufname(l:bufnr)
   endfor
   while 1
     echohl Question
-    let anwser = input('Modified files detected! Save all? [Y/N]: ')
+    let l:anwser = input('Modified files detected! Save all? [Y/N]: ')
     echohl None
-    if anwser == 'Y'
+    if l:anwser == 'Y'
       write all
       return
-    elseif anwser == 'N'
+    elseif l:anwser == 'N'
       return
     endif
   endwhile
@@ -510,12 +510,12 @@ fun! s:LocateBuildSysPath()
     return s:BuildSysPath
   endif
   " 2) attempt to locate the build system directory
-  let path = getcwd()
-  while path != '/'
-      if <SID>IsBuildSysPath(path.'/'.s:BuildSysDir)
-        return path.'/'.s:BuildSysDir
+  let l:path = getcwd()
+  while l:path != '/'
+      if <SID>IsBuildSysPath(l:path.'/'.s:BuildSysDir)
+        return l:path.'/'.s:BuildSysDir
     endif
-    let path = fnamemodify(path, ':h')
+    let l:path = fnamemodify(l:path, ':h')
   endwhile
   " 3) give up and use the current working directory
   echohl WarningMsg | echo 'Unable to locate buildsys path ...' | echohl None
@@ -596,19 +596,19 @@ fun! s:ExecuteGrep(GrepCmd, GrepArgs)
   exe 'silent '.a:GrepCmd.' '.s:GrepOpts.' '.s:GrepWord.' '.s:GrepPath
   redraw!
   if s:GrepShow == 'qf'
-    let total = len(getqflist())
+    let l:total = len(getqflist())
   else
-    let total = len(getloclist(0))
+    let l:total = len(getloclist(0))
   endif
-  if total == 0
+  if l:total == 0
     echohl WarningMsg
     echon 'Search for '.s:GrepWord.' returned no results.'
     echohl Normal
     return
-  elseif total == 1
+  elseif l:total == 1
     echon 'Search for '.s:GrepWord.' returned 1 result.'
   else
-    echon 'Search for '.s:GrepWord.' returned '.total.' results.'
+    echon 'Search for '.s:GrepWord.' returned '.l:total.' results.'
   endif
   if s:GrepShow == 'qf'
     botright copen 12
@@ -631,10 +631,10 @@ cabbrev ag MySearch
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 function! s:Log(eventName) abort
-  let bufnr = bufnr('%')
-  let bufname = bufname(bufnr)
-  let ispvw = getwinvar(winnr(), '&pvw')
-  silent execute '!echo '.a:eventName.' '.bufnr.'-'.ispvw.' '.bufname.' >>'.$VIMHOME.'/vimlog'
+  let l:bufnr = bufnr('%')
+  let l:bufname = bufname(l:bufnr)
+  let l:ispvw = getwinvar(winnr(), '&pvw')
+  silent execute '!echo '.a:eventName.' '.l:bufnr.'-'.l:ispvw.' '.l:bufname.' >>'.$VIMHOME.'/vimlog'
 endfunction
 
 augroup EventLoggin
