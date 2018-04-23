@@ -16,7 +16,7 @@ def print_warning(msg):
     print ("\033[93mWARNING:\033[0m %s\n" % msg)
 
 def parse_config(path):
-    config = {}
+    config = { 'user' : os.environ['USER'] }
     if os.path.isfile(path):
         for line in open (path):
             # parse server url
