@@ -139,6 +139,7 @@ let g:gruvbox_italic = 1
 Plug 'henrik/vim-indexed-search'
 let g:indexed_search_numbered_only = 1
 let g:indexed_search_dont_move = 1
+let g:indexed_search_max_lines = 500000
 "}}}
 
 " gitv {{{
@@ -147,7 +148,7 @@ let g:indexed_search_dont_move = 1
 "}}}
 
 " always highlight parentheses {{{
-Plug 'matt1003/surrparen'
+Plug 'justinmk/vim-matchparenalways', {'tag':'8fe259720a'}
 "}}}
 
 " matchmaker (highlight current word) {{{
@@ -685,6 +686,7 @@ call airline#add_inactive_statusline_func('Render_Only_File')
 " close all quickfix/location windows
 func! CloseAllQfLocWins()
   windo if &ft == "qf" | bd | endif
+  call win_gotoid(g:main_win_id)
 endfunc
 silent! map <F2> :call CloseAllQfLocWins()<CR>
 
