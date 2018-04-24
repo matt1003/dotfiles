@@ -55,7 +55,7 @@ endif
 syntax on                    " enable syntax highlighting
 
 nnoremap <space> <nop>
-let g:mapleader='\<space>'     " use space bar at leader
+let g:mapleader="\<space>"   " use space bar at leader
 
 set hidden                   " allow easier switching between buffers
 set confirm                  " confirmation prompt on unsaved buffers
