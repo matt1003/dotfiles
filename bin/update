@@ -1,11 +1,15 @@
 #!/usr/bin/env python
 
+# pylint: disable=missing-docstring
+# pylint: disable=wrong-import-order
+
 from __future__ import print_function
 
 import fcntl
 import os
 import re
 import sys
+import textwrap
 import time
 
 if os.geteuid() == 0:
@@ -20,87 +24,103 @@ if os.geteuid() == 0:
 def is_dpkg_active():
     return os.WEXITSTATUS(os.system("sudo %s" % os.path.realpath(__file__)))
 
-def exit(status):
-    if prompt_on_exit:
-        print("Press enter to continue", end='')
-        raw_input()
+def exit_with_prompt(status):
+    print("Press enter to continue", end='')
+    raw_input()
     sys.exit(status)
 
 def exe(cmd):
     if os.WEXITSTATUS(os.system(cmd)) != 0:
         print("\"%s\" completed with a non-zero exit status" % cmd)
         print("\033[91m *** FAILURE ** \033[0m")
-        exit(1)
+        exit_with_prompt(1)
 
-def parse_apt_output(output):
+def parse_apt_packages(pkg_list, action, packages):
+    for package in packages.split():
+        if package not in pkg_list[action]:
+            pkg_list[action].append(package)
+
+def parse_apt_output(pkg_list, output):
     # install packages
-    regex = re.compile('The following NEW packages will be installed:(.*?)(?=\n\w)', re.DOTALL)
+    regex = re.compile(r'The following NEW packages will be installed:(.*?)(?=\n\w)', re.DOTALL)
     for packages in re.findall(regex, output):
-        pkg_list['install'] += packages.split()
+        parse_apt_packages(pkg_list, 'install', packages)
     # upgrade packages
-    regex = re.compile('The following packages will be upgraded:(.*?)(?=\n\w)', re.DOTALL)
+    regex = re.compile(r'The following packages will be upgraded:(.*?)(?=\n\w)', re.DOTALL)
     for packages in re.findall(regex, output):
-        pkg_list['upgrade'] += packages.split()
+        parse_apt_packages(pkg_list, 'upgrade', packages)
     # remove packages
-    regex = re.compile('The following packages will be REMOVED:(.*?)(?=\n\w)', re.DOTALL)
+    regex = re.compile(r'The following packages will be REMOVED:(.*?)(?=\n\w)', re.DOTALL)
     for packages in re.findall(regex, output):
-        pkg_list['remove'] += packages.split()
+        parse_apt_packages(pkg_list, 'remove', packages)
+    regex = re.compile(r'The following packages .* are no longer required:(.*?)(?=\n\w)', re.DOTALL)
+    for packages in re.findall(regex, output):
+        parse_apt_packages(pkg_list, 'remove', packages)
 
-def print_apt_packages():
+def format_packages(packages):
+    textwrapper = textwrap.TextWrapper(150, subsequent_indent='  ', break_on_hyphens=False)
+    return '\n'.join(textwrapper.wrap(' '.join(packages)))
+
+def print_apt_packages(pkg_list):
     # install packages
     if pkg_list['install']:
-        print("The following packages will be installed:")
-        print("\033[92m  %s\033[0m" % ' '.join(pkg_list['install']))
+        print("The following %d packages will be installed:" % len(pkg_list['install']))
+        print("\033[92m  %s\033[0m" % format_packages(pkg_list['install']))
     # upgrade packages
     if pkg_list['upgrade']:
-        print("The following packages will be upgraded:")
-        print("\033[93m  %s\033[0m" % ' '.join(pkg_list['upgrade']))
+        print("The following %d packages will be upgraded:" % len(pkg_list['upgrade']))
+        print("\033[93m  %s\033[0m" % format_packages(pkg_list['upgrade']))
     # remove packages
     if pkg_list['remove']:
-        print("The following packages will be removed:")
-        print("\033[91m  %s\033[0m" % ' '.join(pkg_list['remove']))
+        print("The following %d packages will be removed:" % len(pkg_list['remove']))
+        print("\033[91m  %s\033[0m" % format_packages(pkg_list['remove']))
 
-pkg_list = {'install':[],'upgrade':[],'remove':[]}
-prompt_on_exit = False
+def main(argv):
+    pkg_list = {'install':[], 'upgrade':[], 'remove':[]}
+    use_input_file = ''
 
-for arg in sys.argv[1:]:
-    if arg == "--prompt-on-exit":
-        prompt_on_exit = True
+    for arg in argv:
+        use_input_file = arg
 
-while is_dpkg_active():
-    print("waiting for apt lock")
-    time.sleep(1)
+    while is_dpkg_active():
+        print("waiting for apt lock")
+        time.sleep(1)
 
-exe("sudo apt-get update")
+    if use_input_file:
+        with open(use_input_file, 'r') as input_file:
+            parse_apt_output(pkg_list, input_file.read())
+    else:
+        exe("sudo apt-get update")
+        parse_apt_output(pkg_list, os.popen("apt-get --dry-run dist-upgrade").read())
+        parse_apt_output(pkg_list, os.popen("apt-get --dry-run auto-remove").read())
 
-parse_apt_output(os.popen("apt-get --dry-run dist-upgrade").read())
-parse_apt_output(os.popen("apt-get --dry-run auto-remove").read())
+    if pkg_list['install'] or pkg_list['upgrade'] or pkg_list['remove']:
 
-if pkg_list['install'] or pkg_list['upgrade'] or pkg_list['remove']:
+        print_apt_packages(pkg_list)
 
-    print_apt_packages()
+        print("Do you want to continue? ", end='')
+        try:
+            anwser = raw_input().lower()
+        except KeyboardInterrupt:
+            print("\n * OPERATION CANCELLED *")
+            exit_with_prompt(1)
 
-    print("Do you want to continue? ", end='')
-    try:
-        anwser = raw_input().lower()
-    except:
-        print("\n * OPERATION CANCELLED *")
-        exit(1)
+        if anwser != 'yes' and anwser != 'yeah':
+            print(" * OPERATION CANCELLED *")
+            exit_with_prompt(1)
 
-    if anwser != 'yes' and anwser != 'yeah':
-        print(" * OPERATION CANCELLED *")
-        exit(1)
+        if pkg_list['install'] or pkg_list['upgrade']:
+            exe("sudo apt-get dist-upgrade --assume-yes")
 
-    if pkg_list['install'] or pkg_list['upgrade']:
-        exe("sudo apt-get dist-upgrade --assume-yes")
+        if pkg_list['remove']:
+            exe("sudo apt-get auto-remove --assume-yes")
 
-    if pkg_list['remove']:
-        exe("sudo apt-get auto-remove --assume-yes")
+    else:
+        print("No packages need to be installed/upgraded/removed.")
 
-else:
-     print("No packages need to be installed/upgraded/removed.")
+    os.system("date +%Y%m%d > $HOME/.last-update")
+    print("\033[92m *** COMPLETE *** \033[0m")
+    exit_with_prompt(0)
 
-os.system("date +%Y%m%d > $HOME/.last-update")
-print("\033[92m *** COMPLETE *** \033[0m")
-exit(0)
-
+if __name__ == "__main__":
+    main(sys.argv[1:])

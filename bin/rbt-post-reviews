@@ -1,22 +1,20 @@
 #!/usr/bin/env python
 
+# pylint: disable=missing-docstring
+# pylint: disable=wrong-import-order
+
 from __future__ import print_function
 from rbtools.api.client import RBClient
+from rbtools.api.errors import APIError
+from rbtools.api.errors import ServerInterfaceError
 
 import git
 import os
 import re
 import sys
 
-id_list = []
-commit_list = []
-review_list = []
-
-publish = False
-dryrun = False
-help = False
-
-help_string  = """
+def help_string():
+    return """
 usage: %s [--dry-run|-d ][--publish|-p] <commit-range>
 
 Extends the "rbt post" functionality as follows:
@@ -41,7 +39,6 @@ Arguments:
                  If no commit-range is specified, the current commit will be used.
 """ % os.path.basename(__file__)
 
-
 def print_error(msg):
     print("\033[91mERROR:\033[0m %s\n" % msg)
 
@@ -51,9 +48,9 @@ def print_warning(msg):
 def parse_config(path):
     config = {}
     if os.path.isfile(path):
-        for line in open (path):
+        for line in open(path):
             # parse server url
-            match = re.match('REVIEWBOARD_URL\s*=\s*"(.*)"', line)
+            match = re.match(r'REVIEWBOARD_URL\s*=\s*"(.*)"', line)
             if match:
                 config['url'] = match.group(1)
     return config
@@ -61,38 +58,38 @@ def parse_config(path):
 def get_git(path):
     try:
         return git.Git(git.Repo(path).git_dir)
-    except:
+    except git.InvalidGitRepositoryError:
         print_error("must be executed from inside a git repository")
         sys.exit(1)
 
-def get_git_commit_ids(args):
+def get_git_commit_ids(repo, args):
     try:
         commit_ids = []
         for arg in args.split(','):
-            if re.match("^[0-9a-f]{10,40}$", arg):
+            if re.match(r'^[0-9a-f]{10,40}$', arg):
                 # look for a single commit
-                commit_ids += g.show(arg, "--no-patch", "--pretty=%H").split("\n")
+                commit_ids += repo.show(arg, "--no-patch", "--pretty=%H").split("\n")
             else:
                 # look for a range of commits
-                commit_ids += g.log(arg, "--pretty=%H").split("\n")
+                commit_ids += repo.log(arg, "--pretty=%H").split("\n")
         return commit_ids
-    except:
+    except git.GitCommandError:
         print_error("unable to locate commits \"%s\"" % arg)
         sys.exit(1)
 
 def get_existing_reviews(config):
     try:
-        args = {'from_user':os.environ['USER'],'status':'pending','max_results':100}
+        args = {'from_user':os.environ['USER'], 'status':'pending', 'max_results':100}
         root = RBClient(config['url']).get_root()
         return root.get_review_requests(**args)
-    except:
+    except (APIError, ServerInterfaceError):
         print_error("unable to connect to ReviewBoard server")
         sys.exit(1)
 
-def get_commit_details(commit):
-    commit['author'] = g.show(id, "--no-patch", "--pretty=%an")
-    commit['summary'] = g.show(id, "--no-patch", "--pretty=%s")
-    commit['description'] = g.show(id, "--no-patch", "--pretty=%b")
+def get_commit_details(repo, commit):
+    commit['author'] = repo.show(commit['id'], "--no-patch", "--pretty=%an")
+    commit['summary'] = repo.show(commit['id'], "--no-patch", "--pretty=%s")
+    commit['description'] = repo.show(commit['id'], "--no-patch", "--pretty=%b")
 
 def get_commit_reviewers(commit):
     commit['reviewers'] = []
@@ -100,18 +97,21 @@ def get_commit_reviewers(commit):
         username = (reviewer[0]+reviewer.split(' ')[1]).lower()
         commit['reviewers'].append(username)
 
-def get_commit_review_id(commit):
+def get_commit_review_id(review_list, commit):
     commit['review_id'] = ''
     for review in review_list:
         if review.summary == commit['summary']:
             commit['review_id'] = review.id
 
-def get_commit(id):
-    commit = { 'id' : id }
-    get_commit_details(commit)
-    get_commit_reviewers(commit)
-    get_commit_review_id(commit)
-    return commit
+def get_pending_commits(repo, review_list, id_list):
+    commit_list = []
+    for commit_id in id_list:
+        commit = {'id' : commit_id}
+        get_commit_details(repo, commit)
+        get_commit_reviewers(commit)
+        get_commit_review_id(review_list, commit)
+        commit_list.append(commit)
+    return commit_list
 
 def print_commit(commit):
     commit_id = commit['id']
@@ -123,79 +123,83 @@ def print_commit(commit):
         action = "\033[93mcreate new\033[0m"
     print("%s: %s - %s - %s" % (action.ljust(20), commit_id[:10], author, summary))
 
-g = get_git('./')
-
-for arg in sys.argv[1:]:
-    if re.match("^[0-9a-f]{10,40}(?:,[0-9a-f]{10,40})*$", arg):
-        id_list += get_git_commit_ids(arg)
-        continue
-    if re.match("^[0-9a-f]{10,40}\^{0,1}\.{2,3}(?:[0-9a-f]{10,40})?$", arg):
-        id_list += get_git_commit_ids(arg)
-        continue
-    if re.match("^HEAD~[0-9]+$", arg):
-        id_list += get_git_commit_ids("-%s" % arg.split('~')[1])
-        continue
-    if re.match("^-{1,2}p(?:u(?:b(?:l(?:i(?:s(?:h)?)?)?)?)?)?$", arg):
-        publish = True
-        continue
-    if re.match("^-{1,2}d(?:r(?:y(?:-(?:r(?:u(?:n)?)?)?)?)?)?$", arg):
-        dryrun = True
-        continue
-    if re.match("^-{1,2}h(?:e(?:l(?:p?)?)?)?$", arg):
-        help = True
-        continue
-    print_error("invalid argument \"%s\"" % arg)
-    sys.exit(1)
-
-if help:
-    print(help_string)
-    sys.exit(1)
-
-if not id_list:
-    id_list = get_git_commit_ids("-1")
-
-config = parse_config("/home/mbright/.reviewboardrc")
-
-review_list = get_existing_reviews(config)
-
-for id in id_list:
-    commit_list.append(get_commit(id))
-
-for commit in reversed(commit_list):
-    print_commit(commit)
-
-print("\033[94mPost %s commits to review board?\033[0m " % len(commit_list), end='')
-if dryrun:
-    print("\033[94m(dry-run)\033[0m ", end='')
-
-try:
-    anwser = raw_input().lower()
-except:
-    print("\n * OPERATION CANCELLED *")
-    sys.exit(1)
-
-if anwser != 'yes' and anwser != 'yeah':
-    print(" * OPERATION CANCELLED *")
-    sys.exit(1)
-
-for commit in reversed(commit_list):
-
+def post_commit(commit, dryrun, publish):
     cmd = "pbt post"
-
     if publish:
         cmd += " --publish"
-
     if commit['reviewers']:
         cmd += " --target-people=%s" % ",".join(commit['reviewers'])
-
     if commit['review_id']:
         cmd += " --review-request-id %s" % commit['review_id']
-
     if commit['id']:
         cmd += " %s" % commit['id']
-
     if dryrun:
         print(cmd)
     else:
         os.system(cmd)
+
+def parse_args(repo, argv):
+    dryrun = False
+    publish = False
+    id_list = []
+
+    for arg in argv:
+        if re.match(r"^[0-9a-f]{10,40}(?:,[0-9a-f]{10,40})*$", arg):
+            id_list += get_git_commit_ids(repo, arg)
+            continue
+        if re.match(r"^[0-9a-f]{10,40}\^{0,1}\.{2,3}(?:[0-9a-f]{10,40})?$", arg):
+            id_list += get_git_commit_ids(repo, arg)
+            continue
+        if re.match(r"^HEAD~[0-9]+$", arg):
+            id_list += get_git_commit_ids(repo, "-%s" % arg.split('~')[1])
+            continue
+        if re.match(r"^-{1,2}d(?:r(?:y(?:-(?:r(?:u(?:n)?)?)?)?)?)?$", arg):
+            dryrun = True
+            continue
+        if re.match(r"^-{1,2}p(?:u(?:b(?:l(?:i(?:s(?:h)?)?)?)?)?)?$", arg):
+            publish = True
+            continue
+        if re.match(r"^-{1,2}h(?:e(?:l(?:p?)?)?)?$", arg):
+            print(help_string())
+            sys.exit(1)
+        print_error("invalid argument \"%s\"" % arg)
+        sys.exit(1)
+
+    if not id_list:
+        id_list = get_git_commit_ids(repo, "-1")
+
+    return [dryrun, publish, id_list]
+
+def main(argv):
+
+    repo = get_git('./')
+
+    dryrun, publish, id_list = parse_args(repo, argv)
+
+    config = parse_config("/home/mbright/.reviewboardrc")
+
+    review_list = get_existing_reviews(config)
+
+    commit_list = get_pending_commits(repo, review_list, id_list)
+
+    for commit in reversed(commit_list):
+        print_commit(commit)
+
+    print("\033[94mPost %s commits to review board?\033[0m " % len(commit_list), end='')
+
+    try:
+        anwser = raw_input().lower()
+    except KeyboardInterrupt:
+        print("\n * OPERATION CANCELLED *")
+        sys.exit(1)
+
+    if anwser != 'yes' and anwser != 'yeah':
+        print(" * OPERATION CANCELLED *")
+        sys.exit(1)
+
+    for commit in reversed(commit_list):
+        post_commit(commit, dryrun, publish)
+
+if __name__ == '__main__':
+    main(sys.argv[1:])
 

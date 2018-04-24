@@ -1,7 +1,12 @@
 #!/usr/bin/env python
 
+# pylint: disable=missing-docstring
+# pylint: disable=wrong-import-order
+
 from __future__ import print_function
 from rbtools.api.client import RBClient
+from rbtools.api.errors import APIError
+from rbtools.api.errors import ServerInterfaceError
 
 import datetime
 import optparse
@@ -16,25 +21,25 @@ def print_warning(msg):
     print ("\033[93mWARNING:\033[0m %s\n" % msg)
 
 def parse_config(path):
-    config = { 'user' : os.environ['USER'] }
+    config = {'user' : os.environ['USER']}
     if os.path.isfile(path):
-        for line in open (path):
+        for line in open(path):
             # parse server url
-            match = re.match('REVIEWBOARD_URL\s*=\s*"(.*)"', line)
+            match = re.match(r'REVIEWBOARD_URL\s*=\s*"(.*)"', line)
             if match:
                 config['url'] = match.group(1)
             # parse username
-            match = re.match('USERNAME\s*=\s*"(.*)"', line)
+            match = re.match(r'USERNAME\s*=\s*"(.*)"', line)
             if match:
                 config['user'] = match.group(1)
             # parse password
-            match = re.match('PASSWORD\s*=\s*"(.*)"', line)
+            match = re.match(r'PASSWORD\s*=\s*"(.*)"', line)
             if match:
                 config['pwrd'] = match.group(1)
     return config
 
-def parse_time_string(ts):
-    return datetime.datetime.strptime(ts, "%Y-%m-%dT%H:%M:%SZ")
+def parse_time_string(timestring):
+    return datetime.datetime.strptime(timestring, "%Y-%m-%dT%H:%M:%SZ")
 
 def get_latest_diff_for_review(review):
     diffs = review.get_diffs()
@@ -45,9 +50,9 @@ def get_latest_diff_for_review(review):
     return None
 
 def update_progress(current, total):
-    barLength = 40 # progress bar length
-    block = int(round(barLength*(float(current)/float(total))))
-    text = "\rProgress: [{0}] {1}/{2}".format( "#"*block + "-"*(barLength-block), current, total)
+    length = 40 # progress bar length
+    block = int(round(length*(float(current)/float(total))))
+    text = "\rProgress: [{0}] {1}/{2}".format("#"*block + "-"*(length-block), current, total)
     sys.stdout.write(text)
     sys.stdout.flush()
 
@@ -55,28 +60,80 @@ def clear_progress():
     sys.stdout.write('\x1b[2K\r')
     sys.stdout.flush()
 
-def display_current_reviews(url, user, pwrd, max, cmd):
-    count=0 ; total=0
+def parse_comment(comment, diff_time, ship_it):
+    try:
+        reviewer = comment.get_user().username
+    except APIError:
+        # skipping invalid username
+        return
+    if comment.public is False:
+        # skipping non-public comment
+        return
+    if reviewer not in ship_it:
+        # skipping ship it from user
+        return
+    if parse_time_string(comment.timestamp) <= diff_time:
+        # skipping ship it from old diff
+        return
+    if comment.ship_it:
+        ship_it[reviewer] = 'shipit'
+    else:
+        ship_it[reviewer] = 'comment'
+
+def parse_review(review):
+    # grab the listed reviewers
+    ship_it = {}
+    for person in review.target_people:
+        ship_it[person.title] = 'none'
+
+    # get the latest diff for the review
+    diff = get_latest_diff_for_review(review)
+    if diff:
+        diff_time = parse_time_string(diff.timestamp)
+    else:
+        diff_time = parse_time_string("2000-01-01T00:00:00Z")
+
+    # check each review comment for a "ship it"
+    for comment in review.get_reviews():
+        parse_comment(comment, diff_time, ship_it)
+
+    submitter = review.get_submitter().username
+    return [review.id, review.summary, ship_it, submitter]
+
+def print_review(review_attributes, url):
+    review_id, summary, ship_it, submitter = review_attributes
+    review_url = "%s/r/%s" % (url.strip('/'), review_id)
+    print ("%s - %s - %s - ship it:" % (review_url, submitter, summary), end='')
+    for reviewer in sorted(ship_it.iterkeys()):
+        if ship_it[reviewer] == 'comment':
+            color = " \033[91m"
+        elif ship_it[reviewer] == 'shipit':
+            color = " \033[92m"
+        else:
+            color = " \033[93m"
+        print (" %s%s\033[0m" % (color, reviewer), end='')
+    print ('\r')
+
+def display_current_reviews(url, username, password, maximum, cmd):
+    count = 0
+    total = 0
 
     # get all open reviews for the user
-    args = {}
-    args[cmd] = user
-    args['status'] = 'pending'
-    args['max_results'] = max
+    args = {cmd : username, 'status' : 'pending', 'max_results' : maximum}
 
     # connect to reviewboard
     try:
-        client = RBClient(url, username=user, password=pwrd)
+        client = RBClient(url, username=username, password=password)
         root = client.get_root()
-    except:
+    except ServerInterfaceError:
         print_error("Unable to connect to \"%s\", please ensure url is correct." % url)
         sys.exit(2)
 
     # download the reviews
     try:
         review_list = root.get_review_requests(**args)
-    except:
-        print_error("Unable to locate \"%s\", please ensure username is correct." % user)
+    except APIError:
+        print_error("Unable to locate \"%s\", please ensure username is correct." % username)
         sys.exit(2)
 
     # check how many we have
@@ -84,68 +141,23 @@ def display_current_reviews(url, user, pwrd, max, cmd):
     if total == 0:
         print ("(none)\n")
         return
-    if total > max:
-        print_warning("Found %d open reviews, but will only process max %d. Use --max to change this." % (total, max))
-        total = max
+    if total > maximum:
+        print_warning("Found %d open reviews, but will only process max %d."
+                      % (total, maximum) + " Use --max to change this.")
+        total = maximum
 
     # process each review
     processed_reviews = {}
     for review in review_list:
-        count+=1; update_progress (count, total)
-
-        # grab the listed reviewers
-        ship_it = {}
-        for person in review.target_people:
-            ship_it[person.title] = 'none'
-
-        # get the latest diff for the review
-        diff = get_latest_diff_for_review(review)
-        if diff:
-            diff_time = parse_time_string(diff.timestamp)
-        else:
-            diff_time = parse_time_string("2000-01-01T00:00:00Z")
-
-        # check each review comment for a "ship it"
-        for comment in review.get_reviews():
-            try:
-                reviewer = comment.get_user().username
-            except:
-                # print ("skipping invalid username")
-                continue
-            if comment.public is False:
-                #print ("skipping non-public comment")
-                continue
-            if reviewer not in ship_it:
-                #print ("skipping ship it from user")
-                continue
-            if parse_time_string(comment.timestamp) <= diff_time:
-                #print ("skipping ship it from old diff")
-                continue
-            if comment.ship_it:
-                ship_it[reviewer] = 'shipit'
-            else:
-                ship_it[reviewer] = 'comment'
-
-        submitter = review.get_submitter().username
-        processed_reviews[review.id] = [review.summary, ship_it, submitter]
+        count += 1
+        update_progress(count, total)
+        processed_reviews[review.id] = parse_review(review)
 
     clear_progress()
 
     # print out the results
-    for id in sorted(processed_reviews.iterkeys(), reverse=True):
-        summary = processed_reviews[id][0]
-        ship_it = processed_reviews[id][1]
-        submitter = processed_reviews[id][2]
-        print ("%s/r/%s - %s - %s - ship it:" % (url.strip('/'), id, submitter, summary), end='')
-        for reviewer in sorted(ship_it.iterkeys()):
-            if ship_it[reviewer] == 'comment':
-                color = " \033[91m"
-            elif ship_it[reviewer] == 'shipit':
-                color = " \033[92m"
-            else:
-                color = " \033[93m"
-            print (" %s%s\033[0m" % (color, reviewer), end='')
-        print ('\r')
+    for review_id in sorted(processed_reviews.iterkeys(), reverse=True):
+        print_review(processed_reviews[review_id], url)
 
     # print out the total count
     if total != review_list.total_results:
@@ -154,7 +166,7 @@ def display_current_reviews(url, user, pwrd, max, cmd):
         warn = ''
     print ("total number of open reviews is %d%s\n" % (review_list.total_results, warn))
 
-if __name__ == '__main__':
+def main():
 
     config = parse_config("/home/mbright/.reviewboardrc")
 
@@ -168,13 +180,13 @@ if __name__ == '__main__':
                       default=config.get('pwrd'), help='reviewboard password')
     parser.add_option('-m', '--max', dest='max', action="store", type="int",
                       default=15, help='the maximum number of reviews to display')
-    options, args = parser.parse_args()
+    options = parser.parse_args()[0]
 
     if not options.url:
-        print_error("You must specify the reviewboard server url (-s|--server) to find reviews from.")
+        print_error("You must specify the reviewboard server url (-s|--server).")
         sys.exit(1)
     if not options.user:
-        print_error("You must specify the reviewboard username (-u|--username) to find reviews for.")
+        print_error("You must specify the reviewboard username (-u|--username).")
         sys.exit(1)
 
     print ("*** My Review Requests ***\n")
@@ -182,4 +194,7 @@ if __name__ == '__main__':
 
     print ("*** Other Review Requests ***\n")
     display_current_reviews(options.url, options.user, options.pwrd, options.max, 'to_users')
+
+if __name__ == '__main__':
+    main()
 
