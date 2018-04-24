@@ -107,6 +107,15 @@ endif
 
 call plug#begin()
 
+" automatic syntax checking {{{
+Plug 'w0rp/ale'
+let g:ale_set_loclist = 0
+let g:ale_set_quickfix = 1
+let g:ale_set_highlights = 0
+let g:ale_sign_error = '✘'
+let g:ale_sign_warning = '✘'
+"}}}
+
 " powerline-fonts {{{
 Plug 'powerline/fonts', { 'do' : './install.sh' }
 "}}}
