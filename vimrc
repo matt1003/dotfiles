@@ -356,7 +356,7 @@ augroup FileSpecificSettings
   " git commit message
   autocmd FileType gitcommit setlocal colorcolumn=73
   " source code files
-  autocmd FileType c,cpp,dts,kconfig,javascript,lua,make,python,sh,vim,vhdl,xml setlocal list colorcolumn=81
+  autocmd FileType c,cpp,dts,kconfig,javascript,lua,make,python,sh,vim,vhdl,xml setlocal list colorcolumn=81,101,121
   " quickfix buffer
   autocmd FileType qf,tagbar,nerdtree,help setlocal nospell norelativenumber
 augroup END
