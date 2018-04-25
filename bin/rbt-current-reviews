@@ -97,8 +97,9 @@ def parse_review(review):
     for comment in review.get_reviews():
         parse_comment(comment, diff_time, ship_it)
 
+    summary = review.summary.strip()
     submitter = review.get_submitter().username
-    return [review.id, review.summary, ship_it, submitter]
+    return [review.id, summary, ship_it, submitter]
 
 def print_review(review_attributes, url):
     review_id, summary, ship_it, submitter = review_attributes
