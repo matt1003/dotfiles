@@ -658,10 +658,12 @@ augroup END
 
 " override airline status line to print straight lines when inactive
 set fillchars+=vert:│,stlnc:─
-function! Render_Only_File(...)
-  return 1   " modify the statusline with the current contents of the builder
+function! RenderNoStatusLine(...)
+  return 1
 endfunction
-call airline#add_inactive_statusline_func('Render_Only_File')
+if isdirectory($VIMHOME.'/plugged/vim-airline')
+  call airline#add_inactive_statusline_func('RenderNoStatusLine')
+endif
 
 " close all quickfix/location windows
 func! CloseAllQfLocWins()
