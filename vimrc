@@ -97,8 +97,11 @@ endtry
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 if !filereadable($VIMHOME.'/autoload/plug.vim')
-  silent !wget -O '$VIMHOME/autoload/plug.vim'
-    \ 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
+  silent !wget -O "$VIMHOME/autoload/plug.vim"
+    \ "https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim"
+endif
+
+if !isdirectory($VIMHOME.'/plugged')
   augroup InstallPlugins
     autocmd!
     autocmd VimEnter * nested PlugInstall --sync | source $MYVIMRC
@@ -107,128 +110,7 @@ endif
 
 call plug#begin()
 
-" automatic syntax checking {{{
-Plug 'w0rp/ale'
-let g:ale_set_loclist = 0
-let g:ale_set_quickfix = 1
-let g:ale_set_highlights = 0
-let g:ale_sign_error = '✘'
-let g:ale_sign_warning = '✘'
-"}}}
-
-" powerline-fonts {{{
-Plug 'powerline/fonts', { 'do' : './install.sh' }
-"}}}
-
-" cscope {{{
- if executable('cscope')
-  "Plug 'vim-scripts/cscope.vim'
-  Plug 'matt1003/cscope.vim'
-  let g:cscope_no_jump = 1
-endif
-"}}}
-
-" quickr-preview {{{
-"Plug 'ronakg/quickr-preview.vim'
-Plug 'matt1003/quickr-preview.vim'
-let g:quickr_preview_on_cursor = 0
-let g:quickr_preview_sign_enable = 0
-"}}}
-
-" gruvbox {{{
-"Plug 'morhetz/gruvbox'
-Plug 'matt1003/gruvbox'
-let g:gruvbox_contrast_dark = 'hard'
-let g:gruvbox_number_column = 'bgN'
-let g:gruvbox_sign_column = 'bgN'
-let g:gruvbox_italic = 1
-"}}}
-
-"Plug 'vim-scripts/fontsize' this doesn't work with quickr-preview, as they
-"have overlapping key bindings.
-
-" indexed-search {{{
-Plug 'henrik/vim-indexed-search'
-let g:indexed_search_numbered_only = 1
-let g:indexed_search_dont_move = 1
-let g:indexed_search_max_lines = 500000
-"}}}
-
-" gitv {{{
-"Plug 'gregsexton/gitv'
-"let g:Gitv_OpenHorizontal=1
-"}}}
-
-" always highlight parentheses {{{
-Plug 'justinmk/vim-matchparenalways', {'tag':'8fe259720a'}
-"}}}
-
-" matchmaker (highlight current word) {{{
-Plug 'qstrahl/vim-matchmaker'
-let g:matchmaker_enable_startup = 1
-let g:matchmaker_matchpriority = -1
-augroup MatchMakerColor
-  autocmd!
-  autocmd ColorScheme * highlight MatchMaker ctermbg=241 guibg=#665c54
-augroup END
-"}}}
-
-"Plug 'terryma/vim-expand-region'
-"Plug 'jiangmiao/auto-pairs'            " insert brackets/quotes in pairs
-"Plug 'bronson/vim-visual-star-search'  " search visual mode selection
-
-" better whitespace (highlight trailing whitespace) {{{
-"Plug 'ntpeters/vim-better-whitespace'
-Plug 'matt1003/vim-better-whitespace'
-let g:match_spaces_that_precede_tabs = 1
-"}}}
-
-" syntax-extra (improved c syntax highlighting) {{{
-Plug 'justinmk/vim-syntax-extra'
-"}}}
-
-" ifdef-highlighting (highlighting of c #ifdef blocks) {{{
-Plug 'vim-scripts/ifdef-highlighting'
-"}}}
-
-" replace with register (delete and paste) {{{
-Plug 'vim-scripts/ReplaceWithRegister'
-"}}}
-
-" sleuth (auto detect file indentation) {{{
-Plug 'tpope/vim-sleuth'
-"}}}
-
-" mucomplete (insert mode auto completion) {{{
-Plug 'lifepillar/vim-mucomplete'
-let g:mucomplete#enable_auto_at_startup = 1
-set completeopt+=menuone
-set completeopt-=preview
-if v:version >= 800 || has ('nvim')
-  set completeopt+=noinsert
-endif
-"}}}
-
-" dispatch {{{
-Plug 'tpope/vim-dispatch'
-"}}}
-
-" surround {{{
-Plug 'tpope/vim-surround'
-"}}}
-
-" capslock {{{
-Plug 'tpope/vim-capslock'
-imap <c-c> <Plug>CapsLockToggle
-"}}}
-
-" buffexplorer {{{
-Plug 'vim-scripts/bufexplorer.zip'
-nmap <silent> <leader>bl :call win_gotoid(g:main_win_id)<CR>:BufExplorer<CR>
-nmap <silent> <c-u> :BufExplorer<CR>
-"}}}
-
-" airline {{{
+" airline -------------------(status line) {{{
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 Plug 'edkolev/tmuxline.vim'
@@ -237,7 +119,44 @@ let g:airline#extensions#tabline#enabled = 1
 let g:airline#extensions#tmuxline#enabled = 0
 let g:airline#extensions#tabline#fnamemod = ':t'
 "}}}
+" ale -----------------------(automatic linting engine) {{{
+Plug 'w0rp/ale'
+let g:ale_set_loclist = 0
+let g:ale_set_quickfix = 1
+let g:ale_set_highlights = 0
+let g:ale_sign_error = '✘'
+let g:ale_sign_warning = '✘'
+"}}}
+" better whitespace ---------(highlight trailing whitespace) {{{
+Plug 'ntpeters/vim-better-whitespace'
+let g:show_spaces_that_precede_tabs = 1
 
+"}}}
+" bufexplorer ---------------(improved interface for switching buffers) {{{
+Plug 'vim-scripts/bufexplorer.zip'
+nmap <silent> <leader>bl :call win_gotoid(g:main_win_id)<CR>:BufExplorer<CR>
+nmap <silent> <c-u> :BufExplorer<CR>
+"}}}
+" bufkill -------------------(delete buffer without messing up splits) {{{
+Plug 'qpkorr/vim-bufkill'
+"}}}
+" caps lock -----------------(simulate caps lock key) {{{
+Plug 'tpope/vim-capslock'
+imap <c-c> <Plug>CapsLockToggle
+"}}}
+" cscope {{{
+ if executable('cscope')
+  "Plug 'vim-scripts/cscope.vim'
+  Plug 'matt1003/cscope.vim'
+  let g:cscope_no_jump = 1
+endif
+"}}}
+" dispatch {{{
+Plug 'tpope/vim-dispatch'
+"}}}
+" fugitive {{{
+Plug 'tpope/vim-fugitive'
+"}}}
 " gitgutter {{{
 Plug 'airblade/vim-gitgutter'
 set signcolumn=yes
@@ -255,15 +174,98 @@ augroup SignColumnEnable
   autocmd FileType help,tagbar,nerdtree,qf setlocal signcolumn=no
 augroup END
 "}}}
-
-" fugitive {{{
-Plug 'tpope/vim-fugitive'
+" gruvbox {{{
+"Plug 'morhetz/gruvbox'
+Plug 'matt1003/gruvbox'
+let g:gruvbox_contrast_dark = 'hard'
+let g:gruvbox_number_column = 'bgN'
+let g:gruvbox_sign_column = 'bgN'
+let g:gruvbox_italic = 1
 "}}}
-
+" hardtime {{{
+Plug 'takac/vim-hardtime'
+let g:hardtime_default_on = 0
+let g:hardtime_allow_different_key = 1
+let g:hardtime_maxcount = 3
+let g:list_of_normal_keys = ['h', 'l', 'x']
+let g:list_of_visual_keys = ['h', 'l', 'x']
+let g:list_of_insert_keys = []
+let g:list_of_disabled_keys = ['<UP>', '<DOWN>', '<LEFT>', '<RIGHT>']
+"}}}
+" ifdef highlighting --------(highlighting of c #ifdef blocks) {{{
+Plug 'vim-scripts/ifdef-highlighting'
+"}}}
+" indexed search ------------(count current search results) {{{
+Plug 'henrik/vim-indexed-search'
+let g:indexed_search_numbered_only = 1
+let g:indexed_search_dont_move = 1
+let g:indexed_search_max_lines = 500000
+"}}}
+" match maker ---------------(highlight current word) {{{
+"
+Plug 'qstrahl/vim-matchmaker'
+let g:matchmaker_enable_startup = 1
+let g:matchmaker_matchpriority = -1
+augroup MatchMakerColor
+  autocmd!
+  autocmd ColorScheme * highlight MatchMaker ctermbg=241 guibg=#665c54
+augroup END
+"}}}
+" match parentheses always --(highlight matching parentheses) {{{
+Plug 'justinmk/vim-matchparenalways', {'tag':'8fe259720a'}
+"}}}
+" mucomplete ----------------(insert mode auto completion) {{{
+Plug 'lifepillar/vim-mucomplete'
+let g:mucomplete#enable_auto_at_startup = 1
+set completeopt+=menuone
+set completeopt-=preview
+if v:version >= 800 || has ('nvim')
+  set completeopt+=noinsert
+endif
+"}}}
+" multiple search -----------(highlight search results in different colors) {{{
+Plug 'vim-scripts/MultipleSearch'
+silent! map <F5> :call MultipleSearch#MultipleSearch(bufnr('%'), expand('<cword>'))<CR>
+silent! map <F6> :SearchReset<CR>
+"}}}
+" nerdtree {{{
+Plug 'scrooloose/nerdtree'
+let g:NERDTreeWinSize = 40
+let g:NERDTreeMinimalUI = 1
+"}}}
+" powerline fonts {{{
+Plug 'powerline/fonts', { 'do' : './install.sh' }
+"}}}
+" quickr-preview {{{
+"Plug 'ronakg/quickr-preview.vim'
+Plug 'matt1003/quickr-preview.vim'
+let g:quickr_preview_on_cursor = 0
+let g:quickr_preview_sign_enable = 0
+"}}}
+" replace with register -----(delete and paste) {{{
+Plug 'vim-scripts/ReplaceWithRegister'
+"}}}
+" sleuth --------------------(auto detect file indentation) {{{
+Plug 'tpope/vim-sleuth'
+"}}}
+" surround {{{
+Plug 'tpope/vim-surround'
+"}}}
+" syntax-extra --------------(improved c syntax highlighting) {{{
+Plug 'justinmk/vim-syntax-extra'
+"}}}
+" tagbar {{{
+Plug 'majutsushi/tagbar'
+let g:tagbar_compact = 1
+let g:tagbar_indent = 1
+let g:tagbar_silent = 1
+"}}}
+" tmux-navigator {{{
+Plug 'christoomey/vim-tmux-navigator'
+"}}}
 " undotree {{{
 Plug 'mbbill/undotree'
 "}}}
-
 " yankring {{{
 Plug 'vim-scripts/YankRing.vim'
 let g:yankring_history_dir = $VIMHOME
@@ -276,42 +278,6 @@ nmap <leader>yr :YRShow<CR>
 nmap <leader>ys :YRSearch<CR>
 nmap <silent> <c-y> :YRShow<CR>
 "}}}
-
-" nerdtree {{{
-Plug 'scrooloose/nerdtree'
-let g:NERDTreeWinSize = 40
-let g:NERDTreeMinimalUI = 1
-"}}}
-
-" tagbar {{{
-Plug 'majutsushi/tagbar'
-let g:tagbar_compact = 1
-let g:tagbar_indent = 1
-let g:tagbar_silent = 1
-"}}}
-
-" hardtime {{{
-Plug 'takac/vim-hardtime'
-let g:hardtime_default_on = 0
-let g:hardtime_allow_different_key = 1
-let g:hardtime_maxcount = 3
-let g:list_of_normal_keys = ['h', 'l', 'x']
-let g:list_of_visual_keys = ['h', 'l', 'x']
-let g:list_of_insert_keys = []
-let g:list_of_disabled_keys = ['<UP>', '<DOWN>', '<LEFT>', '<RIGHT>']
-"}}}
-
-" tmux-navigator {{{
-Plug 'christoomey/vim-tmux-navigator'
-"}}}
-
-" multiple-search {{{
-Plug 'vim-scripts/MultipleSearch'
-silent! map <F5> :call MultipleSearch#MultipleSearch(bufnr('%'), expand('<cword>'))<CR>
-silent! map <F6> :SearchReset<CR>
-"}}}
-
-Plug 'qpkorr/vim-bufkill'
 
 call plug#end()
 
