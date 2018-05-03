@@ -1,0 +1,53 @@
+#!/bin/bash -e
+
+tip=false
+rev='master'
+opt='--recursive --init --force'
+
+is_detached_head() {
+  [ $(git rev-parse --symbolic-full-name --abbrev-ref HEAD) == 'HEAD' ]
+}
+
+get_repo_name() {
+  eval "$1=$(basename -s .git $(git config --get remote.origin.url))"
+}
+
+# parse arguments
+for arg in "$@"; do
+  if [[ $arg == --tip ]]; then
+    tip=true
+  elif [[ $arg == --* ]]; then
+    opt+=' '$arg
+  else
+    rev=$arg
+  fi
+done
+
+# check git dir
+if [ ! -d '.git' ]; then
+  echo -e "\033[91merror:\033[0m ${0##*/} must be run within a git super-project"
+  exit 1
+fi
+get_repo_name name
+
+# update the super-project
+echo -e "\033[93mupdating $name to '$rev'\033[0m"
+git checkout $rev
+if ! is_detached_head; then
+  git pull
+fi
+
+# update the sub-projects
+echo -e "\033[93mupdating sub-modules to '$rev'\033[0m"
+git submodule update $opt
+
+# force the sub-projects to the latest
+if ! is_detached_head && $tip; then
+  echo -e "\033[93mforcing sub-modules to '$rev' latest\033[0m"
+  git submodule foreach --recursive '[ $(git branch --list '$rev') ] && git checkout '$rev' && git pull;:'
+fi
+
+# complete
+echo -e "\033[92m *** COMPLETE *** \033[0m"
+exit 0
+
