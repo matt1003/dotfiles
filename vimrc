@@ -674,10 +674,25 @@ silent! map <F2> :call CloseAllQfLocWins()<CR>
 
 " write file with sudo rights
 func! SudoWrite()
-  write !sudo tee % > /dev/null
-  edit!
+  let l:file=expand('<afile>')
+  silent execute '![ -w '.l:file.' ]'
+  if v:shell_error
+    if confirm('You do not have permission to write to "'.l:file.'"'."\n".
+              \'Do you wish to write with sudo?', "&Yes\n&No", 2) == 1
+      silent write !sudo tee % > /dev/null
+      silent edit!
+      redraw
+      echo 'sudo write "'.l:file.'"'
+    endif
+  else
+    write
+  endif
 endfunc
-command! Write call SudoWrite()
+
+augroup SudoWrite
+  autocmd!
+  autocmd BufWriteCmd * call SudoWrite()
+augroup END
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " tracking the main window
