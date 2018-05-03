@@ -12,8 +12,9 @@ import sys
 import textwrap
 import time
 
+# when root user, check the apt/dpkg locks, and exit with the result
 if os.geteuid() == 0:
-    for lock in ['/var/lib/dpkg/lock', '/var/lib/apt/lists/lock']:
+    for lock in ['/var/lib/apt/lists/lock', '/var/lib/dpkg/lock']:
         with open(lock, 'w') as handle:
             try:
                 fcntl.lockf(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -21,7 +22,7 @@ if os.geteuid() == 0:
                 sys.exit(1)
     sys.exit(0)
 
-def is_dpkg_active():
+def apt_or_dpkg_active():
     return os.WEXITSTATUS(os.system("sudo %s" % os.path.realpath(__file__)))
 
 def exit_with_prompt(status):
@@ -30,10 +31,19 @@ def exit_with_prompt(status):
     sys.exit(status)
 
 def exe(cmd):
-    if os.WEXITSTATUS(os.system(cmd)) != 0:
-        print("\"%s\" completed with a non-zero exit status" % cmd)
-        print("\033[91m *** FAILURE ** \033[0m")
-        exit_with_prompt(1)
+    # wait for the apt/dpkg lock
+    while apt_or_dpkg_active():
+        print("waiting for apt/dpkg lock")
+        time.sleep(1)
+    # execute the apt command
+    exit_status = os.WEXITSTATUS(os.system(cmd))
+    if exit_status == 0:
+        return 0
+    elif exit_status == 100:
+        return exe(cmd)
+    print("\"%s\" completed with a non-zero exit status" % cmd)
+    print("\033[91m *** FAILURE ** \033[0m")
+    exit_with_prompt(exit_status)
 
 def parse_apt_packages(pkg_list, action, packages):
     for package in packages.split():
@@ -82,14 +92,11 @@ def main(argv):
     for arg in argv:
         use_input_file = arg
 
-    while is_dpkg_active():
-        print("waiting for apt lock")
-        time.sleep(1)
-
     if use_input_file:
         with open(use_input_file, 'r') as input_file:
             parse_apt_output(pkg_list, input_file.read())
     else:
+        print("\033[94mrunning apt-get update...\033[0m")
         exe("sudo apt-get update")
         parse_apt_output(pkg_list, os.popen("apt-get --dry-run dist-upgrade").read())
         parse_apt_output(pkg_list, os.popen("apt-get --dry-run auto-remove").read())
@@ -110,13 +117,15 @@ def main(argv):
             exit_with_prompt(1)
 
         if pkg_list['install'] or pkg_list['upgrade']:
+            print("\033[94mrunning apt-get dist-upgrade...\033[0m")
             exe("sudo apt-get dist-upgrade --assume-yes")
 
         if pkg_list['remove']:
+            print("\033[94mrunning apt-get auto-remove...\033[0m")
             exe("sudo apt-get auto-remove --assume-yes")
 
     else:
-        print("No packages need to be installed/upgraded/removed.")
+        print("\033[94mNo packages need to be installed/upgraded/removed.\033[0m")
 
     os.system("date +%Y%m%d > $HOME/.last-update")
     print("\033[92m *** COMPLETE *** \033[0m")
