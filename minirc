@@ -1,5 +1,5 @@
 # Machine-generated file - use setup menu in minicom to change parameters.
-pu escape-key       ^Z           
+pu escape-key       ^Z
 pu rtscts           No
 pu histlines        10000
 pu linewrap         Yes

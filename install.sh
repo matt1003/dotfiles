@@ -52,6 +52,7 @@ declare -A dotfiles=(
   [bashrc]=.bashrc
   [gitignore]=.gitignore
   [inputrc]=.inputrc
+  [minimacros]=.macro
   [minirc]=.minirc.dfl
   [profile]=.profile
   [terminator.conf]=.config/terminator/config
