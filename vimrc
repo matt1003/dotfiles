@@ -409,9 +409,9 @@ let s:DefaultPowerBoxAddr = '192.168.0.3'
 let s:PowerBoxAddr = s:DefaultPowerBoxAddr
 
 fun! s:UpdatePowerBoxAddr(addr)
-  let s:PowerBoxAddr = input('address: ', a:addr, 'dir')
+  let s:PowerBoxAddr = input('address: ', a:addr)
   if s:PowerBoxAddr ==? 'reset'
-    let s:PowerBoxAddr = input('address: ', s:DefaultPowerBoxAddr, 'dir')
+    let s:PowerBoxAddr = input('address: ', s:DefaultPowerBoxAddr)
   endif
 endfun
 
@@ -548,10 +548,11 @@ let s:GrepShow = 'loc' " qf/loc
 
 fun! s:UpdateGrepWord(word)
   if a:word !=? ''
-    let s:GrepWord = input('search pattern: ', '"'.a:word.'"', 'dir')
+    let l:escaped = shellescape(a:word)
   else
-    let s:GrepWord = input('search pattern: ', '"'.expand('<cword>').'"', 'dir')
+    let l:escaped = shellescape(expand('<cword>'))
   endif
+  let s:GrepWord = input('search pattern: ', l:escaped)
 endfun
 
 fun! s:UpdateGrepPath(path)
@@ -562,9 +563,9 @@ fun! s:UpdateGrepPath(path)
 endfun
 
 fun! s:UpdateGrepOpts(opts)
-  let s:GrepOpts = input('search flags: ', a:opts, 'dir')
+  let s:GrepOpts = input('search flags: ', a:opts)
   if s:GrepOpts ==? 'reset'
-    let s:GrepOpts = input('search flags: ', s:DefaultGrepOpts, 'dir')
+    let s:GrepOpts = input('search flags: ', s:DefaultGrepOpts)
   endif
 endfun
 
