@@ -124,7 +124,7 @@ def print_commit(commit):
     print("%s: %s - %s - %s" % (action.ljust(20), commit_id[:10], author, summary))
 
 def post_commit(commit, dryrun, publish):
-    cmd = "pbt post"
+    cmd = "rbt post"
     if publish:
         cmd += " --publish"
     if commit['reviewers']:
