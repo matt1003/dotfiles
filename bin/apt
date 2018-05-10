@@ -100,27 +100,40 @@ def parse_apt_output(pkg_list, output):
     regex = re.compile(r'The following packages .* are no longer required:(.*?)(?=\n\w)', re.DOTALL)
     for packages in re.findall(regex, output):
         parse_apt_packages(pkg_list, 'remove', packages)
-    # TODO ...
     regex = re.compile(r'(.*) is already the newest version')
     for packages in re.findall(regex, output):
-        parse_apt_packages(pkg_list, 'already_installed', packages)
+        parse_apt_packages(pkg_list, 'already_inst', packages)
+    regex = re.compile(r'Package \'(.*)\' is not installed, so not removed')
+    for packages in re.findall(regex, output):
+        parse_apt_packages(pkg_list, 'already_remv', packages)
+
+def pkgs2str(packages, action, color):
+    if len(packages) == 1:
+        return "The following package is %s:\033[%sm\n  %s\033[0m" \
+                % (action, color, "\n  ".join(packages))
+    else:
+        return "The following %d packages are %s:\033[%sm\n  %s\033[0m" \
+                % (len(packages), action, color, "\n  ".join(packages))
 
 def print_apt_packages(pkg_list):
+    # already installed packages
+    if pkg_list['already_inst']:
+        print(pkgs2str(pkg_list['already_inst'], 'ALREADY installed', '91'))
+    # already removed packages
+    if pkg_list['already_remv']:
+        print(pkgs2str(pkg_list['already_remv'], 'ALREADY removed', '91'))
     # install packages
     if pkg_list['install']:
-        print("The following %d packages will be installed:" % len(pkg_list['install']))
-        print("\033[92m  %s\033[0m" % "\n  ".join(pkg_list['install']))
+        print(pkgs2str(pkg_list['install'], 'to be installed', '92'))
     # upgrade packages
     if pkg_list['upgrade']:
-        print("The following %d packages will be upgraded:" % len(pkg_list['upgrade']))
-        print("\033[93m  %s\033[0m" % "\n  ".join(pkg_list['upgrade']))
+        print(pkgs2str(pkg_list['upgrade'], 'to be upgraded', '92'))
     # remove packages
     if pkg_list['remove']:
-        print("The following %d packages will be removed:" % len(pkg_list['remove']))
-        print("\033[91m  %s\033[0m" % "\n  ".join(pkg_list['remove']))
+        print(pkgs2str(pkg_list['remove'], 'to be removed', '93'))
 
 def do_apt_update_upgrade():
-    pkg_list = {'install':[], 'upgrade':[], 'remove':[], 'already_installed':[]}
+    pkg_list = {'install':[], 'upgrade':[], 'remove':[], 'already_inst':[], 'already_remv':[]}
     print("\033[94mrunning apt-get update...\033[0m")
     exe("sudo apt-get update")
     parse_apt_output(pkg_list, exe("apt-get --dry-run dist-upgrade", show=False))
@@ -139,16 +152,14 @@ def do_apt_update_upgrade():
     os.system("date +%Y%m%d > $HOME/.last-update")
 
 def do_apt_install_remove(cmd):
-    pkg_list = {'install':[], 'upgrade':[], 'remove':[], 'already_installed':[]}
+    pkg_list = {'install':[], 'upgrade':[], 'remove':[], 'already_inst':[], 'already_remv':[]}
     parse_apt_output(pkg_list, exe("apt-get --dry-run %s" % cmd, show=False))
-    if pkg_list['already_installed']:
-        print("package already installed: %s" % ' '.join(pkg_list['already_installed']))
+    print_apt_packages(pkg_list)
     if pkg_list['install'] or pkg_list['upgrade'] or pkg_list['remove']:
-        print_apt_packages(pkg_list)
         confirm()
         exe("sudo apt-get --assume-yes %s" % cmd)
     else:
-        print("\033[94mUnable to %s.\033[0m" % cmd)
+        print("\033[94mNo packages need to be installed/upgraded/removed.\033[0m")
 
 def do_apt_command(cmd):
     return exe("sudo apt-get %s" % cmd)
