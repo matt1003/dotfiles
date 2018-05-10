@@ -19,8 +19,16 @@ shopt -s histappend
 HISTSIZE=-1
 HISTFILESIZE=-1
 
-# immediately write to bash history and make it available to all terminals
-export PROMPT_COMMAND="history -a; history -c; history -r; $PROMPT_COMMAND"
+# immediately write to global bash history
+export PROMPT_COMMAND="history -a ~/.bash_history.global; $PROMPT_COMMAND"
+
+# map ctrl-r to run hstr using the global bash history
+if [[ $- =~ .*i.* ]]; then
+  bind -x '"\C-r": "HISTFILE=~/.bash_history.global hstr -- $READLINE_LINE; READLINE_LINE="'
+fi
+
+# force hstr to use a color prompt
+export HH_CONFIG=hicolor
 
 # check the window size after each command and, if necessary,
 # update the values of LINES and COLUMNS.

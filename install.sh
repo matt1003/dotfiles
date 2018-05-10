@@ -16,6 +16,7 @@ declare cli_apps=(
   cscope
   ctags
   git
+  hh
   minicom
   numlockx
   silversearcher-ag
@@ -30,6 +31,7 @@ declare cli_apps=(
 declare cli_ppas=(
   ppa:jonathonf/vim # required for vim 8.0
   ppa:pi-rho/dev # required for tmux 2.3
+  ppa:ultradvorka/ppa # required for hstr
 )
 
 #
