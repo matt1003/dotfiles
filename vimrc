@@ -198,6 +198,9 @@ let g:list_of_visual_keys = ['h', 'l', 'x']
 let g:list_of_insert_keys = []
 let g:list_of_disabled_keys = ['<UP>', '<DOWN>', '<LEFT>', '<RIGHT>']
 "}}}
+" hexmode {{{
+Plug 'fidian/hexmode'
+"}}}
 " ifdef highlighting --------(highlighting of c #ifdef blocks) {{{
 Plug 'vim-scripts/ifdef-highlighting'
 "}}}
@@ -342,39 +345,6 @@ augroup END
 
 nmap <leader>o :<C-U>call append(line('.'), repeat([''], v:count1))<CR>
 nmap <leader>O :<C-U>call append(line('.')-1, repeat([''], v:count1))<CR>
-
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Auto Detect Binary Files
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-fun! TestBinFile()
-  if &binary || search('\%u0000', 'wn', 0, 200)
-    set binary
-    silent %!xxd
-    set fileencoding&
-    let b:hexdump=1
-    echon ', ' | echohl WarningMsg | echon '(hex dump of binary file)' | echohl None
-  endif
-endfun
-
-fun! ToBinFile()
-  if exists('b:hexdump')
-    silent %!xxd -r
-  endif
-endfun
-
-fun! ToHexFile()
-  if exists('b:hexdump')
-    silent %!xxd
-  endif
-endfun
-
-augroup ConvertBinaryFiles
-  autocmd!
-  autocmd BufReadPost  * call TestBinFile()
-  autocmd BufWritePre  * call ToBinFile()
-  autocmd BufWritePost * call ToHexFile()
-augroup END
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " build system
