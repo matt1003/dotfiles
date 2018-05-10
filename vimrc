@@ -68,10 +68,13 @@ set laststatus=2
 set number                   " display: show absolute line numbers
 set relativenumber           " display: show relative line numbers
 set cursorline               " display: show current line
+set colorcolumn=81,101,121   " display: show 80/100/120 char column
 set scrolloff=999            " display: cursor always centered
 set spell spelllang=en_us    " display: show spell checking
 set shortmess+=I             " display: hide startup screen
 set noshowmode               " display: hide mode in status bar
+set signcolumn=yes           " display: show the sign column
+set list                     " display: show white-space characters
 
 set hlsearch                 " search: highlight results
 set incsearch                " search: search as typing
@@ -84,12 +87,13 @@ set formatoptions+=j         " delete comment char when joining commented lines
 
 set foldmethod=marker
 set lazyredraw
+set clipboard^=unnamed,unnamedplus
 
-" define white-space visible characters
+" define white-space characters
 try
   set listchars=tab:»―,space:·,nbsp:⚬,eol:↵
 catch
-  set listchars=tab:»―,trail:·,nbsp:⚬,eol:↵
+  set listchars=tab:»―,trail:·,nbsp:⚬,eol:
 endtry
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -109,7 +113,6 @@ if !isdirectory($VIMHOME.'/plugged')
 endif
 
 call plug#begin()
-
 " airline -------------------(status line) {{{
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
@@ -145,10 +148,19 @@ Plug 'tpope/vim-capslock'
 imap <c-c> <Plug>CapsLockToggle
 "}}}
 " cscope {{{
- if executable('cscope')
-  "Plug 'vim-scripts/cscope.vim'
+if executable('cscope')
   Plug 'matt1003/cscope.vim'
+  set cscopetag        " use ctags and cscope
+  set cscopetagorder=0 " search cscope first
   let g:cscope_no_jump = 1
+  nnoremap <silent> <leader>fs :call cscope#find('s', expand('<cword>'))<CR>
+  nnoremap <silent> <leader>fg :call cscope#find('g', expand('<cword>'))<CR>
+  nnoremap <silent> <leader>fd :call cscope#find('d', expand('<cword>'))<CR>
+  nnoremap <silent> <leader>fc :call cscope#find('c', expand('<cword>'))<CR>
+  nnoremap <silent> <leader>ft :call cscope#find('t', expand('<cword>'))<CR>
+  nnoremap <silent> <leader>fe :call cscope#find('e', expand('<cword>'))<CR>
+  nnoremap <silent> <leader>ff :call cscope#find('f', expand('<cword>'))<CR>
+  nnoremap <silent> <leader>fi :call cscope#find('i', expand('<cword>'))<CR>
 endif
 "}}}
 " dispatch {{{
@@ -159,7 +171,6 @@ Plug 'tpope/vim-fugitive'
 "}}}
 " gitgutter {{{
 Plug 'airblade/vim-gitgutter'
-set signcolumn=yes
 let g:gitgutter_sign_added = '▶'
 let g:gitgutter_sign_modified = '▶'
 let g:gitgutter_sign_modified_removed = '▼'
@@ -169,13 +180,8 @@ nmap <leader>hn :GitGutterNextHunk<CR>
 nmap <leader>hp :GitGutterPrevHunk<CR>
 nmap <leader>hu :GitGutterUndoHunk<CR>
 nmap <silent> <c-n> :GitGutterNextHunk<CR>
-augroup SignColumnEnable
-  autocmd!
-  autocmd FileType help,tagbar,nerdtree,qf setlocal signcolumn=no
-augroup END
 "}}}
 " gruvbox {{{
-"Plug 'morhetz/gruvbox'
 Plug 'matt1003/gruvbox'
 let g:gruvbox_contrast_dark = 'hard'
 let g:gruvbox_number_column = 'bgN'
@@ -237,7 +243,6 @@ let g:NERDTreeMinimalUI = 1
 Plug 'powerline/fonts', { 'do' : './install.sh' }
 "}}}
 " quickr-preview {{{
-"Plug 'ronakg/quickr-preview.vim'
 Plug 'matt1003/quickr-preview.vim'
 let g:quickr_preview_on_cursor = 0
 let g:quickr_preview_sign_enable = 0
@@ -278,7 +283,6 @@ nmap <leader>yr :YRShow<CR>
 nmap <leader>ys :YRSearch<CR>
 nmap <silent> <c-y> :YRShow<CR>
 "}}}
-
 call plug#end()
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -297,7 +301,7 @@ endif
 
 if has('gui_running')
   if has('win32') || has ('win64')
-  set guifont=DejaVu_Sans_Mono_for_Powerline:h10:cANSI
+    set guifont=DejaVu_Sans_Mono_for_Powerline:h10:cANSI
   else
     set guifont=DejaVu\ Sans\ Mono\ for\ Powerline\ 10
   endif
@@ -320,8 +324,6 @@ else
   endi
 endif
 
-let g:quickfix_window_height = 12
-
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " file specific settings
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -330,24 +332,16 @@ augroup FileSpecificSettings
   autocmd!
   " git commit message
   autocmd FileType gitcommit setlocal colorcolumn=73
-  " source code files
-  autocmd FileType c,cpp,dts,kconfig,javascript,lua,make,python,sh,vim,vhdl,xml setlocal list colorcolumn=81,101,121
-  " quickfix buffer
-  autocmd FileType qf,tagbar,nerdtree,help setlocal nospell norelativenumber
+  " non-editable buffers
+  autocmd FileType help,nerdtree,tagbar,qf setlocal nolist nospell norelativenumber nocursorcolumn signcolumn=no
 augroup END
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " custom keybindings
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-" insert new line {{{
 nmap <leader>o :<C-U>call append(line('.'), repeat([''], v:count1))<CR>
 nmap <leader>O :<C-U>call append(line('.')-1, repeat([''], v:count1))<CR>
-"}}}
-
-nmap <silent> <leader>bd :bd<CR>
-nmap <silent> <leader>bn :bn<CR>
-nmap <silent> <leader>bp :bp<CR>
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " Auto Detect Binary Files
@@ -381,47 +375,6 @@ augroup ConvertBinaryFiles
   autocmd BufWritePre  * call ToBinFile()
   autocmd BufWritePost * call ToHexFile()
 augroup END
-
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" Cscope / Ctags
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-set cscopetag        " use ctags and cscope
-set cscopetagorder=0 " search cscope first
-
-nnoremap <silent> <leader>fa :call cscope#findInteractive(expand('<cword>'))<CR>
-nnoremap <silent> <leader>l :call ToggleLocationList()<CR>
-
-nnoremap <silent> <leader>fs :call cscope#find('s', expand('<cword>'))<CR>
-nnoremap <silent> <leader>fg :call cscope#find('g', expand('<cword>'))<CR>
-nnoremap <silent> <leader>fd :call cscope#find('d', expand('<cword>'))<CR>
-nnoremap <silent> <leader>fc :call cscope#find('c', expand('<cword>'))<CR>
-nnoremap <silent> <leader>ft :call cscope#find('t', expand('<cword>'))<CR>
-nnoremap <silent> <leader>fe :call cscope#find('e', expand('<cword>'))<CR>
-nnoremap <silent> <leader>ff :call cscope#find('f', expand('<cword>'))<CR>
-nnoremap <silent> <leader>fi :call cscope#find('i', expand('<cword>'))<CR>
-
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" power box
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-let s:DefaultPowerBoxAddr = '192.168.0.3'
-let s:PowerBoxAddr = s:DefaultPowerBoxAddr
-
-fun! s:UpdatePowerBoxAddr(addr)
-  let s:PowerBoxAddr = input('address: ', a:addr)
-  if s:PowerBoxAddr ==? 'reset'
-    let s:PowerBoxAddr = input('address: ', s:DefaultPowerBoxAddr)
-  endif
-endfun
-
-fun! s:ExecutePowerBox(PowerBoxCmd, PowerBoxArgs)
-  call <SID>UpdatePowerBoxAddr(s:PowerBoxAddr)
-  exe '!'.a:PowerBoxCmd.' '.s:PowerBoxAddr.' '.a:PowerBoxArgs
-endfun
-
-command! -nargs=+ PowerBox call <SID>ExecutePowerBox('pdu', <q-args>)
-cabbrev pdu PowerBox
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " build system
@@ -501,7 +454,7 @@ fun! s:LocateBuildSysPath()
   " 3) give up and use the current working directory
   echohl WarningMsg | echo 'Unable to locate buildsys path ...' | echohl None
   return getcwd()
-endfunction
+endfun
 
 fun! s:UpdateBuildSysPath()
   let s:BuildSysPath = input('buildsys path: ', <SID>LocateBuildSysPath(), 'dir')
@@ -515,11 +468,6 @@ fun! s:ExecuteBuildSys(BuildSysArgs)
     call <SID>CheckForModifiedBuffers()
     call <SID>UpdateBuildSysPath()
     exe 'Dispatch! -compiler=make -dir='.s:BuildSysPath.' '.s:BuildSysCmd.' '.a:BuildSysArgs
-    "botright copen 12
-    "call <SID>SetBuildSysSyntax()
-    "setlocal nonumber
-    "cbottom
-    "wincmd p
   endif
 endfun
 
@@ -609,32 +557,6 @@ cabbrev grep MySearch
 cabbrev ag MySearch
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" random crap
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-function! s:Log(eventName) abort
-  let l:bufnr = bufnr('%')
-  let l:bufname = bufname(l:bufnr)
-  let l:ispvw = getwinvar(winnr(), '&pvw')
-  silent execute '!echo '.a:eventName.' '.l:bufnr.'-'.l:ispvw.' '.l:bufname.' >>'.$VIMHOME.'/vimlog'
-endfunction
-
-augroup EventLoggin
-  autocmd!
-  if 0 " enable/disable autocmd logging
-    autocmd BufNewFile  * call s:Log('BufNewFile --')
-    autocmd BufReadPre  * call s:Log('BufReadPre --')
-    autocmd BufReadPost * call s:Log('BufReadPost -')
-    autocmd BufWinEnter * call s:Log('BufWinEnter -')
-    autocmd BufCreate   * call s:Log('BufCreate ---')
-    autocmd BufDelete   * call s:Log('BufDelete ---')
-    autocmd BufEnter    * call s:Log('BufEnter ----')
-    autocmd User        * call s:Log('User --------')
-    autocmd SwapExists  * call s:Log('SwapExists---')
-  endif
-augroup END
-
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " useful stuff
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
@@ -650,31 +572,42 @@ augroup PreviewWindowSwapChoice
   autocmd SwapExists * if &l:pvw | let v:swapchoice = 'o' | endif
 augroup END
 
+fun!  SetCursorLine()
+  if (&filetype=~#'help\|nerdtree\|tagbar\|qf')
+    setlocal cursorline
+  else
+    setlocal cursorline relativenumber
+  endif
+endfun
+
 " enable the cursor line and relative numbering in the active window only
 augroup CursorLineOnlyInActiveWindow
   autocmd!
-  autocmd VimEnter,WinEnter,BufWinEnter * setlocal cursorline | if (&ft!='help' && &ft!='nerdtree' && &ft!='tagbar' && &ft!='qf') | setlocal relativenumber | endif
+  autocmd VimEnter,WinEnter,BufWinEnter * call SetCursorLine()
   autocmd WinLeave * setlocal nocursorline norelativenumber
 augroup END
 
 " override airline status line to print straight lines when inactive
 set fillchars+=vert:│,stlnc:─
-function! RenderNoStatusLine(...)
+fun! RenderNoStatusLine(...)
   return 1
-endfunction
+endfun
 if isdirectory($VIMHOME.'/plugged/vim-airline')
   call airline#add_inactive_statusline_func('RenderNoStatusLine')
 endif
 
 " close all quickfix/location windows
-func! CloseAllQfLocWins()
+fun! CloseAllQfLocWins()
   windo if &ft == 'qf' | bd | endif
   call win_gotoid(g:main_win_id)
-endfunc
+endfun
 silent! map <F2> :call CloseAllQfLocWins()<CR>
 
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " write file with sudo rights
-func! SudoWrite()
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+fun! SudoWrite()
   let l:file=expand('<afile>')
   silent execute '![ -w '.l:file.' ]'
   if v:shell_error
@@ -688,12 +621,14 @@ func! SudoWrite()
   else
     write
   endif
-endfunc
+endfun
 
-augroup SudoWrite
-  autocmd!
-  autocmd BufWriteCmd * call SudoWrite()
-augroup END
+if has ('unix')
+  augroup SudoWrite
+    autocmd!
+    autocmd BufWriteCmd * call SudoWrite()
+  augroup END
+endif
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " tracking the main window
@@ -702,17 +637,17 @@ augroup END
 let g:main_win_tm = -1
 let g:main_win_id = -1
 
-func! MainWinHandler(...)
+fun! MainWinHandler(...)
   if &modifiable
     let g:main_win_id = win_getid()
   endif
   "echo ' main='.g:main_win_id.' (win='.win_getid().',mod='.&modifiable.',ft='.&ft.')'
-endfunc
+endfun
 
-func! MainWinTimer()
+fun! MainWinTimer()
   call timer_stop(g:main_win_tm)
   let g:main_win_tm = timer_start(250, 'MainWinHandler')
-endfunc
+endfun
 
 augroup MainWindowTracking
   autocmd!
@@ -723,11 +658,11 @@ augroup END
 " nerd tree auto trace current buffer
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-func! s:NERDTreeIsOpen()
+fun! s:NERDTreeIsOpen()
   return exists('t:NERDTreeBufName') && (bufwinnr(t:NERDTreeBufName) != -1)
-endfunc
+endfun
 
-func! s:NERDTreeSync()
+fun! s:NERDTreeSync()
   " check if nerdtree is open
   if !s:NERDTreeIsOpen()
     return
@@ -750,7 +685,7 @@ func! s:NERDTreeSync()
   execute 'sign unplace 27'
   execute 'sign place 27 name=NERDTreeCurrentFile line='.line('.').' buffer='.bufnr('%')
   call win_gotoid(l:win_id)
-endfunc
+endfun
 
 augroup NERDTreeTracking
   autocmd!
@@ -765,7 +700,7 @@ sign define NERDTreeCurrentFile linehl=Search
 
 let s:ide_view = 0
 
-func! IdeViewToggle(...)
+fun! IdeViewToggle(...)
   if s:ide_view
     TagbarClose
     NERDTreeClose
@@ -777,7 +712,7 @@ func! IdeViewToggle(...)
     call win_gotoid(l:win_id)
     let s:ide_view = 1
   endif
-endfunc
+endfun
 
 augroup IdeView
   autocmd!
