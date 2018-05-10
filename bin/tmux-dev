@@ -47,7 +47,7 @@ fi
 #
 if [ $(date +%Y%m%d) -gt $(cat $HOME/.last-update) ]; then
   echo "launching update/upgrade"
-  terminator --geometry=1200x800 -T update -e "update" &
+  terminator --geometry=1200x800 -T update -e "PROMPT_ON_EXIT=1 apt update" &
   while true; do
     if wmctrl -l | grep -q 'update'; then
       break;
