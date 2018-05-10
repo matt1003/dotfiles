@@ -8,8 +8,8 @@ from __future__ import print_function
 import fcntl
 import os
 import re
+import subprocess
 import sys
-import textwrap
 import time
 
 # when root user, check the apt/dpkg locks, and exit with the result
@@ -22,28 +22,62 @@ if os.geteuid() == 0:
                 sys.exit(1)
     sys.exit(0)
 
+# only allow a single instance to run at a time
+APT_LOCK = open(os.getenv('HOME')+'/.apt_lock', 'w')
+try:
+    fcntl.lockf(APT_LOCK, fcntl.LOCK_EX | fcntl.LOCK_NB)
+except IOError:
+    sys.exit(0)
+
 def apt_or_dpkg_active():
     return os.WEXITSTATUS(os.system("sudo %s" % os.path.realpath(__file__)))
 
 def exit_with_prompt(status):
-    print("Press enter to continue", end='')
-    raw_input()
+    if status == 0:
+        print("\033[92m *** COMPLETE *** \033[0m")
+    if status > 0:
+        print("\033[91m *** FAILURE ** \033[0m")
+    if "PROMPT_ON_EXIT" in os.environ:
+        print("Press enter to continue", end='')
+        raw_input()
     sys.exit(status)
 
-def exe(cmd):
+def exe_subprocess(cmd, show, stdout=''):
+    subproc = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    for line in iter(subproc.stdout.readline, b''):
+        if show:
+            print(line, end='')
+        stdout += line
+    subproc.stdout.close()
+    return subproc.wait(), stdout
+
+def exe(cmd, show=True):
     # wait for the apt/dpkg lock
     while apt_or_dpkg_active():
         print("waiting for apt/dpkg lock")
         time.sleep(1)
     # execute the apt command
-    exit_status = os.WEXITSTATUS(os.system(cmd))
-    if exit_status == 0:
-        return 0
-    elif exit_status == 100:
+    status, output = exe_subprocess(cmd, show)
+    # check for apt/dpkg lock error
+    if re.match(r'E: Could not get lock /var/lib/(?:apt/lists/lock|dpkg/lock).*', output):
         return exe(cmd)
-    print("\"%s\" completed with a non-zero exit status" % cmd)
-    print("\033[91m *** FAILURE ** \033[0m")
-    exit_with_prompt(exit_status)
+    # check for other errors
+    if status != 0:
+        print("\"%s\" completed with a non-zero exit status" % cmd)
+        exit_with_prompt(status)
+    # return the result
+    return output
+
+def confirm():
+    print("Do you want to continue? ", end='')
+    try:
+        anwser = raw_input().lower()
+    except KeyboardInterrupt:
+        print("\n * OPERATION CANCELLED *")
+        exit_with_prompt(-1)
+    if anwser != 'yes' and anwser != 'yeah':
+        print(" * OPERATION CANCELLED *")
+        exit_with_prompt(-1)
 
 def parse_apt_packages(pkg_list, action, packages):
     for package in packages.split():
@@ -66,69 +100,72 @@ def parse_apt_output(pkg_list, output):
     regex = re.compile(r'The following packages .* are no longer required:(.*?)(?=\n\w)', re.DOTALL)
     for packages in re.findall(regex, output):
         parse_apt_packages(pkg_list, 'remove', packages)
-
-def format_packages(packages):
-    textwrapper = textwrap.TextWrapper(150, subsequent_indent='  ', break_on_hyphens=False)
-    return '\n'.join(textwrapper.wrap(' '.join(packages)))
+    # TODO ...
+    regex = re.compile(r'(.*) is already the newest version')
+    for packages in re.findall(regex, output):
+        parse_apt_packages(pkg_list, 'already_installed', packages)
 
 def print_apt_packages(pkg_list):
     # install packages
     if pkg_list['install']:
         print("The following %d packages will be installed:" % len(pkg_list['install']))
-        print("\033[92m  %s\033[0m" % format_packages(pkg_list['install']))
+        print("\033[92m  %s\033[0m" % "\n  ".join(pkg_list['install']))
     # upgrade packages
     if pkg_list['upgrade']:
         print("The following %d packages will be upgraded:" % len(pkg_list['upgrade']))
-        print("\033[93m  %s\033[0m" % format_packages(pkg_list['upgrade']))
+        print("\033[93m  %s\033[0m" % "\n  ".join(pkg_list['upgrade']))
     # remove packages
     if pkg_list['remove']:
         print("The following %d packages will be removed:" % len(pkg_list['remove']))
-        print("\033[91m  %s\033[0m" % format_packages(pkg_list['remove']))
+        print("\033[91m  %s\033[0m" % "\n  ".join(pkg_list['remove']))
 
-def main(argv):
-    pkg_list = {'install':[], 'upgrade':[], 'remove':[]}
-    use_input_file = ''
-
-    for arg in argv:
-        use_input_file = arg
-
-    if use_input_file:
-        with open(use_input_file, 'r') as input_file:
-            parse_apt_output(pkg_list, input_file.read())
-    else:
-        print("\033[94mrunning apt-get update...\033[0m")
-        exe("sudo apt-get update")
-        parse_apt_output(pkg_list, os.popen("apt-get --dry-run dist-upgrade").read())
-        parse_apt_output(pkg_list, os.popen("apt-get --dry-run auto-remove").read())
-
+def do_apt_update_upgrade():
+    pkg_list = {'install':[], 'upgrade':[], 'remove':[], 'already_installed':[]}
+    print("\033[94mrunning apt-get update...\033[0m")
+    exe("sudo apt-get update")
+    parse_apt_output(pkg_list, exe("apt-get --dry-run dist-upgrade", show=False))
+    parse_apt_output(pkg_list, exe("apt-get --dry-run auto-remove", show=False))
     if pkg_list['install'] or pkg_list['upgrade'] or pkg_list['remove']:
-
         print_apt_packages(pkg_list)
-
-        print("Do you want to continue? ", end='')
-        try:
-            anwser = raw_input().lower()
-        except KeyboardInterrupt:
-            print("\n * OPERATION CANCELLED *")
-            exit_with_prompt(1)
-
-        if anwser != 'yes' and anwser != 'yeah':
-            print(" * OPERATION CANCELLED *")
-            exit_with_prompt(1)
-
+        confirm()
         if pkg_list['install'] or pkg_list['upgrade']:
             print("\033[94mrunning apt-get dist-upgrade...\033[0m")
             exe("sudo apt-get dist-upgrade --assume-yes")
-
         if pkg_list['remove']:
             print("\033[94mrunning apt-get auto-remove...\033[0m")
             exe("sudo apt-get auto-remove --assume-yes")
-
     else:
         print("\033[94mNo packages need to be installed/upgraded/removed.\033[0m")
-
     os.system("date +%Y%m%d > $HOME/.last-update")
-    print("\033[92m *** COMPLETE *** \033[0m")
+
+def do_apt_install_remove(cmd):
+    pkg_list = {'install':[], 'upgrade':[], 'remove':[], 'already_installed':[]}
+    parse_apt_output(pkg_list, exe("apt-get --dry-run %s" % cmd, show=False))
+    if pkg_list['already_installed']:
+        print("package already installed: %s" % ' '.join(pkg_list['already_installed']))
+    if pkg_list['install'] or pkg_list['upgrade'] or pkg_list['remove']:
+        print_apt_packages(pkg_list)
+        confirm()
+        exe("sudo apt-get --assume-yes %s" % cmd)
+    else:
+        print("\033[94mUnable to %s.\033[0m" % cmd)
+
+def do_apt_command(cmd):
+    return exe("sudo apt-get %s" % cmd)
+
+def main(argv):
+
+    cmd = ' '.join(argv)
+
+    if not cmd:
+        exit_with_prompt(-1)
+    elif re.match(r'^(?:update|upgrade)', cmd):
+        do_apt_update_upgrade()
+    elif re.match(r'^(?:install|remove|purge)', cmd):
+        do_apt_install_remove(cmd)
+    else:
+        do_apt_command(cmd)
+
     exit_with_prompt(0)
 
 if __name__ == "__main__":
