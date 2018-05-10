@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 if [ -z $1 ]; then
   echo -e "\e[31merror: must specify arg: cli/gui/dot/gnome/bin/font/git/full"
@@ -34,7 +34,7 @@ declare cli_apps=(
 declare gui_apps=(
   firefox
   gedit
-  git-git
+  git-gui
   gnome-tweak-tool
   meld
   pinta
@@ -52,7 +52,7 @@ declare -A dotfiles=(
   [bashrc]=.bashrc
   [gitignore]=.gitignore
   [inputrc]=.inputrc
-  [minimacros]=.macro
+  [minimacros]=.macros
   [minirc]=.minirc.dfl
   [profile]=.profile
   [terminator.conf]=.config/terminator/config
@@ -130,9 +130,9 @@ fi
 #
 if [ $1 == "gnome" ] || [ $1 == "full" ]; then
   echo -e "\e[34minstalling gnome launchers...\e[0m"
-  for launcher in "${gnome_launchers[@]}"; do
-    cat $launcher | sed "s/@user@/$USER/g" | tee $HOME/.local/share/applications/$launcher
-    chmod 775 $HOME/.local/share/applications/$launcher
+  for lau in "${gnome_launchers[@]}"; do
+    cat $lau | sed "s/@user@/$USER/g" | tee $HOME/.local/share/applications/$lau
+    chmod 775 $HOME/.local/share/applications/$lau
   done
 fi
 
