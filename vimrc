@@ -52,27 +52,21 @@ endif
 " general settings
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-syntax on                    " enable syntax highlighting
-
 nnoremap <space> <nop>
 let g:mapleader="\<space>"   " use space bar at leader
 
 set hidden                   " allow easier switching between buffers
 set confirm                  " confirmation prompt on unsaved buffers
+set lazyredraw               " do not redraw while macros are running
 set updatetime=250           " wait time to trigger plugin actions
-set history=1000             " remember the last 1000 commands
-set autoread                 " reload file when changed on disk
-
-set laststatus=2
+set wildmode=longest,list    " setup bash-like auto-complete
 
 set number                   " display: show absolute line numbers
-set relativenumber           " display: show relative line numbers
-set cursorline               " display: show current line
 set colorcolumn=81,101,121   " display: show 80/100/120 char column
 set scrolloff=999            " display: cursor always centered
 set spell spelllang=en_us    " display: show spell checking
 set shortmess+=I             " display: hide startup screen
-set noshowmode               " display: hide mode in status bar
+set noshowmode               " display: hide mode from status bar
 set signcolumn=yes           " display: show the sign column
 set list                     " display: show white-space characters
 
@@ -81,12 +75,7 @@ set incsearch                " search: search as typing
 set ignorecase               " search: case insensitive search
 set smartcase                " search: do not ignore uppercase
 
-set wildmenu                 " visual menu for auto-complete
-set wildmode=longest,list    " setup bash-like auto-complete
-set formatoptions+=j         " delete comment char when joining commented lines
-
 set foldmethod=marker
-set lazyredraw
 set clipboard^=unnamed,unnamedplus
 
 " define white-space characters
@@ -253,6 +242,9 @@ let g:quickr_preview_sign_enable = 0
 " replace with register -----(delete and paste) {{{
 Plug 'vim-scripts/ReplaceWithRegister'
 "}}}
+" sensible ------------------(sensible vim defaults) {{{
+Plug 'tpope/vim-sensible'
+"}}}
 " sleuth --------------------(auto detect file indentation) {{{
 Plug 'tpope/vim-sleuth'
 "}}}
@@ -336,7 +328,7 @@ augroup FileSpecificSettings
   " git commit message
   autocmd FileType gitcommit setlocal colorcolumn=73
   " non-editable buffers
-  autocmd FileType help,nerdtree,tagbar,qf setlocal nolist nospell norelativenumber nocursorcolumn signcolumn=no
+  autocmd FileType help,nerdtree,tagbar,qf setlocal nolist nospell signcolumn=no
 augroup END
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
