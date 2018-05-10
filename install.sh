@@ -27,6 +27,10 @@ declare cli_apps=(
   xclip
   xsel
 )
+declare cli_ppas=(
+  ppa:jonathonf/vim # required for vim 8.0
+  ppa:pi-rho/dev # required for tmux 2.3
+)
 
 #
 # define gui applications
@@ -41,6 +45,9 @@ declare gui_apps=(
   speedcrunch
   terminator
   wireshark
+)
+declare gui_ppas=(
+  ppa:gnome-terminator/nightly-gtk3 # required for terminator 1.91
 )
 
 #
@@ -84,14 +91,11 @@ git_editor=vim
 #
 if [ $1 == "cli" ] || [ $1 == "full" ]; then
   echo -e "\e[34madding apt repositories...\e[0m"
-  # required for tmux 2.3 ...
-  sudo add-apt-repository -y ppa:pi-rho/dev
-  # required for vim 8.0 ...
-  sudo add-apt-repository -y ppa:jonathonf/vim
+  for ppa in "${cli_ppas[@]}"; do
+    sudo add-apt-repository -y $ppa
+  done
   echo -e "\e[34minstalling apt cli apps...\e[0m"
-  sudo apt update && sudo apt install ${cli_apps[*]}
-  # prevent gnome from stomping on xkb settings
-  gsettings set org.gnome.settings-daemon.plugins.keyboard active false
+  sudo apt-get update && sudo apt-get install -y ${cli_apps[*]}
 fi
 
 #
@@ -99,10 +103,11 @@ fi
 #
 if [ $1 == "gui" ] || [ $1 == "full" ]; then
   echo -e "\e[34madding apt repositories...\e[0m"
-  # required for terminator 1.91 ...
-  sudo add-apt-repository -y ppa:gnome-terminator/nightly-gtk3
+  for ppa in "${gui_ppas[@]}"; do
+    sudo add-apt-repository -y $ppa
+  done
   echo -e "\e[34minstalling apt gui apps...\e[0m"
-  sudo apt update && sudo apt install ${gui_apps[*]}
+  sudo apt-get update && sudo apt-get install ${gui_apps[*]}
 fi
 
 #
@@ -168,6 +173,10 @@ if [ $1 == "git" ] || [ $1 == "full" ]; then
   git config core.editor "$git_editor"
   echo "editor: $git_editor"
 fi
+
+# other stuff
+# prevent gnome from stomping on xkb settings
+gsettings set org.gnome.settings-daemon.plugins.keyboard active false
 
 echo -e "\e[34m * COMPLETE * \e[0m"
 
