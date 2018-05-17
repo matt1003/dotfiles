@@ -569,27 +569,47 @@ silent! map <F2> :call CloseAllQfLocWins()<CR>
 " write file with sudo rights
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-fun! SudoWrite()
-  let l:file=expand('<afile>')
-  silent execute '![ -w '.l:file.' ]'
+if !exists('*SudoWrite')
+fun! SudoWrite(path, dir)
+  silent doautocmd BufWritePre
+
+  if !isdirectory(a:dir)
+    if confirm('The directory "'.a:dir.'" does not exits'."\n".
+              \'Do you wish to create it?', "&Yes\n&No", 2) == 1
+      " TODO what if we need sudo to create the dir
+      call mkdir(a:dir, 'p')
+    endif
+  endif
+
+  if filereadable(a:path)
+    silent execute '![ -w '.a:path.' ]'
+    echom '![ -w '.a:path.' ]'
+  else
+    silent execute '![ -w '.a:dir.'/ ]'
+    echom '![ -w '.a:dir.'/ ]'
+  endif
   if v:shell_error
-    if confirm('You do not have permission to write to "'.l:file.'"'."\n".
+    if confirm('You do not have permission to write to "'.a:path.'"'."\n".
               \'Do you wish to write with sudo?', "&Yes\n&No", 2) == 1
       silent write !sudo tee % > /dev/null
+      " TODO don't call edit if the write fails
       silent edit!
       redraw
-      echo 'sudo write "'.l:file.'"'
+      echo 'sudo write "'.a:path.'"'
     endif
   else
     write
   endif
+
+  doautocmd BufWritePost
 endfun
 
 if has ('unix')
   augroup SudoWrite
     autocmd!
-    autocmd BufWriteCmd * call SudoWrite()
+    autocmd BufWriteCmd * call SudoWrite(expand("<amatch>:p"), expand("<amatch>:p:h"))
   augroup END
+endif
 endif
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
