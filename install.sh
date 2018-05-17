@@ -30,6 +30,7 @@ declare cli_apps=(
   xsel
 )
 declare cli_ppas=(
+  ppa:git-core/ppa # required for latest git
   ppa:jonathonf/vim # required for vim 8.0
   ppa:neovim-ppa/unstable # required for neovim
   ppa:pi-rho/dev # required for tmux 2.3
@@ -52,6 +53,7 @@ declare gui_apps=(
 )
 declare gui_ppas=(
   ppa:gnome-terminator/nightly-gtk3 # required for terminator 1.91
+  ppa:wireshark-dev/stable # required for latest wireshark
 )
 
 #
@@ -97,7 +99,12 @@ git_editor=vim
 if [ $1 == "cli" ] || [ $1 == "full" ]; then
   echo -e "\e[34madding apt repositories...\e[0m"
   for ppa in "${cli_ppas[@]}"; do
-    sudo add-apt-repository -y $ppa
+    echo -n "adding $ppa ... "
+    if grep -q "^deb .*${ppa#ppa:}" /etc/apt/sources.list.d/*; then
+      echo "(already added)"
+    else
+      echo ""; sudo add-apt-repository -y $ppa
+    fi
   done
   echo -e "\e[34minstalling apt cli apps...\e[0m"
   sudo apt-get update && sudo apt-get install -y ${cli_apps[*]}
@@ -109,10 +116,15 @@ fi
 if [ $1 == "gui" ] || [ $1 == "full" ]; then
   echo -e "\e[34madding apt repositories...\e[0m"
   for ppa in "${gui_ppas[@]}"; do
-    sudo add-apt-repository -y $ppa
+    echo -n "adding $ppa ... "
+    if grep -q "^deb .*${ppa#ppa:}" /etc/apt/sources.list.d/*; then
+      echo "(already added)"
+    else
+      echo ""; sudo add-apt-repository -y $ppa
+    fi
   done
   echo -e "\e[34minstalling apt gui apps...\e[0m"
-  sudo apt-get update && sudo apt-get install ${gui_apps[*]}
+  sudo apt-get update && sudo apt-get install -y ${gui_apps[*]}
 fi
 
 #
