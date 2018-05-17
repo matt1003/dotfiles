@@ -538,19 +538,13 @@ augroup ReloadVimrc
   autocmd BufWritePost $MYVIMRC nested source $MYVIMRC
 augroup END
 
-fun!  SetCursorLine()
-  if (&filetype=~#'help\|nerdtree\|tagbar\|qf')
-    setlocal cursorline
-  else
-    setlocal cursorline relativenumber
-  endif
-endfun
-
-" enable the cursor line and relative numbering in the active window only
+" enable the cursor line in the active window only
 augroup CursorLineOnlyInActiveWindow
-  autocmd!
-  autocmd VimEnter,WinEnter,BufWinEnter * call SetCursorLine()
-  autocmd WinLeave * setlocal nocursorline norelativenumber
+  if !&diff
+    autocmd!
+    autocmd VimEnter,WinEnter,BufWinEnter * setlocal cursorline
+    autocmd WinLeave * setlocal nocursorline
+  endif
 augroup END
 
 " override airline status line to print straight lines when inactive
