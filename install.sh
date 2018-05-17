@@ -92,6 +92,8 @@ fonts=https://github.com/powerline/fonts.git
 git_name=matt1003
 git_email=matt1003@gmail.com
 git_editor=vim
+git_difftool=vimdiff
+git_ignorefile=$HOME/.gitignore
 
 #
 # install cli apps
@@ -179,16 +181,25 @@ if [ $1 == "font" ] || [ $1 == "full" ]; then
 fi
 
 #
-# configure local git
+# configure git settings
 #
 if [ $1 == "git" ] || [ $1 == "full" ]; then
-  echo -e "\e[34mconfiguring local git...\e[0m"
+  # local settings
+  echo -e "\e[34mconfiguring git local settings...\e[0m"
   git config user.name "$git_name"
   echo "name: $git_name"
   git config user.email "$git_email"
   echo "email: $git_email"
-  git config core.editor "$git_editor"
+  # global settings
+  echo -e "\e[34mconfiguring git global settings...\e[0m"
+  git config --global core.editor "$git_editor"
   echo "editor: $git_editor"
+  git config --global diff.tool "$git_difftool"
+  echo "difftool: $git_difftool"
+  git config --global merge.tool "$git_difftool"
+  echo "mergetool: $git_difftool"
+  git config --global core.excludesfile "$git_ignorefile"
+  echo "ignorefile: $git_ignorefile"
 fi
 
 # other stuff
@@ -202,6 +213,5 @@ echo -e "\e[34m * COMPLETE * \e[0m"
 # - edit /etc/sudoers so that password is not required for sudo
 # - edit /etc/group so that username is added to minicom and wireshark
 # - edit /etc/default/grub so that there is no splash screen during boot
-# - git config --global core.excludesfile '~/.gitignore'
 #
 
