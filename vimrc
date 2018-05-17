@@ -538,12 +538,6 @@ augroup ReloadVimrc
   autocmd BufWritePost $MYVIMRC nested source $MYVIMRC
 augroup END
 
-" select read only when opening a swap file in the preview window
-augroup PreviewWindowSwapChoice
-  autocmd!
-  autocmd SwapExists * if &l:pvw | let v:swapchoice = 'o' | endif
-augroup END
-
 fun!  SetCursorLine()
   if (&filetype=~#'help\|nerdtree\|tagbar\|qf')
     setlocal cursorline
