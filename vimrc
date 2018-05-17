@@ -563,6 +563,15 @@ fun! CloseAllQfLocWins()
 endfun
 silent! map <F2> :call CloseAllQfLocWins()<CR>
 
+" auto update vim diff on write
+augroup UpdateDiff
+  if &diff
+    autocmd!
+    autocmd TextChanged * diffupdate
+    autocmd BufRead * setlocal cursorline noreadonly
+  endif
+augroup END
+
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " write file with sudo rights
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
