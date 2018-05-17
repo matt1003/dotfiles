@@ -152,6 +152,9 @@ if executable('cscope')
   nnoremap <silent> <leader>fi :call cscope#find('i', expand('<cword>'))<CR>
 endif
 "}}}
+" code break {{{
+Plug 'johngrib/vim-game-code-break'
+"}}}
 " dispatch {{{
 Plug 'tpope/vim-dispatch'
 "}}}
@@ -231,6 +234,10 @@ Plug 'scrooloose/nerdtree'
 let g:NERDTreeWinSize = 40
 let g:NERDTreeMinimalUI = 1
 "}}}
+" numbers {{{
+Plug 'myusuf3/numbers.vim'
+let g:numbers_exclude = ['help', 'nerdtree', 'tagbar', 'qf']
+"}}}
 " powerline fonts {{{
 Plug 'powerline/fonts', { 'do' : './install.sh' }
 "}}}
@@ -259,6 +266,9 @@ Plug 'majutsushi/tagbar'
 let g:tagbar_compact = 1
 let g:tagbar_indent = 1
 let g:tagbar_silent = 1
+"}}}
+" terminus {{{
+Plug 'wincent/terminus'
 "}}}
 " tmux-navigator {{{
 Plug 'christoomey/vim-tmux-navigator'
