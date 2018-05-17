@@ -245,6 +245,7 @@ Plug 'powerline/fonts', { 'do' : './install.sh' }
 Plug 'matt1003/quickr-preview.vim'
 let g:quickr_preview_on_cursor = 0
 let g:quickr_preview_sign_enable = 0
+let g:quickr_preview_on_cursor = 1
 "}}}
 " replace with register -----(delete and paste) {{{
 Plug 'vim-scripts/ReplaceWithRegister'
