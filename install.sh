@@ -18,6 +18,7 @@ declare cli_apps=(
   git
   hh
   minicom
+  neovim
   numlockx
   silversearcher-ag
   tmux-next
@@ -30,6 +31,7 @@ declare cli_apps=(
 )
 declare cli_ppas=(
   ppa:jonathonf/vim # required for vim 8.0
+  ppa:neovim-ppa/unstable # required for neovim
   ppa:pi-rho/dev # required for tmux 2.3
   ppa:ultradvorka/ppa # required for hstr
 )
@@ -63,6 +65,7 @@ declare -A dotfiles=(
   [inputrc]=.inputrc
   [minimacros]=.macros
   [minirc]=.minirc.dfl
+  [nvimrc]=.config/nvim/init.vim
   [profile]=.profile
   [terminator.conf]=.config/terminator/config
   [tmux.conf]=.tmux.conf
