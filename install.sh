@@ -219,4 +219,17 @@ echo -e "\e[34m * COMPLETE * \e[0m"
 # - edit /etc/group so that username is added to minicom and wireshark
 # - edit /etc/default/grub so that there is no splash screen during boot
 #
-
+# sort out what python modules are needed ...
+# sudo apt-get install pip
+# sudo apt-get install python-pip
+# pip install --upgrade pip
+# pip install config
+# pip install jenkins
+# pip install jenkinsapi
+# pip install BeautifulSoup
+# pip install vim-vint
+# pip install vim-vint
+# pip install ansicolor
+# pip uninstall ansicolor
+# pip install 'ansicolor==0.2.4'
+# sudo apt-get install pylint
