@@ -171,7 +171,7 @@ let g:gitgutter_sign_removed_first_line = '▲'
 nmap <leader>hn :GitGutterNextHunk<CR>
 nmap <leader>hp :GitGutterPrevHunk<CR>
 nmap <leader>hu :GitGutterUndoHunk<CR>
-nmap <silent> <c-n> :GitGutterNextHunk<CR>
+nmap <silent> <c-n> ]c
 "}}}
 " gruvbox {{{
 Plug 'matt1003/gruvbox'
