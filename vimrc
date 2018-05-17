@@ -13,18 +13,18 @@ if has('win32') || has ('win64')
 else
   set shell=/bin/bash
   set shellcmdflag=-c
-  if has ('nvim')
-    let $VIMHOME=$HOME.'/.config/nvim'
-  else
-    let $VIMHOME=$HOME.'/.vim'
-  endif
+  let $VIMHOME=$HOME.'/.vim'
 endif
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " vim directories
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-set viminfo+=n$VIMHOME/viminfo
+if has ('nvim')
+  set viminfo+=n$VIMHOME/nviminfo
+else
+  set viminfo+=n$VIMHOME/viminfo
+endif
 
 if !isdirectory($VIMHOME.'/swap')
   call mkdir($VIMHOME.'/swap', 'p')
