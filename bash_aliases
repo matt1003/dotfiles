@@ -31,6 +31,9 @@ alias gsh='git show'
 alias gst='git status'
 alias gta='git tag'
 
+alias gada='git add --all'
+alias grbc='git rebase --continue'
+
 alias gbrd='confirm && git branch -D'
 alias grss='confirm && git reset --soft'
 alias grsh='confirm && git reset --hard'
