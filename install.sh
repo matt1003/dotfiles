@@ -202,9 +202,14 @@ if [ $1 == "git" ] || [ $1 == "full" ]; then
   echo "ignorefile: $git_ignorefile"
 fi
 
+#
 # other stuff
-# prevent gnome from stomping on xkb settings
-gsettings set org.gnome.settings-daemon.plugins.keyboard active false
+#
+if [ $1 == "full" ]; then
+  echo -e "\e[34mconfiguring other settings...\e[0m"
+  # prevent gnome from stomping on xkb settings
+  gsettings set org.gnome.settings-daemon.plugins.keyboard active false
+fi
 
 echo -e "\e[34m * COMPLETE * \e[0m"
 
