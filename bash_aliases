@@ -58,6 +58,7 @@ alias goa='vim $(git diff --name-only | tr "\n" " ")'
 
 alias ll='ls --group-directories-first --time-style=long-iso -hl'
 alias la='ls --group-directories-first --time-style=long-iso -hlA'
+alias lt='ls --group-directories-first --time-style=long-iso -hlAt'
 
 alias his="cat ~/.bash_history.global | grep --text"
 
