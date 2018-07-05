@@ -267,6 +267,12 @@ tmux_bld_path=${PWD//\//%}
 cd "./$buildsys_dir/"
 
 #
+# grab the correct docker version
+#
+docker=$(grep DOCKER_BUILD_IMAGE ../main/.jenkinsparams | awk -F= '{print $2}')
+buildsys_cmd=${buildsys_cmd/@DOCKER@/$docker}
+
+#
 # ensure build is not already running
 #
 if [ -f $buildsys_pid ]; then
