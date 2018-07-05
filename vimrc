@@ -103,6 +103,7 @@ let g:ale_sign_warning = '✘'
 " better whitespace ---------(highlight trailing whitespace) {{{
 Plug 'ntpeters/vim-better-whitespace'
 let g:show_spaces_that_precede_tabs = 1
+let g:better_whitespace_filetypes_blacklist = ['help', 'nerdtree', 'tagbar', 'qf', 'undotree']
 
 "}}}
 " bufexplorer ---------------(improved interface for switching buffers) {{{
@@ -220,7 +221,7 @@ let g:NERDTreeMinimalUI = 1
 "}}}
 " numbers {{{
 Plug 'myusuf3/numbers.vim'
-let g:numbers_exclude = ['help', 'nerdtree', 'tagbar', 'qf']
+let g:numbers_exclude = ['help', 'nerdtree', 'tagbar', 'qf', 'undotree']
 "}}}
 " powerline fonts {{{
 Plug 'powerline/fonts', { 'do' : './install.sh' }
@@ -323,7 +324,7 @@ augroup FileSpecificSettings
   " git commit message
   autocmd FileType gitcommit setlocal colorcolumn=73
   " non-editable buffers
-  autocmd FileType help,nerdtree,tagbar,qf setlocal nolist nospell signcolumn=no
+  autocmd FileType help,nerdtree,tagbar,qf,undotree setlocal nolist nospell signcolumn=no colorcolumn=0
 augroup END
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
