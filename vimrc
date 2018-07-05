@@ -26,24 +26,6 @@ else
   set viminfo+=n$VIMHOME/viminfo
 endif
 
-if !isdirectory($VIMHOME.'/swap')
-  call mkdir($VIMHOME.'/swap', 'p')
-endif
-set directory=$VIMHOME/swap//
-set swapfile
-
-if !isdirectory($VIMHOME.'/backup')
-  call mkdir($VIMHOME.'/backup', 'p')
-endif
-set backupdir=$VIMHOME/backup//
-set backup
-
-if !isdirectory($VIMHOME.'/undo')
-  call mkdir($VIMHOME.'/undo', 'p')
-endif
-set undodir=$VIMHOME/undo//
-set undofile
-
 if !isdirectory($VIMHOME.'/autoload')
   call mkdir($VIMHOME.'/autoload', 'p')
 endif
@@ -134,6 +116,9 @@ Plug 'qpkorr/vim-bufkill'
 " caps lock -----------------(simulate caps lock key) {{{
 Plug 'tpope/vim-capslock'
 imap <c-c> <Plug>CapsLockToggle
+"}}}
+" central -------------------(manage backup/swap/undo files) {{{
+Plug 'matt1003/central.vim'
 "}}}
 " cscope {{{
 if executable('cscope')
