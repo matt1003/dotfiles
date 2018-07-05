@@ -100,7 +100,9 @@ def get_commit_reviewers(commit):
 def get_commit_review_id(review_list, commit):
     commit['review_id'] = ''
     for review in review_list:
-        if review.summary == commit['summary']:
+        if not review.summary:
+            print_warning("existing review %d has no summary, does it need to be published?" % review.id)
+        elif review.summary == commit['summary']:
             commit['review_id'] = review.id
 
 def get_pending_commits(repo, review_list, id_list):
