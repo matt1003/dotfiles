@@ -231,6 +231,7 @@ Plug 'matt1003/quickr-preview.vim'
 let g:quickr_preview_on_cursor = 0
 let g:quickr_preview_sign_enable = 0
 let g:quickr_preview_on_cursor = 1
+let g:quickr_preview_line_hl = 'IncSearch'
 "}}}
 " replace with register -----(delete and paste) {{{
 Plug 'vim-scripts/ReplaceWithRegister'
@@ -252,6 +253,10 @@ Plug 'majutsushi/tagbar'
 let g:tagbar_compact = 1
 let g:tagbar_indent = 1
 let g:tagbar_silent = 1
+augroup TagBarColor
+  autocmd!
+  autocmd ColorScheme * highlight link TagbarHighlight IncSearch
+augroup END
 "}}}
 " terminus {{{
 Plug 'wincent/terminus'
@@ -674,18 +679,17 @@ fun! s:NERDTreeSync()
   endif
   " highlight the current file
   let l:win_id = win_getid()
-  NERDTreeFind
-  execute 'sign unplace 27'
-  execute 'sign place 27 name=NERDTreeCurrentFile line='.line('.').' buffer='.bufnr('%')
+  set eventignore+=all
+  keepjumps NERDTreeFind
+  execute 'match IncSearch /\%'.line('.').'l^\s*\zs.\{-}\ze\s*\(->\|$\)/'
   call win_gotoid(l:win_id)
+  set eventignore-=all
 endfun
 
 augroup NERDTreeTracking
   autocmd!
   autocmd BufEnter * call s:NERDTreeSync()
 augroup END
-
-sign define NERDTreeCurrentFile linehl=Search
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " ide view
