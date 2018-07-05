@@ -1,4 +1,12 @@
-## arrow up
+#
+# ~/.inputrc: local inputrc for libreadline
+#
+
+# source global inputrc
+$include /etc/inputrc
+
+# arrow up search history
 "\e[A":history-search-backward
-## arrow down
+
+# arrow down search history
 "\e[B":history-search-forward
