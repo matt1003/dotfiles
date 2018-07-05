@@ -549,7 +549,7 @@ endif
 
 " close all quickfix/location windows
 fun! CloseAllQfLocWins()
-  windo if &ft == 'qf' | bd | endif
+  windo if &ft == 'qf' | echom 'close qf/loc win (F2)' | lcl | ccl | endif
   call win_gotoid(g:main_win_id)
 endfun
 silent! map <F2> :call CloseAllQfLocWins()<CR>
