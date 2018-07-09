@@ -572,7 +572,7 @@ fun! SudoWrite(path, dir)
   silent doautocmd BufWritePre
 
   if !isdirectory(a:dir)
-    if confirm('The directory "'.a:dir.'" does not exits'."\n".
+    if confirm('The directory "'.a:dir.'" does not exits.'."\n".
               \'Do you wish to create it?', "&Yes\n&No", 2) == 1
       " TODO what if we need sudo to create the dir
       call mkdir(a:dir, 'p')
@@ -587,7 +587,7 @@ fun! SudoWrite(path, dir)
     echom '![ -w '.a:dir.'/ ]'
   endif
   if v:shell_error
-    if confirm('You do not have permission to write to "'.a:path.'"'."\n".
+    if confirm('You do not have permission to write to "'.a:path.'".'."\n".
               \'Do you wish to write with sudo?', "&Yes\n&No", 2) == 1
       silent write !sudo tee % > /dev/null
       " TODO don't call edit if the write fails
@@ -615,19 +615,28 @@ endif
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 if ! exists(':UpdateVim')
+
   fun! s:DownloadLatestVimrc()
       if getftype($MYVIMRC) ==# 'link'
         echo 'error: "'.$MYVIMRC.'" is a symlink'
       else
-        if confirm('This will overwrite "'.$MYVIMRC.'"'."\n".
+        if confirm('Updating vim config. This will overwrite "'.$MYVIMRC.'".'."\n".
                   \'Do you wish to continue?', "&Yes\n&No", 2) == 1
           execute 'silent !wget -O "'.$MYVIMRC.'" "https://raw.githubusercontent.com/matt1003/dotfiles/master/vimrc"'
-          source $MYVIMRC
-          PlugInstall
         endif
       endif
   endfun
-  command! UpdateVim call <SID>DownloadLatestVimrc()
+
+  fun! s:DownloadLatestPlugins()
+    if confirm('Updating vim plugins. This may overwrite local changes.'."\n".
+              \'Do you wish to continue?', "&Yes\n&No", 2) == 1
+      PlugUpgrade
+      PlugUpdate
+    endif
+  endfun
+
+  command! UpdateVim call <SID>DownloadLatestVimrc() | call <SID>DownloadLatestPlugins()
+
 endif
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
