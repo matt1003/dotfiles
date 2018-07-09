@@ -90,8 +90,7 @@ endtry
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 if !filereadable($VIMHOME.'/autoload/plug.vim')
-  silent !wget -O "$VIMHOME/autoload/plug.vim"
-    \ "https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim"
+  execute 'silent !wget -O "'.$VIMHOME.'/autoload/plug.vim" "https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim"'
 endif
 
 if !isdirectory($VIMHOME.'/plugged')
