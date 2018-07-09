@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-if [ -z $1 ]; then
+if [ -z ${1+x} ]; then
   echo -e "\e[31merror: must specify arg: cli/gui/dot/gnome/bin/font/git/full"
   exit 1
 fi
@@ -44,6 +44,7 @@ declare gui_apps=(
   firefox
   gedit
   git-gui
+  gitk
   gnome-tweak-tool
   meld
   pinta
@@ -155,7 +156,7 @@ fi
 if [ $1 == "gnome" ] || [ $1 == "full" ]; then
   echo -e "\e[34minstalling gnome launchers...\e[0m"
   for lau in "${gnome_launchers[@]}"; do
-    cat $lau | sed "s/@user@/$USER/g" | tee $HOME/.local/share/applications/$lau
+    cat $scriptpath/$lau | sed "s/@user@/$USER/g" | tee $HOME/.local/share/applications/$lau
     chmod 775 $HOME/.local/share/applications/$lau
   done
 fi
@@ -184,6 +185,8 @@ fi
 # configure git settings
 #
 if [ $1 == "git" ] || [ $1 == "full" ]; then
+  # git directory
+  cd $scriptpath
   # local settings
   echo -e "\e[34mconfiguring git local settings...\e[0m"
   git config user.name "$git_name"
@@ -200,6 +203,8 @@ if [ $1 == "git" ] || [ $1 == "full" ]; then
   echo "mergetool: $git_difftool"
   git config --global core.excludesfile "$git_ignorefile"
   echo "ignorefile: $git_ignorefile"
+  # original directory
+  cd -
 fi
 
 #
