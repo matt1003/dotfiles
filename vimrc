@@ -613,20 +613,22 @@ endif
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " download latest vimrc
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-fun! s:DownloadLatestVimrc()
-    if getftype($MYVIMRC) == 'link'
-      echo "unable to process vimrc"
-    else
-      if confirm('This will overwrite "'.$MYVIMRC.'"'."\n".
-                \'Do you wish to continue?', "&Yes\n&No", 2) == 1
-        execute 'silent !wget -O "'.$MYVIMRC.'" "https://raw.githubusercontent.com/matt1003/dotfiles/master/vimrc"'
-        source $MYVIMRC
-        PlugInstall
-      endif
-    endif
-endfun
 
-command! UpdateVim call <SID>DownloadLatestVimrc()
+if ! exists(':UpdateVim')
+  fun! s:DownloadLatestVimrc()
+      if getftype($MYVIMRC) ==# 'link'
+        echo 'error: "'.$MYVIMRC.'" is a symlink'
+      else
+        if confirm('This will overwrite "'.$MYVIMRC.'"'."\n".
+                  \'Do you wish to continue?', "&Yes\n&No", 2) == 1
+          execute 'silent !wget -O "'.$MYVIMRC.'" "https://raw.githubusercontent.com/matt1003/dotfiles/master/vimrc"'
+          source $MYVIMRC
+          PlugInstall
+        endif
+      endif
+  endfun
+  command! UpdateVim call <SID>DownloadLatestVimrc()
+endif
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " tracking the main window
