@@ -224,7 +224,7 @@ Plug 'myusuf3/numbers.vim'
 let g:numbers_exclude = ['help', 'nerdtree', 'tagbar', 'qf', 'undotree']
 "}}}
 " powerline fonts {{{
-Plug 'powerline/fonts', { 'do' : './install.sh' }
+Plug 'powerline/fonts'
 "}}}
 " quickr-preview {{{
 Plug 'matt1003/quickr-preview.vim'
