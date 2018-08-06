@@ -623,7 +623,7 @@ if ! exists(':UpdateVim')
       if getftype($MYVIMRC) ==# 'link'
         echo 'error: "'.$MYVIMRC.'" is a symlink'
       else
-        if confirm('Updating vim config. This will overwrite "'.$MYVIMRC.'".'."\n".
+        if confirm('Updating vim config; this will overwrite "'.$MYVIMRC.'".'."\n".
                   \'Do you wish to continue?', "&Yes\n&No", 2) == 1
           execute 'silent !wget -O "'.$MYVIMRC.'" "https://raw.githubusercontent.com/matt1003/dotfiles/master/vimrc"'
         endif
@@ -631,7 +631,7 @@ if ! exists(':UpdateVim')
   endfun
 
   fun! s:DownloadLatestPlugins()
-    if confirm('Updating vim plugins. This may overwrite local changes.'."\n".
+    if confirm('Updating vim plugins; this may overwrite local changes.'."\n".
               \'Do you wish to continue?', "&Yes\n&No", 2) == 1
       PlugUpgrade
       PlugUpdate
