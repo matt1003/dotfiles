@@ -59,6 +59,7 @@ set smartcase                " search: do not ignore uppercase
 
 set foldmethod=marker
 set clipboard^=unnamed,unnamedplus
+set belloff=all
 
 " define white-space characters
 try
