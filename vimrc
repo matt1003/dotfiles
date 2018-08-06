@@ -234,6 +234,7 @@ let g:quickr_preview_on_cursor = 0
 let g:quickr_preview_sign_enable = 0
 let g:quickr_preview_on_cursor = 1
 let g:quickr_preview_line_hl = 'IncSearch'
+let g:quickr_preview_options = 'number norelativenumber nofoldenable nocursorline colorcolumn=0 numberwidth=6 signcolumn=no'
 "}}}
 " replace with register -----(delete and paste) {{{
 Plug 'vim-scripts/ReplaceWithRegister'
