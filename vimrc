@@ -100,6 +100,7 @@ let g:ale_set_quickfix = 1
 let g:ale_set_highlights = 0
 let g:ale_sign_error = '✘'
 let g:ale_sign_warning = '✘'
+let g:ale_linters = {'c':[],'cpp':[]}
 "}}}
 " better whitespace ---------(highlight trailing whitespace) {{{
 Plug 'ntpeters/vim-better-whitespace'
