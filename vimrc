@@ -110,8 +110,8 @@ let g:better_whitespace_filetypes_blacklist = ['help', 'nerdtree', 'tagbar', 'qf
 "}}}
 " bufexplorer ---------------(improved interface for switching buffers) {{{
 Plug 'vim-scripts/bufexplorer.zip'
-nmap <silent> <leader>bl :call win_gotoid(g:main_win_id)<CR>:BufExplorer<CR>
-nmap <silent> <c-u> :BufExplorer<CR>
+nmap <silent> <leader>bl :call win_gotoid(g:main_win_id)<CR>:keepjumps BufExplorer<CR>
+nmap <silent> <c-u> :keepjumps BufExplorer<CR>
 "}}}
 " bufkill -------------------(delete buffer without messing up splits) {{{
 Plug 'qpkorr/vim-bufkill'
