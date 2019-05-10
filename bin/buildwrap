@@ -18,16 +18,19 @@
 set -o pipefail
 shopt -s nullglob
 
+I3=1
+
 buildsys_pid=".buildsys.pid"
 buildsys_config="$HOME/.buildcmds"
 
 tmux_bld_file="$HOME/.tmux/build"
-tmux_bld_name="unknown"
-tmux_bld_path="unknown"
+i3_bld_file="$HOME/.i3-build-status"
+bld_name="unknown"
+bld_path="unknown"
 
 opt_color_none=0
 opt_en_upgrade=0
-opt_clear_tmux=0
+opt_clear_stat=0
 opt_ls_targets=0
 
 restore_pwd=$PWD
@@ -53,7 +56,7 @@ echo_error() {
 
 print_status() {
   # arguments
-  phase=$1; status=$2; bash_color=$3; tmux_color=$4
+  phase=$1; status=$2; bash_color=$3; status_color=$4
   # print banner
   len=$((${#phase}+${#status}+7))
   printf "\n$bash_color"
@@ -61,10 +64,8 @@ print_status() {
   printf "\n** ${phase^^} ${status^^} **\n"
   printf "%0.s*" $(seq 1 $len)
   printf "\n$color_none"
-  # update tmux status
-  if [ $TMUX ]; then
-    update_tmux_status "$phase $status" "$tmux_color"
-  fi
+  # update status bar
+  update_status "$phase $status" "$status_color"
 }
 
 status_success() {
@@ -122,8 +123,22 @@ cleanup() {
 
 update_tmux_status() {
   [ -z "$2" ] && local c="#f9f5d7" || local c="$2"
-  echo "#[fg=#a89984,bg=#3c3836] $tmux_bld_name:#[fg=$c,bg=#3c3836,bold] $1 " \
-    > "$tmux_bld_file-$tmux_bld_path"
+  echo "#[fg=#a89984,bg=#3c3836] $bld_name:#[fg=$c,bg=#3c3836,bold] $1 " \
+    > "$tmux_bld_file-$bld_path"
+}
+
+update_i3_status() {
+  [ -z "$2" ] && local c="#f9f5d7" || local c="$2"
+  echo "{\"color\":\"#282828\",\"markup\":\"pango\",\"full_text\":\"<span background='$c'>  $bld_name $1 </span>\"}," \
+    > "$i3_bld_file-$bld_path"
+}
+
+update_status() {
+  if [ $TMUX ]; then
+    update_tmux_status "$1" "$2"
+  elif [ $I3 ]; then
+    update_i3_status "$1" "$2"
+  fi
 }
 
 clear_tmux_status() {
@@ -132,6 +147,19 @@ clear_tmux_status() {
       rm $file
     fi
   done
+}
+
+clear_i3_status() {
+  for file in $i3_bld_file-$1; do
+    if grep -q 'Success\|Failure\|Aborted' $file; then
+      rm $file
+    fi
+  done
+}
+
+clear_status() {
+  clear_tmux_status "$1"
+  clear_i3_status "$1"
 }
 
 ################################################################################
@@ -154,7 +182,7 @@ for arg in $@; do
     '--upgrade')
       opt_en_upgrade=1 ;;
     'clear')
-      opt_clear_tmux=1 ;;
+      opt_clear_stat=1 ;;
     'list')
       opt_ls_targets=1 ;;
     *)
@@ -199,10 +227,10 @@ while IFS=, read -r target dir cmd upgrade aliases; do
 done < $buildsys_config
 
 #
-# check for tmux clear command
+# check for clear status command
 #
-if [ $opt_clear_tmux -ne 0 ]; then
-  clear_tmux_status '*'
+if [ $opt_clear_stat -ne 0 ]; then
+  clear_status '*'
   exit_pass
 fi
 
@@ -262,8 +290,8 @@ while [ ! -d "$PWD/$buildsys_dir" ]; do
      exit_fail
   fi
 done
-tmux_bld_name=$(basename $PWD)
-tmux_bld_path=${PWD//\//%}
+bld_name=$(basename $PWD)
+bld_path=${PWD//\//%}
 cd "./$buildsys_dir/"
 
 #
@@ -290,11 +318,9 @@ running_pid=1
 ################################################################################
 
 #
-# update tmux status bar
+# update status bar
 #
-if [ $TMUX ]; then
-  update_tmux_status "Building $buildsys_target"
-fi
+update_status "Building $buildsys_target"
 buildsys_phase="Build"
 
 #
@@ -331,11 +357,9 @@ fi
 ################################################################################
 
 #
-# update tmux status bar
+# update status bar
 #
-if [ $TMUX ]; then
-  update_tmux_status "Upgrading $buildsys_target"
-fi
+update_status "Upgrading $buildsys_target"
 buildsys_phase="Upgrade"
 
 #
