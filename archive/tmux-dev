@@ -43,6 +43,23 @@ else
 fi
 
 #
+# launch chrome
+#
+if ! wmctrl -l | grep -q 'Chromium'; then
+  echo "launching chrome"
+  chromium-browser --password-store=basic &
+  while true; do
+    if wmctrl -l | grep -q 'Chromium'; then
+      break;
+    fi
+  done
+  sleep 0.2
+  wmctrl -r 'Chromium' -b add,maximized_vert,maximized_horz
+else
+  echo "chrome already running"
+fi
+
+#
 # launch update/upgrade
 #
 if [ $(date +%Y%m%d) -gt $(cat $HOME/.last-update) ]; then
