@@ -346,8 +346,6 @@ nmap <leader>O :<C-U>call append(line('.')-1, repeat([''], v:count1))<CR>
 " build system
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-let s:BuildSysCmd = 'buildwrap'
-let s:BuildSysDir = 'docker'
 let s:BuildSysPath = 0
 
 " build result color
@@ -397,23 +395,18 @@ fun! s:CheckForModifiedBuffers()
   endwhile
 endfun
 
-fun! s:IsBuildSysPath(path)
-  if filereadable(a:path.'/build.sh')
-    return 1
-  endif
-  return 0
-endfun
-
 fun! s:LocateBuildSysPath()
   " 1) attempt to use the last build system directory
-  if <SID>IsBuildSysPath(s:BuildSysPath)
-    return s:BuildSysPath
+  if s:BuildSysPath != 0
+    if filereadable(s:BuildSysPath.'/aviat-setup-env')
+      return s:BuildSysPath
+    endif
   endif
   " 2) attempt to locate the build system directory
   let l:path = getcwd()
   while l:path !=? '/'
-      if <SID>IsBuildSysPath(l:path.'/'.s:BuildSysDir)
-        return l:path.'/'.s:BuildSysDir
+      if filereadable(l:path.'/aviat-setup-env')
+        return l:path
     endif
     let l:path = fnamemodify(l:path, ':h')
   endwhile
@@ -433,7 +426,7 @@ fun! s:ExecuteBuildSys(BuildSysArgs)
   else
     call <SID>CheckForModifiedBuffers()
     call <SID>UpdateBuildSysPath()
-    exe 'Dispatch! -compiler=make -dir='.s:BuildSysPath.' '.s:BuildSysCmd.' '.a:BuildSysArgs
+    exe 'Dispatch! -compiler=make -dir='.s:BuildSysPath.' buildwrap '.a:BuildSysArgs
   endif
 endfun
 
