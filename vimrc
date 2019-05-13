@@ -559,6 +559,13 @@ augroup UpdateDiff
   endif
 augroup END
 
+" auto jump to the last position when reopening a file
+autocmd VimLeave * call system('xsel -ib', getreg('+'))
+if has('autocmd')
+  au BufReadPost * if line("'\"") > 0 && line("'\"") <= line('$')
+    \| exe "normal! g'\"" | endif
+endif
+
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " write file with sudo rights
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
