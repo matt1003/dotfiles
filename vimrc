@@ -711,23 +711,40 @@ augroup END
 
 let s:ide_view = 0
 
-fun! IdeViewToggle(...)
+fun! IdeViewEnable()
+  let l:win_id = win_getid()
+  NERDTree
+  Tagbar
+  call win_gotoid(l:win_id)
+  let s:ide_view = 1
+endfun
+
+fun! IdeViewDisable()
+  NERDTreeClose
+  TagbarClose
+  let s:ide_view = 0
+endfun
+
+fun! IdeViewToggle()
   if s:ide_view
-    TagbarClose
-    NERDTreeClose
-    let s:ide_view = 0
+    call IdeViewDisable()
   else
-    let l:win_id = win_getid()
-    NERDTree
-    Tagbar
-    call win_gotoid(l:win_id)
-    let s:ide_view = 1
+    call IdeViewEnable()
+  endif
+endfun
+
+fun! IdeViewAuto(...)
+  if winwidth(0) < 160
+    call IdeViewDisable()
+  else
+    call IdeViewEnable()
   endif
 endfun
 
 augroup IdeView
   autocmd!
-  autocmd VimEnter * if winwidth(0) > 160 | call timer_start(200, 'IdeViewToggle') | endif
+  autocmd VimEnter * call timer_start(200, 'IdeViewAuto')
+  autocmd VimResized * call IdeViewAuto()
 augroup END
 
 silent! map <F3> :call IdeViewToggle()<CR>
