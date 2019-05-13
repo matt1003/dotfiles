@@ -1,16 +1,5 @@
 #!/bin/bash
 
-#
-# buildwrap provides a simple wrapper around buildsys,
-# intended to make build success and failures obvious.
-#
-# A buildsys configuration file is required to specify
-# support build commands. This should be a csv file in
-# the following format:
-#
-# target name, build directory, build command, upgrade command, target aliases
-#
-
 ################################################################################
 # script setup
 ################################################################################
@@ -20,38 +9,31 @@ shopt -s nullglob
 
 I3=1
 
-buildsys_pid=".buildsys.pid"
-buildsys_config="$HOME/.buildcmds"
-
 tmux_bld_file="$HOME/.tmux/build"
 i3_bld_file="$HOME/.i3-build-status"
+
 bld_name="unknown"
 bld_path="unknown"
+bld_step="unknown"
 
 opt_color_none=0
 opt_en_upgrade=0
-opt_clear_stat=0
-opt_ls_targets=0
 
-restore_pwd=$PWD
-running_pid=0
-target_required=1
-
-declare -A buildsys_dir_list
-declare -A buildsys_cmd_list
-declare -A upgrade_cmd_list
-declare -A buildsys_aliases
-specified_targets=()
+supported_targets=()
+specified_target=''
+specified_recipe=''
+specified_options=()
 
 ################################################################################
 # script functions
 ################################################################################
 
+array_contains () {
+  local e ; for e in "${@:2}"; do [[ "$e" == "$1" ]] && return 0 ; done ; return 1
+}
+
 echo_error() {
-  # arguments
-  message=$1
-  # print error message
-  echo -e "${color_fail}error:${color_none} ${message}"
+  echo -e "${color_fail}error:${color_none} $1"
 }
 
 print_status() {
@@ -65,83 +47,51 @@ print_status() {
   printf "%0.s*" $(seq 1 $len)
   printf "\n$color_none"
   # update status bar
-  update_status "$phase $status" "$status_color"
+  update_status_bar "$phase $status" "$status_color"
 }
 
 status_success() {
-  print_status $buildsys_phase "Success" "$color_pass" "#b8bb26"
+  print_status $bld_step "Success" "$color_pass" "#b8bb26"
 }
 
 status_failure() {
-  print_status $buildsys_phase "Failure" "$color_fail" "#fb4934"
+  print_status $bld_step "Failure" "$color_fail" "#fb4934"
 }
 
 status_aborted() {
-  print_status $buildsys_phase "Aborted" "$color_warn" "#fabd2f"
-}
-
-exit_pass() {
-  cleanup
-  exit 0
-}
-
-exit_fail() {
-  cleanup
-  exit 1
-}
-
-exit_abort() {
-  cleanup
-  exit 2
+  print_status $bld_step "Aborted" "$color_warn" "#fabd2f"
 }
 
 hdl_sig_int() {
-  kill_buildsys
-  status_aborted
-  exit_abort
+  status_aborted ; exit 2
 }
 
 hdl_sig_abrt() {
-  sleep 0.50
-  status_aborted
-  exit_abort
+  status_aborted ; exit 2
 }
 
-kill_buildsys() {
-  if [ -f $buildsys_pid ]; then
-    pkill -SIGKILL -P `cat $buildsys_pid`
-    sleep 0.25
-    pkill -SIGKILL -P `cat $buildsys_pid`
-    sleep 0.25
-  fi
-}
-
-cleanup() {
-  [ $running_pid -ne 0 ] && rm -f $buildsys_pid
-  cd $restore_pwd
-}
-
-update_tmux_status() {
+update_tmux_status_bar() {
   [ -z "$2" ] && local c="#f9f5d7" || local c="$2"
   echo "#[fg=#a89984,bg=#3c3836] $bld_name:#[fg=$c,bg=#3c3836,bold] $1 " \
-    > "$tmux_bld_file-$bld_path"
+    > "$tmux_bld_file-${bld_path//\//%}"
 }
 
-update_i3_status() {
+update_i3_status_bar() {
   [ -z "$2" ] && local c="#f9f5d7" || local c="$2"
-  echo "{\"color\":\"#282828\",\"markup\":\"pango\",\"full_text\":\"<span background='$c'>  $bld_name $1 </span>\"}," \
-    > "$i3_bld_file-$bld_path"
+  echo "{\"color\":\"#282828\",\"markup\":\"pango\",\"full_text\":\"<span background='$c'>  $bld_name: $1 </span>\"}," \
+    > "$i3_bld_file-${bld_path//\//%}"
 }
 
-update_status() {
+update_status_bar() {
   if [ $TMUX ]; then
-    update_tmux_status "$1" "$2"
-  elif [ $I3 ]; then
-    update_i3_status "$1" "$2"
+    update_tmux_status_bar "$1" "$2"
+  fi
+  if [ $I3 ]; then
+    update_i3_status_bar "$1" "$2"
   fi
 }
 
-clear_tmux_status() {
+clear_tmux_status_bar() {
   for file in $tmux_bld_file-$1; do
     if grep -q 'Success\|Failure\|Aborted' $file; then
       rm $file
@@ -149,7 +99,7 @@ clear_tmux_status() {
   done
 }
 
-clear_i3_status() {
+clear_i3_status_bar() {
   for file in $i3_bld_file-$1; do
     if grep -q 'Success\|Failure\|Aborted' $file; then
       rm $file
@@ -157,9 +107,9 @@ clear_i3_status() {
   done
 }
 
-clear_status() {
-  clear_tmux_status "$1"
-  clear_i3_status "$1"
+clear_status_bar() {
+  clear_tmux_status_bar "$1"
+  clear_i3_status_bar "$1"
 }
 
 ################################################################################
@@ -181,14 +131,14 @@ for arg in $@; do
       opt_color_none=1 ;;
     '--upgrade')
       opt_en_upgrade=1 ;;
-    'clear')
-      opt_clear_stat=1 ;;
-    'list')
-      opt_ls_targets=1 ;;
     *)
-      # split out comma separated args
-      IFS=',' read -r -a sarg <<< $arg
-      specified_targets+=(${sarg[@]}) ;;
+      if [ "$specified_target" = "" ]; then
+        specified_target=$arg
+      elif [ "$specified_recipe" = "" ]; then
+        specified_recipe=$arg
+      else
+        specified_options+=$arg
+      fi ;;
   esac
 done
 
@@ -207,111 +157,71 @@ else
 fi
 
 #
-# check the config exists
-#
-if [ ! -f $buildsys_config ]; then
-  echo_error "can not locate buildsys config \"$buildsys_config\""
-  exit_fail
-fi
-
-#
-# process the config
-#
-while IFS=, read -r target dir cmd upgrade aliases; do
-  if [ -n  "$target" ]; then
-    buildsys_dir_list["$target"]="$dir"
-    buildsys_cmd_list["$target"]="$cmd"
-    upgrade_cmd_list["$target"]="$upgrade"
-    buildsys_aliases["$target"]="$target $aliases"
-  fi
-done < $buildsys_config
-
-#
 # check for clear status command
 #
-if [ $opt_clear_stat -ne 0 ]; then
-  clear_status '*'
-  exit_pass
-fi
-
-#
-# check for list targets command
-#
-if [ $opt_ls_targets -ne 0 ]; then
-  printf "%-15s %s\n" "---------" "---------"
-  printf "%-15s %s\n" " targets " " aliases "
-  printf "%-15s %s\n" "---------" "---------"
-  for target in ${!buildsys_cmd_list[@]}; do
-    printf "%-15s %s\n" "$target" "${buildsys_aliases[$target]}"
-  done | sort
-  exit_pass
-fi
-
-#
-# check target is specified
-#
-if [ $target_required -eq 1 ]; then
-  if [ ${#specified_targets[@]} -eq 0 ]; then
-     echo_error "no target specified"
-     exit_fail
-  fi
-  # TODO: update script to handle multiple targets
-  if [ ${#specified_targets[@]} -gt 1 ]; then
-     echo_error "only one target can be specified"
-     exit_fail
-   fi
-fi
-
-#
-# process specified targets
-#
-for target in ${!buildsys_cmd_list[@]}; do
-  for alias in ${buildsys_aliases[$target]}; do
-    if [ "${specified_targets[0]^^}" == "${alias^^}" ]; then
-      buildsys_target=$target
-      buildsys_dir=${buildsys_dir_list[$target]}
-      buildsys_cmd=${buildsys_cmd_list[$target]}
-      upgrade_cmd=${upgrade_cmd_list[$target]}
-    fi
-  done
-done
-if [ -z $buildsys_target ]; then
-  echo_error "unknown buildsys target \"${specified_targets[0]}\""
-  exit_fail
+if [ "$specified_target" = "clear" ]; then
+  clear_status_bar '*'
+  exit 0
 fi
 
 #
 # locate build directory
 #
-while [ ! -d "$PWD/$buildsys_dir" ]; do
+while [ ! -f "$PWD/aviat-setup-env" ]; do
   cd ..
   if [ $PWD == "/" ]; then
-     echo_error "unable to locate buildsys directory"
-     exit_fail
+     echo_error "unable to locate aviat-setup-env"
+     exit 1
   fi
 done
 bld_name=$(basename $PWD)
-bld_path=${PWD//\//%}
-cd "./$buildsys_dir/"
+bld_path=$PWD/build_$specified_target
 
 #
-# grab the correct docker version
+# determine the supported targets
 #
-docker=$(grep DOCKER_BUILD_IMAGE ../main/.jenkinsparams | awk -F= '{print $2}')
-buildsys_cmd=${buildsys_cmd/@DOCKER@/$docker}
+while read -r line ; do
+  supported_targets+=($line)
+done < <(. ./aviat-setup-env -l)
 
-#
-# ensure build is not already running
-#
-if [ -f $buildsys_pid ]; then
-  if ps -p `cat $buildsys_pid` > /dev/null; then
-    echo_error "an instance of buildsys is already running"
-    exit_fail
-  else
-    rm -f $buildsys_pid
-  fi
+if [ ${#supported_targets[@]} -eq 0 ]; then
+  echo_error "unable to determine supported targets"
+  exit 1
 fi
-running_pid=1
+
+#
+# check for list targets command
+#
+if [ "$specified_target" = "list" ]; then
+  for target in ${supported_targets[@]}; do
+    echo $target
+  done
+  exit 0
+fi
+
+#
+# check target is specified
+#
+if [ "$specified_target" = "" ]; then
+  echo_error "build target must be specified"
+  exit 1
+fi
+
+#
+# check recipe is specified
+#
+if [ "$specified_recipe" = "" ]; then
+  echo_error "build recipe must be specified"
+  exit 1
+fi
+
+#
+# check specified target exists
+#
+if ! array_contains $specified_target "${supported_targets[@]}";then
+  echo_error "invalid target \"$specified_target\""
+  exit 1
+fi
 
 ################################################################################
 # kick off the build
@@ -320,36 +230,45 @@ running_pid=1
 #
 # update status bar
 #
-update_status "Building $buildsys_target"
-buildsys_phase="Build"
+update_status_bar "Building $specified_target $specified_recipe"
+bld_step="Build"
+
+#
+# construct the build command
+#
+build_cmd=". ./aviat-setup-env $specified_target && bitbake $specified_recipe"
+for option in "${specified_options[@]}" ; do
+  build_cmd+=" $option"
+done
 
 #
 # execute build command
 #
 #
-echo -e "building target: $color_info\"$buildsys_target\"$color_none"
-echo -e "build directory: $color_info\"$PWD\"$color_none"
-echo -e "build command: $color_info\"$buildsys_cmd$color_none"
+echo -e "building target: $color_info\"$specified_target\"$color_none"
+echo -e "building recipe: $color_info\"$specified_recipe\"$color_none"
+echo -e "build directory: $color_info\"$bld_path\"$color_none"
+echo -e "build command: $color_info\"$build_cmd\"$color_none"
 echo -e "build start time: $color_info`date`$color_none"
-eval "$buildsys_cmd 2>&1 $strip_ansi"
+eval "$build_cmd 2>&1 $strip_ansi"
 
 #
 # check build result
 #
 if [ $? -eq 0 ]; then
-  echo -e "\nBuild Success for target $buildsys_target"
+  echo -e "\nBuild Success for target $specified_target $specified_recipe"
   status_success
 else
-  echo -e "\nBuild Failure for target $buildsys_target"
+  echo -e "\nBuild Failure for target $specified_target $specified_recipe"
   status_failure
-  exit_fail
+  exit 1
 fi
 
 #
 # build complete
 #
 if [ $opt_en_upgrade -eq 0 ]; then
-  exit_pass
+  exit 0
 fi
 
 ################################################################################
@@ -359,13 +278,18 @@ fi
 #
 # update status bar
 #
-update_status "Upgrading $buildsys_target"
-buildsys_phase="Upgrade"
+update_status_bar "Upgrading $specified_target"
+bld_step="Upgrade"
+
+#
+# construct the upgrade command
+#
+upgrade_cmd="return 1"
 
 #
 # execute upgrade command
 #
-echo -e "upgrading target: $color_info\"$buildsys_target\"$color_none"
+echo -e "upgrading target: $color_info\"$specified_target\"$color_none"
 echo -e "upgrade directory: $color_info\"$PWD\"$color_none"
 echo -e "upgrade command: $color_info\"$upgrade_cmd$color_none"
 echo -e "upgrade start time: $color_info`date`$color_none"
@@ -375,16 +299,16 @@ eval "$upgrade_cmd 2>&1 $strip_ansi"
 # check upgrade result
 #
 if [ $? -eq 0 ]; then
-  echo -e "\nUpgrade Success for target $buildsys_target"
+  echo -e "\nUpgrade Success for target $specified_target"
   status_success
 else
-  echo -e "\nUpgrade Failure for target $buildsys_target"
+  echo -e "\nUpgrade Failure for target $specified_target"
   status_failure
-  exit_fail
+  exit 1
 fi
 
 #
 # upgrade complete
 #
-exit_pass
+exit 0
 
