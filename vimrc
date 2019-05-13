@@ -270,6 +270,9 @@ Plug 'christoomey/vim-tmux-navigator'
 " undotree {{{
 Plug 'mbbill/undotree'
 "}}}
+" yang syntax {{{
+Plug 'fach/vim-yang'
+"}}}
 " yankring {{{
 Plug 'vim-scripts/YankRing.vim'
 let g:yankring_history_dir = $VIMHOME
