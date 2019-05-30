@@ -1,0 +1,75 @@
+#!/bin/bash
+
+i3_status_file="/tmp/display"
+
+info() {
+  notify-send "$1"
+}
+
+set_notifications() { # $1=enable/disable
+  if [ "$1" == "enable" ]; then
+    # resume notifications
+    pkill -u "$USER" -USR2 dunst
+  elif [ "$1" == "disable" ]; then
+    # suspend notifications (sleep for 5 seconds to allow the display mode
+    # notification to be displayed before suspending all notifications)
+    (sleep 5 ; pkill -u "$USER" -USR1 dunst) &
+  fi
+}
+
+set_lock_screen() { # $1=lock-timeout
+  # set the timeout to lock the screen
+  killall xautolock >/dev/null 2>&1
+  xautolock -time $1 -locker i3-pixelate &
+}
+
+set_blank_screen() { # $1=blank-timeout $2=shutdown-timeout
+  # set the timeout to blank and power off the screen
+  xset s $(expr $1 \* 60) dpms 0 0 $(expr $2 \* 60)
+}
+
+set_mode() { # $1=mode $2=symbol
+  if [ "$1" == "present" ]; then
+    # set to 60 minutes when in presentation mode
+    lock_timeout=59
+    blank_timeout=60
+    shutdown_timeout=60
+    notifications="disable"
+  else
+    # set to 5/10/60 minutes when in other modes
+    lock_timeout=5
+    blank_timeout=10
+    shutdown_timeout=20
+    notifications="enable"
+  fi
+  display-$1 || exit $?
+  set_notifications $notifications
+  set_lock_screen $lock_timeout
+  set_blank_screen $blank_timeout $shutdown_timeout
+  info "display set to $1 mode"
+  echo $2 > $i3_status_file
+}
+
+case $1 in
+  single)
+    num=1
+    ;;
+  present)
+    num=2
+    ;;
+  multi)
+    num=3
+    ;;
+  *)
+    num=$(xrandr | grep -swc 'connected')
+    ;;
+esac
+
+if [[ $num -eq 1 ]]; then
+  set_mode "single" ""
+elif [[ $num -eq 2 ]]; then
+  set_mode "present" "來"
+elif [[ $num -eq 3 ]]; then
+  set_mode "multi" ""
+fi
+

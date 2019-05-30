@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# useful scrot args:
+#
+# -s, --select    Interactively select a window or rectangle with the mouse.
+# -u, --focused   Use the currently focused window.
+
+path=$HOME/Pictures/screenshots
+file=screenshot_%Y-%m-%d_%H-%M-%S.png
+
+scrot $@ $path/$file -e 'eog $f'
+

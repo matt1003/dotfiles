@@ -45,12 +45,18 @@ declare gui_apps=(
   gedit
   git-gui
   gitk
-  gnome-tweak-tool
+#  gnome-tweak-tool
   meld
   pinta
   speedcrunch
   terminator
   wireshark
+
+  i3
+  i3-lock
+  rofi
+  xautolock
+  compton
 )
 declare gui_ppas=(
   ppa:gnome-terminator/nightly-gtk3 # required for terminator 1.91
@@ -64,7 +70,9 @@ declare -A dotfiles=(
   [bash_aliases]=.bash_aliases
   [bash_profile]=.bash_profile
   [bashrc]=.bashrc
+  [compton.conf]=.compton.conf
   [gitignore]=.gitignore
+  [i3]=.config/i3/config
   [inputrc]=.inputrc
   [minimacros]=.macros
   [minirc]=.minirc.dfl

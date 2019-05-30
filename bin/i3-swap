@@ -1,0 +1,94 @@
+#!/usr/bin/env python3
+
+import i3ipc
+import time
+import sys
+
+cmd=' '.join(sys.argv[1:]) if len(sys.argv) > 1 else 'swap'
+aggressive=True
+
+def print_con(con):
+    print("--------------------")
+    print("id = " + str(con.id))
+    print("type = " + con.type)
+    print("layout = " + con.layout)
+    print("focused = " + str(con.focused))
+    for des in con.descendents():
+        print("des = {0} {1} {2}".format(des.id, des.type, des.name))
+    for leaf in con.leaves():
+        print("leaf = {0} {1} {2}".format(leaf.id, leaf.type, leaf.name))
+    for node in con.nodes:
+        print("node = {0} {1} {2}".format(node.id, node.type, node.name))
+
+def print_tree(prefix, parent):
+    for node in parent.nodes:
+        print("{0}? {1} nodes={2} des={3} leafs={4}".format \
+            (prefix, node.id, len(node.nodes), len(node.descendents()), len(node.leaves())))
+        print_tree(prefix+"--", node)
+
+def find_all_windows(parent, prune, leaves):
+    if len(parent.nodes) == 0:
+        leaves.append(parent)
+        return
+    for node in parent.nodes:
+        if node.id != prune.id:
+            find_all_windows(node, prune, leaves)
+
+def find_non_split_windows(parent, prune, leaves):
+    for node in parent.nodes:
+        if node.id != prune.id:
+            if len(node.nodes) == 0:
+                leaves.append(node)
+
+# connect to i3
+i3 = i3ipc.Connection()
+
+# find the container managing the current window
+con = i3.get_tree().find_focused()
+old_win = con
+
+# find the parent container managing the current tab
+while con.parent.layout != 'tabbed' and con.parent.layout != 'stacked':
+    con = con.parent
+    if con.parent is None:
+        exit(0)
+current_tab = con
+
+# run the command in a new tab
+if cmd != "swap" and cmd != "delete":
+    i3.command('[con_id={0}] focus'.format(current_tab.id))
+    i3.command('[con_id={0}] exec {1}'.format(current_tab.id, cmd))
+    # todo ... replace this sleep with https://github.com/drbig/i3-exec-wait
+    time.sleep(1)
+    # todo ... bail if the window fails to open
+    new_win = i3.get_tree().find_focused()
+    i3.command('[con_id={0}] focus'.format(old_win.id))
+else:
+    # find all windows not present in the current tab
+    win_list = []
+    if aggressive:
+        find_all_windows(current_tab.parent, current_tab, win_list)
+    else:
+        # todo ... this needs to be tested:
+        find_non_split_windows(current_tab.parent, current_tab, win_list)
+    # grab this first window
+    new_win = win_list[0]
+
+# swap the current window with the next window
+i3.command('[con_id={0}] swap with con_id {1}'.format(old_win.id, new_win.id))
+i3.command('[con_id={0}] focus'.format(new_win.id))
+
+if cmd == "delete":
+    # remove the old window
+    i3.command('[con_id={0}] kill'.format(old_win.id))
+
+if cmd == "swap":
+    # move the old window to the end of the tabs/stack
+    i3.command('[con_id={0}] mark last'.format(current_tab.parent.id))
+    i3.command('[con_id={0}] focus'.format(current_tab.parent.nodes[-1].id))
+    i3.command('[con_id={0}] move container to mark last'.format(old_win.id))
+    i3.command('[con_id={0}] focus'.format(new_win.id))
+    i3.command('[con_id={0}] unmark last'.format(current_tab.parent.id))
+
+exit(0)
+

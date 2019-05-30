@@ -1,0 +1,10 @@
+#!/bin/bash
+
+if synclient -l | grep -q "TouchpadOff .*=.*0" ; then
+    synclient TouchpadOff=1
+    notify-send "touchpad disabled"
+else
+    synclient TouchpadOff=0
+    notify-send "touchpad enabled"
+fi
+

@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+
+import i3ipc
+
+icons = {
+    "Chromium-browser" :"",
+    "Eog"              :"",
+    "Evince"           :"",
+    "File-roller"      :"",
+    "Firefox"          :"",
+    "Gedit"            :"",
+    "Git-gui"          :"",
+    "Gitk"             :"",
+    "Gvim"             :"",
+    "Meld"             :"",
+    "Nautilus"         :"",
+    "Terminator"       :"",
+    "Wireshark"        :"ﯱ",
+}
+
+def rename_workspace(i3, e):
+    print("event: %s" % e.change)
+    for workspace in i3.get_tree().workspaces():
+        current_icons = []
+        for window in workspace.leaves():
+            icon = icons.get(window.window_class, "?")
+            if icon not in current_icons:
+                current_icons.append(icon)
+                print("%s = %s" % (window.window_class, icon))
+        i3.command("rename workspace \"%s\" to \" %s: %s \"" %
+        (workspace.name, workspace.num, ' '.join(current_icons)))
+
+i3 = i3ipc.Connection()
+i3.on("window::move", rename_workspace)
+i3.on("window::new", rename_workspace)
+i3.on("window::title", rename_workspace)
+i3.on("window::close", rename_workspace)
+i3.main()
+

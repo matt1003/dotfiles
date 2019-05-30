@@ -1,0 +1,24 @@
+#!/bin/bash
+
+case $(echo -e "[Cancel]\nLock\nLogout\nReboot\nShutdown\nSuspend\nHibernate" | rofi -dmenu -i -p "")
+in
+	Lock)
+		i3-pixelate
+		;;
+	Logout)
+		kill -9 -1
+		;;
+	Reboot)
+		systemctl reboot
+		;;
+	Shutdown)
+		systemctl poweroff
+		;;
+	Suspend)
+		systemctl suspend
+		;;
+	Hibernate)
+		systemctl hibernate
+		;;
+esac
+

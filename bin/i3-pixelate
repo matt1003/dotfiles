@@ -1,0 +1,19 @@
+#!/bin/bash
+
+file=/tmp/.i3lock.png
+
+# take a screenshot
+scrot $file
+
+# pixelate the screenshot
+convert -scale 10% -scale 1000% $file $file
+
+# suspend notifications
+pkill -u "$USER" -USR1 dunst
+
+# lock the screen
+i3lock --nofork --image $file
+
+# restore notifications to their previous state
+display-reload
+

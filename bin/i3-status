@@ -1,0 +1,293 @@
+#!/bin/bash
+
+shopt -s nullglob
+
+markup=0
+labels=0
+debug=0
+
+dflt="#928374"
+warn="#fe8019"
+crit="#fb4934"
+text="#282828"
+
+wifi_symbol="直"
+wifi_out_symbol="睊"
+ethernet_symbol=""
+disk_symbol=""
+#backlight_symbol="盛"
+volume_speaker_symbol=""
+volume_headphone_symbol=""
+volume_mute_symbol=""
+battery_ac_symbol=""
+battery_100_symbol=""
+battery_75_symbol=""
+battery_50_symbol=""
+battery_25_symbol=""
+battery_0_symbol=""
+date_symbol=""
+time_1_symbol=""
+time_2_symbol=""
+time_3_symbol=""
+time_4_symbol=""
+time_5_symbol=""
+time_6_symbol=""
+time_7_symbol=""
+time_8_symbol=""
+time_9_symbol=""
+time_10_symbol=""
+time_11_symbol=""
+time_12_symbol=""
+hostname_symbol=""
+capslock_symbol="CAPS "
+numlock_symbol="NUM "
+debug_symbol="祥"
+
+if [ $labels -ne 0 ] ; then
+  disk_label="Disk "
+  backlight_label="Backlight "
+  volume_label="Volume "
+  battery_label="Battery "
+fi
+
+#  
+
+add2bar() {
+  if [ $markup -ne 0 ] ; then
+    line+="{\"markup\":\"pango\",\"color\":\"$text\",\"full_text\":\"<span background='$1'> $2 $3 </span>\"},"
+  else
+    line+="{\"color\":\"$1\",\"full_text\":\" $2 $3 \"},"
+  fi
+}
+
+add_build() {
+  for f in /tmp/build/i3wm-status-* ; do
+    line+="$(<$f)"
+  done
+}
+
+add_wifi() {
+  wifi_value=$(iwgetid -r)
+  if [ "$wifi_value" = "" ] ; then
+    add2bar $warn $wifi_out_symbol "(no connection)"
+  else
+    add2bar $dflt $wifi_symbol "$wifi_value"
+  fi
+}
+
+
+add_ethernet() { # $1=interface_number
+  # if ethtool eth$1 | grep -q "Link detected: yes" ; then
+  if [ -f /sys/class/net/eth$1/operstate ] && [ "$(cat /sys/class/net/eth$1/operstate)" == "up" ] ; then
+    ethernet_value=$(ifconfig eth$1 | grep 'inet addr:' | sed 's/.*inet addr:\([0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\).*/\1/')
+    if [ "$ethernet_value" = "" ] ; then
+      add2bar $warn $ethernet_symbol "eth$1 (no ip address)"
+    else
+      add2bar $dflt $ethernet_symbol "eth$1 $ethernet_value"
+    fi
+  fi
+}
+
+add_disk() { # $1=disk_number
+  disk_value=$(df /dev/nvme$1n1p1 --output=pcent | sed 1d | sed s'/[ %]//g')
+  if (( $disk_value >= 90 )) ;then
+    disk_color=$crit
+  elif (( $disk_value >= 80 )) ;then
+    disk_color=$warn
+  else
+    disk_color=$dflt
+  fi
+  add2bar $disk_color $disk_symbol "$disk_label$disk_value%"
+}
+
+# Note: to get the backlight working i had to add the following to etc/X11/xorg.conf
+# (see https://unix.stackexchange.com/questions/301724/xbacklight-not-working)
+#
+#Section "Device"
+#    Identifier  "0x72"
+#    Driver      "intel"
+#    Option      "Backlight"  "intel_backlight"
+
+add_backlight() {
+  ### TODO ###
+  # xbacklight and xrandr are very slow when the work projector is connected,
+  # so this is my hack to get around it for now...
+  if [ "$(cat /tmp/display)" == "來" ] ; then
+    backlight_value="100"
+  else
+    backlight_value=$(xbacklight -get | sed 's/\.[0-9]*//g')
+  fi
+  backlight_symbol=$(cat /tmp/display)
+  add2bar $dflt $backlight_symbol "$backlight_label$backlight_value%"
+}
+
+# todo: use log scale for volume percentage
+
+add_volume() {
+  if [ "$(awk '/%/ {gsub(/[\[\]]/,""); print $6}' <(amixer sget Master))" = "off" ] ; then
+    volume_symbol=$volume_mute_symbol
+    volume_color=$dflt
+    volume_value="---"
+  else
+    if pacmd list-cards | grep -q "analog-output-headphones: Headphones (.* available: yes)" ; then
+      volume_symbol=$volume_headphone_symbol
+    else
+      volume_symbol=$volume_speaker_symbol
+    fi
+    if (( ${volume_value::-1} > 75 )) ; then
+      volume_color=$crit
+    elif (( ${volume_value::-1} > 50 )) ; then
+      volume_color=$warn
+    else
+      volume_color=$dflt
+    fi
+    volume_value=$(awk '/%/ {gsub(/[\[\]]/,""); print $4}' <(amixer sget Master))
+  fi
+  add2bar $volume_color $volume_symbol "$volume_label$volume_value"
+}
+
+# Note: to get battery working i had to install acpi:
+# sudo apt-get install acpi
+
+add_battery() {
+   battery_value=$(acpi | grep -o '[^ ]*%' | sed 's/%//g' )
+  if acpi -a | grep -q on-line ; then
+    battery_symbol=$battery_ac_symbol
+    battery_color=$dflt
+  else
+    if (( $battery_value >= 90 )); then
+      battery_symbol=$battery_100_symbol
+      battery_color=$dflt
+    elif (( $battery_value >= 65 )) ; then
+      battery_symbol=$battery_75_symbol
+      battery_color=$dflt
+    elif (( $battery_value >= 35 )) ; then
+      battery_symbol=$battery_50_symbol
+      battery_color=$dflt
+    elif (( $battery_value >= 10 )) ; then
+      battery_symbol=$battery_25_symbol
+      battery_color=$warn
+    else
+      battery_symbol=$battery_0_symbol
+      battery_color=$crit
+    fi
+  fi
+  add2bar $battery_color $battery_symbol "$battery_label$battery_value"
+}
+
+add_date() {
+  date_value=$(date +"%d-%m-%Y")
+  add2bar $dflt $date_symbol "$date_value"
+}
+
+add_time() {
+  time_value=$(date +"%-I:%M:%S %p")
+  case $(date +"%-I") in
+    1)
+      time_symbol=$time_1_symbol
+      ;;
+    2)
+      time_symbol=$time_2_symbol
+      ;;
+    3)
+      time_symbol=$time_3_symbol
+      ;;
+    4)
+      time_symbol=$time_4_symbol
+      ;;
+    5)
+      time_symbol=$time_5_symbol
+      ;;
+    6)
+      time_symbol=$time_6_symbol
+      ;;
+    7)
+      time_symbol=$time_7_symbol
+      ;;
+    8)
+      time_symbol=$time_8_symbol
+      ;;
+    9)
+      time_symbol=$time_9_symbol
+      ;;
+    10)
+      time_symbol=$time_10_symbol
+      ;;
+    11)
+      time_symbol=$time_11_symbol
+      ;;
+    12)
+      time_symbol=$time_12_symbol
+      ;;
+  esac
+  add2bar $dflt $time_symbol "$time_value"
+}
+
+add_hostname() {
+  hostname_value=$(hostname)
+  add2bar $dflt $hostname_symbol "$hostname_value"
+}
+
+add_capslock() {
+  if xset -q | grep -q 'Caps Lock:   on' ; then
+    add2bar $crit $capslock_symbol
+  fi
+}
+
+add_numlock() {
+  if ! xset -q | grep -q '01: Num Lock:    on' ; then
+    add2bar $crit $numlock_symbol
+  fi
+}
+
+add_debug() { # $1=start_time
+  duration=$(python -c "print (`date +%s%N` - $1) /1000.0 /1000.0")
+  add2bar $dflt $debug_symbol "time: $duration ms"
+}
+
+echo '{"version":1}'
+echo '['
+echo '[],'
+
+while [1] ; do
+
+  line="["
+
+  if [ $debug -ne 0 ] ; then
+    start_time=`date +%s%N`
+  fi
+
+  add_build
+
+  add_ethernet 0
+  add_ethernet 1
+  add_ethernet 2
+
+  add_wifi
+
+  add_disk 0
+  add_disk 1
+
+  # todo ... these three are a bit slow
+  add_volume
+  add_backlight
+  add_battery
+
+  add_date
+  add_time
+
+  #add_hostname
+  add_capslock
+  add_numlock
+
+  if [ $debug -ne 0 ] ; then
+    add_debug $start_time
+  fi
+
+  #echo ${line::-1}"],"
+  echo $line"{\"full_text\":\"\"}],"
+
+  sleep .333
+
+done
+
