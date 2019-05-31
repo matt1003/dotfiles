@@ -16,7 +16,7 @@ declare cli_apps=(
   cscope
   ctags
   git
-  hh
+#  hh
   minicom
   neovim
   numlockx
@@ -25,9 +25,10 @@ declare cli_apps=(
   trash-cli
   tree
   vim
-  xcape
-  xclip
-  xsel
+#  xcape
+#  xclip
+#  xsel
+  zsh
 )
 declare cli_ppas=(
   ppa:git-core/ppa # required for latest git
@@ -67,20 +68,21 @@ declare gui_ppas=(
 # define dotfiles
 #
 declare -A dotfiles=(
-  [bash_aliases]=.bash_aliases
-  [bash_profile]=.bash_profile
-  [bashrc]=.bashrc
+#  [bash_aliases]=.bash_aliases
+#  [bash_profile]=.bash_profile
+#  [bashrc]=.bashrc
   [compton.conf]=.compton.conf
   [gitignore]=.gitignore
   [i3]=.config/i3/config
-  [inputrc]=.inputrc
+#  [inputrc]=.inputrc
   [minimacros]=.macros
   [minirc]=.minirc.dfl
   [nvimrc]=.config/nvim/init.vim
-  [profile]=.profile
+#  [profile]=.profile
   [terminator.conf]=.config/terminator/config
   [tmux.conf]=.tmux.conf
   [vimrc]=.vimrc
+  [zshrc]=.zshrc
 )
 
 #
