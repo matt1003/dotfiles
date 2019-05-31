@@ -106,7 +106,6 @@ let g:ale_linters = {'c':[],'cpp':[]}
 Plug 'ntpeters/vim-better-whitespace'
 let g:show_spaces_that_precede_tabs = 1
 let g:better_whitespace_filetypes_blacklist = ['help', 'nerdtree', 'tagbar', 'qf', 'undotree']
-
 "}}}
 " bufexplorer ---------------(improved interface for switching buffers) {{{
 Plug 'vim-scripts/bufexplorer.zip'
@@ -139,7 +138,7 @@ if executable('cscope')
   nnoremap <silent> <leader>fi :call cscope#find('i', expand('<cword>'))<CR>
 endif
 "}}}
-" code break {{{
+" code break ------------------(game) {{{
 Plug 'johngrib/vim-game-code-break'
 "}}}
 " dispatch {{{
@@ -190,7 +189,6 @@ let g:indexed_search_dont_move = 1
 let g:indexed_search_max_lines = 500000
 "}}}
 " match maker ---------------(highlight current word) {{{
-"
 Plug 'qstrahl/vim-matchmaker'
 let g:matchmaker_enable_startup = 1
 let g:matchmaker_matchpriority = -1
@@ -219,10 +217,10 @@ silent! map <F6> :SearchReset<CR>
 "}}}
 " nerdtree {{{
 Plug 'scrooloose/nerdtree'
-let g:NERDTreeWinSize = 40
+let g:NERDTreeWinSize = 30
 let g:NERDTreeMinimalUI = 1
 "}}}
-" numbers {{{
+" numbers {{{ ---- (relative line numbering in active window only)
 Plug 'myusuf3/numbers.vim'
 let g:numbers_exclude = ['help', 'nerdtree', 'tagbar', 'qf', 'undotree']
 "}}}
@@ -257,6 +255,7 @@ Plug 'majutsushi/tagbar'
 let g:tagbar_compact = 1
 let g:tagbar_indent = 1
 let g:tagbar_silent = 1
+let g:tagbar_width = 30
 augroup TagBarColor
   autocmd!
   autocmd ColorScheme * highlight link TagbarHighlight IncSearch
@@ -722,7 +721,7 @@ let s:ide_view = 0
 fun! IdeViewEnable()
   let l:win_id = win_getid()
   NERDTree
-  Tagbar
+  TagbarOpen
   call win_gotoid(l:win_id)
   let s:ide_view = 1
 endfun
@@ -734,7 +733,7 @@ fun! IdeViewDisable()
 endfun
 
 fun! IdeViewToggle()
-  if s:ide_view
+  if s:ide_view == 1
     call IdeViewDisable()
   else
     call IdeViewEnable()
@@ -742,10 +741,14 @@ fun! IdeViewToggle()
 endfun
 
 fun! IdeViewAuto(...)
-  if winwidth(0) < 160
-    call IdeViewDisable()
-  else
-    call IdeViewEnable()
+  if &columns < 150
+    if s:ide_view == 1
+      call IdeViewDisable()
+    endif
+else
+    if s:ide_view == 0
+      call IdeViewEnable()
+    endif
   endif
 endfun
 

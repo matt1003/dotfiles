@@ -27,6 +27,7 @@ APT_LOCK = open(os.getenv('HOME')+'/.apt_lock', 'w')
 try:
     fcntl.lockf(APT_LOCK, fcntl.LOCK_EX | fcntl.LOCK_NB)
 except IOError:
+    print("an instance of apt is already running")
     sys.exit(0)
 
 def apt_or_dpkg_active():
