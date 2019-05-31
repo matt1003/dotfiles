@@ -435,7 +435,11 @@ fun! s:ExecuteBuildSys(BuildSysArgs)
 endfun
 
 command! -nargs=+ BuildSys call <SID>ExecuteBuildSys(<q-args>)
-cabbrev build BuildSys
+"cabbrev build BuildSys
+
+command! -nargs=+ Build silent call system('buildwrap --new-window '.<q-args>.'&')
+command! Result cgetfile /tmp/build | botright copen
+
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " grep

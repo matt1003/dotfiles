@@ -7,29 +7,52 @@
 set -o pipefail
 shopt -s nullglob
 
-I3=1
-
-tmux_bld_file="$HOME/.tmux/build"
-i3_bld_file="$HOME/.i3-build-status"
+bld_tmp_dir="/tmp/build"
+bld_tmux_file="$bld_tmp_dir/tmux-status"
+bld_i3wm_file="$bld_tmp_dir/i3wm-status"
+bld_proc_file="$bld_tmp_dir/build-pid"
 
 bld_name="unknown"
 bld_path="unknown"
 bld_step="unknown"
 
-opt_color_none=0
+opt_new_window=0
 opt_en_upgrade=0
+opt_win_id=""
 
 supported_targets=()
 specified_target=''
 specified_recipe=''
 specified_options=()
 
+# define ansi color codes
+color_fail="\e[31m"
+color_pass="\e[32m"
+color_warn="\e[33m"
+color_info="\e[36m"
+color_none="\e[0m"
+
 ################################################################################
 # script functions
 ################################################################################
 
+exit_with_prompt() {
+  if [ "$opt_win_id" != "" ]; then
+    echo -e "\n(press enter to exit)" ; read
+  fi
+  exit $1
+}
+
 array_contains () {
   local e ; for e in "${@:2}"; do [[ "$e" == "$1" ]] && return 0 ; done ; return 1
+}
+
+is_tmux() {
+  [ $TMUX ]
+}
+
+is_i3wm() {
+  [ "$DESKTOP_SESSION" = "i3" ]
 }
 
 echo_error() {
@@ -38,7 +61,7 @@ echo_error() {
 
 print_status() {
   # arguments
-  phase=$1; status=$2; bash_color=$3; status_color=$4
+  phase=$1; status=$2; bash_color=$3; status_color=$4; symbol=$5
   # print banner
   len=$((${#phase}+${#status}+7))
   printf "\n$bash_color"
@@ -47,19 +70,21 @@ print_status() {
   printf "%0.s*" $(seq 1 $len)
   printf "\n$color_none"
   # update status bar
-  update_status_bar "$phase $status" "$status_color"
+  update_status_bar "$phase $status" "$status_color" "$symbol"
+  # send an notification
+  notify-send "$phase $status"
 }
 
 status_success() {
-  print_status $bld_step "Success" "$color_pass" "#b8bb26"
+  print_status $bld_step "Success" "$color_pass" "#b8bb26" ""
 }
 
 status_failure() {
-  print_status $bld_step "Failure" "$color_fail" "#fb4934"
+  print_status $bld_step "Failure" "$color_fail" "#fb4934" ""
 }
 
 status_aborted() {
-  print_status $bld_step "Aborted" "$color_warn" "#fabd2f"
+  print_status $bld_step "Aborted" "$color_warn" "#fabd2f" ""
 }
 
 hdl_sig_int() {
@@ -72,35 +97,37 @@ hdl_sig_abrt() {
 
 update_tmux_status_bar() {
   [ -z "$2" ] && local c="#f9f5d7" || local c="$2"
-  echo "#[fg=#a89984,bg=#3c3836] $bld_name:#[fg=$c,bg=#3c3836,bold] $1 " \
-    > "$tmux_bld_file-${bld_path//\//%}"
+  [ -z "$3" ] && local s="" || local s="$3"
+  echo "#[fg=#a89984,bg=#3c3836] #[fg=$c,bg=#3c3836,bold] $s $1 " \
+    > "$bld_tmux_file-${bld_path//\//%}"
 }
 
-update_i3_status_bar() {
+update_i3wm_status_bar() {
   [ -z "$2" ] && local c="#f9f5d7" || local c="$2"
-  echo "{\"color\":\"#282828\",\"markup\":\"pango\",\"full_text\":\"<span background='$c'>  $bld_name: $1 </span>\"}," \
-    > "$i3_bld_file-${bld_path//\//%}"
+  [ -z "$3" ] && local s="" || local s="$3"
+  echo "{\"color\":\"$c\",\"full_text\":\" $s $1 \"}," \
+    > "$bld_i3wm_file-${bld_path//\//%}"
 }
 
 update_status_bar() {
-  if [ $TMUX ]; then
-    update_tmux_status_bar "$1" "$2"
+  if is_tmux ; then
+    update_tmux_status_bar "$1" "$2" "$3"
   fi
-  if [ $I3 ]; then
-    update_i3_status_bar "$1" "$2"
+  if is_i3wm ; then
+    update_i3wm_status_bar "$1" "$2" "$3"
   fi
 }
 
 clear_tmux_status_bar() {
-  for file in $tmux_bld_file-$1; do
+  for file in $bld_tmux_file-$1; do
     if grep -q 'Success\|Failure\|Aborted' $file; then
       rm $file
     fi
   done
 }
 
-clear_i3_status_bar() {
-  for file in $i3_bld_file-$1; do
+clear_i3wm_status_bar() {
+  for file in $bld_i3wm_file-$1; do
     if grep -q 'Success\|Failure\|Aborted' $file; then
       rm $file
     fi
@@ -109,7 +136,7 @@ clear_i3_status_bar() {
 
 clear_status_bar() {
   clear_tmux_status_bar "$1"
-  clear_i3_status_bar "$1"
+  clear_i3wm_status_bar "$1"
 }
 
 ################################################################################
@@ -127,10 +154,12 @@ trap hdl_sig_abrt SIGABRT
 #
 for arg in $@; do
   case $arg in
-    '--no-output-color')
-      opt_color_none=1 ;;
-    '--upgrade')
+    --new-window)
+      opt_new_window=1 ;;
+    --upgrade)
       opt_en_upgrade=1 ;;
+    --window-id=*)
+      opt_win_id=${arg#*=} ;;
     *)
       if [ "$specified_target" = "" ]; then
         specified_target=$arg
@@ -143,24 +172,28 @@ for arg in $@; do
 done
 
 #
-# define ansi color codes
-#
-if [ $opt_color_none -ne 0 ]; then
-  strip_ansi=' | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g"'
-  shift
-else
-  color_fail="\e[31m"
-  color_pass="\e[32m"
-  color_warn="\e[33m"
-  color_info="\e[36m"
-  color_none="\e[0m"
-fi
-
-#
 # check for clear status command
 #
 if [ "$specified_target" = "clear" ]; then
   clear_status_bar '*'
+  exit 0
+fi
+
+#
+# open the build in a new window
+#
+if [ $opt_new_window -ne 0 ]; then
+  delete=("--new-window")
+  cmd="$0 ${@/$delete}"
+  pipe="2>&1 | tee -i -a >(trap '' INT; sed -r 's/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g' > /tmp/build-output)"
+  if is_tmux; then
+    tmux new-window -n build -c $PWD "$cmd --window-id=1 $pipe"
+  elif is_i3wm ; then
+    winid=$(xprop -root | awk '/_NET_ACTIVE_WINDOW\(WINDOW\)/{print $NF}')
+    x-terminal-emulator -x "$cmd --window-id=$winid $pipe"
+  else
+    x-terminal-emulator -x "$cmd $pipe"
+  fi
   exit 0
 fi
 
@@ -171,7 +204,7 @@ while [ ! -f "$PWD/aviat-setup-env" ]; do
   cd ..
   if [ $PWD == "/" ]; then
      echo_error "unable to locate aviat-setup-env"
-     exit 1
+     exit_with_prompt 1
   fi
 done
 bld_name=$(basename $PWD)
@@ -186,7 +219,7 @@ done < <(. ./aviat-setup-env -l)
 
 if [ ${#supported_targets[@]} -eq 0 ]; then
   echo_error "unable to determine supported targets"
-  exit 1
+  exit_with_prompt 1
 fi
 
 #
@@ -196,7 +229,7 @@ if [ "$specified_target" = "list" ]; then
   for target in ${supported_targets[@]}; do
     echo $target
   done
-  exit 0
+  exit_with_prompt 0
 fi
 
 #
@@ -204,7 +237,7 @@ fi
 #
 if [ "$specified_target" = "" ]; then
   echo_error "build target must be specified"
-  exit 1
+  exit_with_prompt 1
 fi
 
 #
@@ -212,7 +245,7 @@ fi
 #
 if [ "$specified_recipe" = "" ]; then
   echo_error "build recipe must be specified"
-  exit 1
+  exit_with_prompt 1
 fi
 
 #
@@ -220,7 +253,36 @@ fi
 #
 if ! array_contains $specified_target "${supported_targets[@]}";then
   echo_error "invalid target \"$specified_target\""
-  exit 1
+  exit_with_prompt 1
+fi
+
+#
+# create the temp build dir
+#
+if [ ! -d "$bld_tmp_dir" ] ; then
+  mkdir $bld_tmp_dir
+fi
+
+#
+# ensure the build is not already running
+#
+if [ -f "$bld_proc_file-${bld_path//\//%}" ] ; then
+  if ps -p `cat $bld_proc_file-${bld_path//\//%}` > /dev/null; then
+    echo_error "an instance of the build is already running"
+    exit_with_prompt 1
+  fi
+fi
+echo $$ > $bld_proc_file-${bld_path//\//%}
+
+#
+# jump back to original window
+#
+if [ "$opt_win_id" != "" ]; then
+  if is_tmux ; then
+    tmux select-window -t -1
+  elif is_i3wm ; then
+    i3-msg "[id=$opt_win_id] focus" > /dev/null
+  fi
 fi
 
 ################################################################################
@@ -250,7 +312,7 @@ echo -e "building recipe: $color_info\"$specified_recipe\"$color_none"
 echo -e "build directory: $color_info\"$bld_path\"$color_none"
 echo -e "build command: $color_info\"$build_cmd\"$color_none"
 echo -e "build start time: $color_info`date`$color_none"
-eval "$build_cmd 2>&1 $strip_ansi"
+eval "$build_cmd 2>&1"
 
 #
 # check build result
@@ -293,7 +355,7 @@ echo -e "upgrading target: $color_info\"$specified_target\"$color_none"
 echo -e "upgrade directory: $color_info\"$PWD\"$color_none"
 echo -e "upgrade command: $color_info\"$upgrade_cmd$color_none"
 echo -e "upgrade start time: $color_info`date`$color_none"
-eval "$upgrade_cmd 2>&1 $strip_ansi"
+eval "$upgrade_cmd 2>&1"
 
 #
 # check upgrade result
