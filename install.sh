@@ -72,6 +72,7 @@ declare -A dotfiles=(
 #  [bash_profile]=.bash_profile
 #  [bashrc]=.bashrc
   [compton.conf]=.compton.conf
+  [dunstrc]=.config/dunst/dunstrc
   [gitignore]=.gitignore
   [i3]=.config/i3/config
 #  [inputrc]=.inputrc

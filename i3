@@ -187,24 +187,48 @@ bindsym $mod+m exec --no-startup-id "display-reload.sh"
 bindsym $mod+Tab --no-startup-id exec i3-swap
 
 ###############################################################################
+# gruv box color codes
+###############################################################################
+
+# set primary gruvbox colorscheme colors
+set $bg #282828
+set $fg #a89984
+set $red #cc241d
+set $green #98971a
+set $yellow #d79921
+set $blue #458588
+set $purple #b16286
+set $aqua #689d68
+set $gray #665c54
+set $darkgray #1d2021
+
+set $test #a89984
+
+# window color:         border | backgr | text | indicator | child_border
+client.focused          $fg     $fg       $bg    $purple     $fg
+client.focused_inactive $bg     $bg       $test  $purple     $darkgray
+client.unfocused        $bg     $bg       $fg    $purple     $darkgray
+client.urgent           $red    $red      $bg    $purple     $red
+
+###############################################################################
 # status bar
 ###############################################################################
 
 # main status bar
 bar {
         colors {
-            background #282828
-            statusline #282828
-            separator  #4b5262
-            # colour of border, background, and text
-            focused_workspace   #2f343f #bf616a #d8dee8
-            active_workspace    #2f343f #2f343f #d8dee8
-            inactive_workspace  #2f343f #2f343f #d8dee8
-            urgent_workspace    #2f343f #ebcb8b #2f343f
+            background $bg
+            statusline $red
+            separator  $gray
+            # workspace colors:  border | backgr | text
+            focused_workspace    $fg      $fg      $bg
+            active_workspace     $bg      $bg      $test
+            inactive_workspace   $bg      $bg      $fg
+            urgent_workspace     $red     $red     $bg
         }
         status_command exec i3-status
-        font pango:DejaVuSansMono Nerd Font 12
-        output primary
+        font pango:DejaVuSansMono Nerd Font 10
+        #output primary
         tray_output primary
         # define mouse button actions
         bindsym button3 exec --no-startup-id display-reload
@@ -214,25 +238,25 @@ bar {
 }
 
 # pop up status bar
-bar {
-        colors {
-            background #282828
-            statusline #282828
-            separator  #4b5262
-            # colour of border, background, and text
-            focused_workspace   #2f343f #bf616a #d8dee8
-            active_workspace    #2f343f #2f343f #d8dee8
-            inactive_workspace  #2f343f #2f343f #d8dee8
-            urgent_workspace    #2f343f #ebcb8b #2f343f
-        }
-        status_command exec i3-status
-        font pango:DejaVuSansMono Nerd Font 12
-        output DP-5.1
-        output DP-5.2
-        # set status bar to auto hide
-        mode hide
-        modifier Mod1
-}
+#bar {
+#        colors {
+#            background $bg
+#            statusline red
+#            separator  $gray
+#            # workspace colors:  border|backgr|text
+#            focused_workspace    $green $green $bg
+#            inactive_workspace   $fg    $fg    $bg
+#            active_workspace     $bg    $bg    $fg
+#            urgent_workspace     $red   $red   $bg
+#        }
+#        status_command exec i3-status
+#        font pango:DejaVuSansMono Nerd Font 10
+#        output DP-5.1
+#        output DP-5.2
+#        # set status bar to auto hide
+#        #mode hide
+#        #modifier Mod1
+#}
 
 ###############################################################################
 # other settings
