@@ -72,7 +72,7 @@ print_status() {
   # update status bar
   update_status_bar "$phase $status" "$status_color" "$symbol"
   # send an notification
-  notify-send "$phase $status"
+  notify-send "$symbol $phase $status"
 }
 
 status_success() {
@@ -104,9 +104,13 @@ update_tmux_status_bar() {
 
 update_i3wm_status_bar() {
   [ -z "$2" ] && local c="#f9f5d7" || local c="$2"
-  [ -z "$3" ] && local s="" || local s="$3"
-  echo "{\"color\":\"$c\",\"full_text\":\" $s $1 \"}," \
-    > "$bld_i3wm_file-${bld_path//\//%}"
+  if [ -z "$3" ] ; then
+    echo "{\"color\":\"$c\",\"full_text\":\"  $1 \"}," \
+      > "$bld_i3wm_file-${bld_path//\//%}"
+  else
+    echo "{\"markup\":\"pango\",\"color\":\"$2\",\"full_text\":\" <b>$3 $1</b> \"}," \
+      > "$bld_i3wm_file-${bld_path//\//%}"
+  fi
 }
 
 update_status_bar() {

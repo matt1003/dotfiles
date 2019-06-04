@@ -13,7 +13,7 @@ set $mod Mod1
 
 # Font for window titles. Will also be used by the bar unless a different font
 # is used in the bar {} block below.
-font pango:monospace 8
+font pango:DejaVu Sans Mono Nerd Font, Bold 10
 
 # This font is widely installed, provides lots of unicode glyphs, right-to-left
 # text rendering and scalability on retina/hidpi displays (thanks to pango).
@@ -245,10 +245,14 @@ bar {
 # disable winsdo title bars
 new_window 1pixel
 
+# center align window titles
+title_align center
+
 # this is needed otherwise the cursor will jump to the center of the screen when
 # clicking on firefox tabs; it appears that the rename workspace command in i3-
 # icons is causing this to happen
 mouse_warping none
+focus_follows_mouse no
 
 # note : firefox will toggle the menu bar when alt is presses, this can be disabled
 # using by going to the link: about:config?filter=ui.key.menuAccessKeyFocuses
@@ -267,7 +271,7 @@ exec --no-startup-id feh --bg-fill ~/.background
 exec --no-startup-id nm-applet
 
 # enable workspace icons
-exec_always --no-startup-id i3-icons
+exec_always --no-startup-id i3-icons 2> /tmp/i3-icons.log
 
 # set the display layout
 exec --no-startup-id display-reload

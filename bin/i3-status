@@ -2,14 +2,13 @@
 
 shopt -s nullglob
 
-markup=0
 labels=0
 debug=0
 
-dflt="#928374"
+dflt="#a89984"
 warn="#fe8019"
 crit="#fb4934"
-text="#282828"
+back="#282828"
 
 wifi_symbol="直"
 wifi_out_symbol="睊"
@@ -50,11 +49,11 @@ if [ $labels -ne 0 ] ; then
   battery_label="Battery "
 fi
 
-#  
-
-add2bar() {
-  if [ $markup -ne 0 ] ; then
-    line+="{\"markup\":\"pango\",\"color\":\"$text\",\"full_text\":\"<span background='$1'> $2 $3 </span>\"},"
+add2bar() { # $1=color $2=symbol $3=text
+  if [ "$1" == "$crit" ] ; then
+    line+="{\"markup\":\"pango\",\"color\":\"$back\",\"full_text\":\"<span background='$crit'> <b>$2 $3</b> </span>\"},"
+  elif [ "$1" == "$warn" ] ; then
+    line+="{\"markup\":\"pango\",\"color\":\"$warn\",\"full_text\":\" <b>$2 $3</b> \"},"
   else
     line+="{\"color\":\"$1\",\"full_text\":\" $2 $3 \"},"
   fi

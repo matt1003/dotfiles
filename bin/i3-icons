@@ -2,38 +2,86 @@
 
 import i3ipc
 
-icons = {
-    "Chromium-browser" :"",
-    "Eog"              :"",
-    "Evince"           :"",
-    "File-roller"      :"",
-    "Firefox"          :"",
-    "Gedit"            :"",
-    "Git-gui"          :"",
-    "Gitk"             :"",
-    "Gvim"             :"",
-    "Meld"             :"",
-    "Nautilus"         :"",
-    "Terminator"       :"",
-    "Wireshark"        :"ﯱ",
+app_icon_list = {
+    "chromium-browser" :"",
+    "eog"              :"",
+    "evince"           :"",
+    "file-roller"      :"",
+    "firefox"          :"",
+    "gedit"            :"",
+    "git-gui"          :"",
+    "gitk"             :"",
+    "gvim"             :"",
+    "meld"             :"",
+    "nautilus"         :"",
+    "pinta"            :"",
+    "speedcrunch"      :"",
+    "terminator"       :"",
+    "wireshark"        :"ﯱ",
 }
 
-def rename_workspace(i3, e):
-    print("event: %s" % e.change)
+cmd_icon_list = {
+    "bitbake"          :"",
+    "buildwrap"        :"",
+    "devtool"          :"",
+    "minicom"          :"",
+    "vim"              :"",
+}
+
+seperator = "  "
+terminal = "" # 
+unknown = "?"
+
+def i3cmd(node, cmd):
+    node.command(cmd)
+
+def update_window(node, text):
+    i3cmd(node, "title_format \"%s\"" % text)
+
+def update_workspace(node, text):
+    i3cmd(node, "rename workspace \"%s\" to \" %s \"" % (node.name, text))
+
+def find_icon(window):
+    if window.window_class == "Terminator":
+        name = window.name.partition(' ')[0].lower()
+        icon = cmd_icon_list.get(name, terminal)
+    else:
+        name = window.window_class.lower()
+        icon = app_icon_list.get(name, unknown)
+    if icon is unknown:
+        with open("/tmp/i3-icons.log", "a") as log:
+            log.write("no symbol for \"%s\"\n" % name)
+    return icon, name
+
+def find_all_windows(node):
+    # process window
+    if node.window_class is not None and len(node.nodes) == 0:
+        icon, name = find_icon(node)
+        update_window(node, "%s %s" % (icon, name))
+        return [(icon, name)]
+    # else process container
+    child_windows = []
+    for child in node.nodes:
+        child_windows += find_all_windows(child)
+    titles = [" ".join(tups) for tups in child_windows]
+    update_window(node, seperator.join(titles))
+    return child_windows
+
+def find_all_workspaces(i3, e):
     for workspace in i3.get_tree().workspaces():
+        child_windows = find_all_windows(workspace)
         current_icons = []
-        for window in workspace.leaves():
-            icon = icons.get(window.window_class, "?")
+        for icon, name in child_windows:
             if icon not in current_icons:
                 current_icons.append(icon)
-                print("%s = %s" % (window.window_class, icon))
-        i3.command("rename workspace \"%s\" to \" %s: %s \"" %
-        (workspace.name, workspace.num, ' '.join(current_icons)))
+        if current_icons:
+            update_workspace(workspace, " %s: %s " % (workspace.num, " ".join(current_icons)))
 
 i3 = i3ipc.Connection()
-i3.on("window::move", rename_workspace)
-i3.on("window::new", rename_workspace)
-i3.on("window::title", rename_workspace)
-i3.on("window::close", rename_workspace)
+find_all_workspaces(i3, None)
+i3.on("window::move", find_all_workspaces)
+i3.on("window::new", find_all_workspaces)
+i3.on("window::title", find_all_workspaces)
+i3.on("window::close", find_all_workspaces)
 i3.main()
 

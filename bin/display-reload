@@ -46,7 +46,7 @@ set_mode() { # $1=mode $2=symbol
   set_notifications $notifications
   set_lock_screen $lock_timeout
   set_blank_screen $blank_timeout $shutdown_timeout
-  info "display set to $1 mode"
+  info "$2 display set to $1 mode"
   echo $2 > $i3_status_file
 }
 
@@ -66,9 +66,9 @@ case $1 in
 esac
 
 if [[ $num -eq 1 ]]; then
-  set_mode "single" ""
+  set_mode "single" "" # 
 elif [[ $num -eq 2 ]]; then
-  set_mode "present" "來"
+  set_mode "present" "來" # 冷
 elif [[ $num -eq 3 ]]; then
   set_mode "multi" ""
 fi
