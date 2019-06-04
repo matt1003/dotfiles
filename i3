@@ -137,10 +137,10 @@ mode "resize" {
         bindsym l resize grow width 10 px or 10 ppt
 
         # same bindings, but for the arrow keys
-        #bindsym Left resize shrink width 10 px or 10 ppt
-        #bindsym Down resize grow height 10 px or 10 ppt
-        #bindsym Up resize shrink height 10 px or 10 ppt
-        #bindsym Right resize grow width 10 px or 10 ppt
+        bindsym Left resize shrink width 10 px or 10 ppt
+        bindsym Down resize grow height 10 px or 10 ppt
+        bindsym Up resize shrink height 10 px or 10 ppt
+        bindsym Right resize grow width 10 px or 10 ppt
 
         # back to normal: Enter or Escape
         bindsym Return mode "default"
@@ -238,12 +238,14 @@ bar {
 # other settings
 ###############################################################################
 
-
-#for_window [class="^.*"] border pixel 3
-#client.focused ff0000 #d65d0e ffff00
-
-# disable winsdo title bars
+# disable window title bars
 new_window 1pixel
+
+# only show borders for splits
+hide_edge_borders smart
+
+# set the border width
+for_window [class="^.*"] border pixel 1
 
 # center align window titles
 title_align center
