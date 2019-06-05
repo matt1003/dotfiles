@@ -6,6 +6,7 @@ labels=0
 debug=0
 
 dflt="#a89984"
+#dflt="#bdae93"
 warn="#fe8019"
 crit="#fb4934"
 back="#282828"
@@ -149,21 +150,21 @@ add_volume() {
 # sudo apt-get install acpi
 
 add_battery() {
-   battery_value=$(acpi | grep -o '[^ ]*%' | sed 's/%//g' )
+   battery_value=$(acpi | grep -o '[^ ]*%')
   if acpi -a | grep -q on-line ; then
     battery_symbol=$battery_ac_symbol
     battery_color=$dflt
   else
-    if (( $battery_value >= 90 )); then
+    if (( ${battery_value::-1} >= 90 )); then
       battery_symbol=$battery_100_symbol
       battery_color=$dflt
-    elif (( $battery_value >= 65 )) ; then
+    elif (( ${battery_value::-1} >= 65 )) ; then
       battery_symbol=$battery_75_symbol
       battery_color=$dflt
-    elif (( $battery_value >= 35 )) ; then
+    elif (( ${battery_value::-1} >= 35 )) ; then
       battery_symbol=$battery_50_symbol
       battery_color=$dflt
-    elif (( $battery_value >= 10 )) ; then
+    elif (( ${battery_value::-1} >= 10 )) ; then
       battery_symbol=$battery_25_symbol
       battery_color=$warn
     else
