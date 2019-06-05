@@ -24,7 +24,7 @@ app_icon_list = {
 
 cmd_icon_list = {
     "bitbake"          :"",
-    "buildwrap"        :"",
+    "build"            :"",
     "devtool"          :"",
     "minicom"          :"",
     "vim"              :"",

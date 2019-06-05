@@ -437,7 +437,7 @@ endfun
 command! -nargs=+ BuildSys call <SID>ExecuteBuildSys(<q-args>)
 "cabbrev build BuildSys
 
-command! -nargs=+ Build silent call system('buildwrap --new-window '.<q-args>.'&')
+command! -nargs=+ Build silent call system('build --new-window '.<q-args>.'&')
 command! Result cgetfile /tmp/build | botright copen
 
 
