@@ -202,11 +202,9 @@ set $aqua #689d68
 set $gray #665c54
 set $darkgray #1d2021
 
-set $test #a89984
-
 # window color:         border | backgr | text | indicator | child_border
 client.focused          $fg     $fg       $bg    $purple     $fg
-client.focused_inactive $bg     $bg       $test  $purple     $darkgray
+client.focused_inactive $fg     $fg       $bg    $purple     $fg
 client.unfocused        $bg     $bg       $fg    $purple     $darkgray
 client.urgent           $red    $red      $bg    $purple     $red
 
@@ -222,7 +220,7 @@ bar {
             separator  $gray
             # workspace colors:  border | backgr | text
             focused_workspace    $fg      $fg      $bg
-            active_workspace     $bg      $bg      $test
+            active_workspace     $bg      $bg      $fg
             inactive_workspace   $bg      $bg      $fg
             urgent_workspace     $red     $red     $bg
         }
@@ -237,27 +235,6 @@ bar {
         bindsym button5 exec --no-startup-id amixer -q set Master 5%- unmute
 }
 
-# pop up status bar
-#bar {
-#        colors {
-#            background $bg
-#            statusline red
-#            separator  $gray
-#            # workspace colors:  border|backgr|text
-#            focused_workspace    $green $green $bg
-#            inactive_workspace   $fg    $fg    $bg
-#            active_workspace     $bg    $bg    $fg
-#            urgent_workspace     $red   $red   $bg
-#        }
-#        status_command exec i3-status
-#        font pango:DejaVuSansMono Nerd Font 10
-#        output DP-5.1
-#        output DP-5.2
-#        # set status bar to auto hide
-#        #mode hide
-#        #modifier Mod1
-#}
-
 ###############################################################################
 # other settings
 ###############################################################################
@@ -269,7 +246,7 @@ new_window 1pixel
 hide_edge_borders smart
 
 # set the border width
-for_window [class="^.*"] border pixel 1
+for_window [class="^.*"] border pixel 2
 
 # center align window titles
 title_align center
