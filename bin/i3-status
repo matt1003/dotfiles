@@ -266,7 +266,7 @@ while [1] ; do
   add_wifi
 
   add_disk 0
-  add_disk 1
+#  add_disk 1
 
   # todo ... these three are a bit slow
   add_volume
