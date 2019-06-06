@@ -3,6 +3,8 @@
 import i3ipc
 import os
 
+debug=False
+
 app_icon_list = {
     "chromium-browser" :"",
     "eog"              :"",
@@ -35,6 +37,7 @@ terminal = "" # 
 unknown = "?"
 
 def i3cmd(node, cmd):
+    if debug: print("cmd: %s" % cmd)
     node.command(cmd)
 
 def update_window(node, text):
@@ -58,6 +61,14 @@ def find_icon(window):
     return icon, name
 
 def find_all_windows(node):
+    # print debug info
+    if debug:
+        print("======================")
+        print("type: %s" % (node.type if node.type else "(None)"))
+        print("class: %s" % (node.window_class if node.window_class else "(None)"))
+        print("layout: %s" % (node.layout if node.layout else "(None)"))
+        print("name: %s" % (node.name if node.name else "(None)"))
+        print("focused: %s" % ("True" if node.focused else "False"))
     # process window
     if node.window_class is not None and len(node.nodes) == 0:
         icon, name = find_icon(node)
