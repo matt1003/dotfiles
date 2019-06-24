@@ -11,7 +11,7 @@ if has('win32') || has ('win64')
   set shellcmdflag=-command
   let $VIMHOME=$HOME.'/vimfiles'
 else
-  set shell=/bin/bash
+  set shell=/bin/zsh
   set shellcmdflag=-c
   let $VIMHOME=$HOME.'/.vim'
 endif
