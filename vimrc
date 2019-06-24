@@ -162,11 +162,44 @@ nmap <leader>hu :GitGutterUndoHunk<CR>
 nmap <silent> <c-n> ]c
 "}}}
 " gruvbox {{{
-Plug 'matt1003/gruvbox'
-let g:gruvbox_contrast_dark = 'hard'
-let g:gruvbox_number_column = 'bgN'
-let g:gruvbox_sign_column = 'bgN'
+"Plug 'matt1003/gruvbox'
+Plug 'gruvbox-community/gruvbox'
+let g:gruvbox_hls_cursor='yellow'
+let g:gruvbox_hls_highlight='orange'
+let g:gruvbox_number_column = 'bg0'
+let g:gruvbox_sign_column = 'bg0'
 let g:gruvbox_italic = 1
+augroup MyGruvBox
+  autocmd!
+  " this does not work with :terminal
+  "autocmd ColorScheme * highlight Normal guibg=NONE ctermbg=NONE
+
+  " change these colors
+  autocmd ColorScheme * highlight! link Function GruvboxBlueBold
+  autocmd ColorScheme * highlight! link GitGutterChange GruvboxOrange
+  autocmd ColorScheme * highlight! link GitGutterChangeDelete GruvboxRed
+  " make search terms bold
+  autocmd ColorScheme * highlight Search cterm=inverse,bold
+  autocmd ColorScheme * highlight IncSearch cterm=inverse,bold
+  " use under-line rather than under-curl
+  autocmd ColorScheme * highlight SpellCap cterm=none
+  autocmd ColorScheme * highlight SpellBad cterm=underline
+  autocmd ColorScheme * highlight SpellLocal cterm=underline
+  autocmd ColorScheme * highlight SpellRare cterm=underline
+  " disable the quickfix line
+  autocmd ColorScheme * highlight! link QuickFixLine Normal
+
+  autocmd ColorScheme * highlight! link VertSplit GruvboxFg4
+  autocmd ColorScheme * highlight! link StatusLineNC GruvboxFg4
+  autocmd ColorScheme * highlight! link StatusLineTermNC GruvboxFg4
+
+  autocmd ColorScheme * highlight! airline_term ctermbg=red ctermfg=red guibg=#ff0000
+
+  "highlight! link debugPC Search
+  highlight! link debugPC Search
+  "highlight! debugPC term=reverse ctermbg=lightblue guibg=#83a598
+  highlight! debugBreakpoint term=reverse ctermbg=red guibg=#fb4934
+augroup END
 "}}}
 " hardtime {{{
 "Plug 'takac/vim-hardtime'
