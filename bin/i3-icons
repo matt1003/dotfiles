@@ -28,7 +28,8 @@ cmd_icon_list = {
     "bitbake"          :"",
     "build"            :"",
     "devtool"          :"",
-    "minicom"          :"",
+    "gdb"              :"",
+    "minicom"          :"",
     "vim"              :"",
 }
 
