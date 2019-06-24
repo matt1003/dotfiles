@@ -93,6 +93,10 @@ let g:airline_skip_empty_sections = 1
 let g:airline#extensions#tabline#enabled = 1
 let g:airline#extensions#tmuxline#enabled = 0
 let g:airline#extensions#tabline#fnamemod = ':t'
+let g:airline_mode_map = {
+        \ 'ic' : 'INSERT',
+        \ 'ix' : 'INSERT',
+        \ }
 "}}}
 " ale -----------------------(automatic linting engine) {{{
 "Plug 'w0rp/ale'
@@ -122,7 +126,7 @@ Plug 'qpkorr/vim-bufkill'
 "imap <c-c> <Plug>CapsLockToggle
 "}}}
 " central -------------------(manage backup/swap/undo files) {{{
-Plug 'matt1003/central.vim'
+Plug 'her/central.vim'
 "}}}
 " cscope {{{
 "if executable('cscope')
@@ -379,6 +383,11 @@ augroup END
 
 nmap <leader>o :<C-U>call append(line('.'), repeat([''], v:count1))<CR>
 nmap <leader>O :<C-U>call append(line('.')-1, repeat([''], v:count1))<CR>
+
+nnoremap <C-J> <C-W><C-J>
+nnoremap <C-K> <C-W><C-K>
+nnoremap <C-L> <C-W><C-L>
+nnoremap <C-H> <C-W><C-H>
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " build system
