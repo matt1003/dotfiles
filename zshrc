@@ -238,3 +238,10 @@ alias svim='vim -u ~/.SpaceVim/vimrc --cmd "set rtp^=~/.SpaceVim"'
 
 alias findtime='find -printf "%Tc %p\n"'
 
+###############################################################################
+# other
+###############################################################################
+
+# disable username and host from window name
+ZSH_THEME_TERM_TITLE_IDLE="zsh"
+

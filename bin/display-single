@@ -1,6 +1,6 @@
 #!/bin/sh
 xrandr \
---output eDP1 --mode 1920x1080 --pos 0x0 --rotate normal --primary \
+--output eDP-1-1 --mode 1920x1080 --pos 0x0 --rotate normal --primary \
 --output DP-6 --off \
 --output DP-5.2 --off \
 --output DP-5.1 --off \

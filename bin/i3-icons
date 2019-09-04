@@ -16,12 +16,14 @@ app_icon_list = {
     "gitk"             :"",
     "gvim"             :"",
     "libreoffice-calc" :"",
+    "libreoffice-writer":"",
     "meld"             :"",
     "nautilus"         :"",
     "pinta"            :"",
     "speedcrunch"      :"",
     "terminator"       :"",
     "wireshark"        :"ﯱ",
+    "x-terminal-emulator":"",
 }
 
 cmd_icon_list = {
@@ -92,6 +94,8 @@ def find_all_workspaces(i3, e):
                 current_icons.append(icon)
         if current_icons:
             update_workspace(workspace, " %s: %s " % (workspace.num, " ".join(current_icons)))
+        else:
+            update_workspace(workspace, " %s " % (workspace.num))
 
 i3 = i3ipc.Connection()
 find_all_workspaces(i3, None)

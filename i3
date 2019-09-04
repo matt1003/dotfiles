@@ -249,7 +249,7 @@ hide_edge_borders smart
 for_window [class="^.*"] border pixel 2
 
 # center align window titles
-title_align center
+#title_align center
 
 # this is needed otherwise the cursor will jump to the center of the screen when
 # clicking on firefox tabs; it appears that the rename workspace command in i3-
@@ -264,6 +264,9 @@ focus_follows_mouse no
 # start up
 ###############################################################################
 
+# enable num lock
+exec --no-startup-id /usr/bin/numlockx on
+
 # enable transparent windows
 exec --no-startup-id compton --config ~/.compton.conf
 
@@ -272,15 +275,16 @@ exec --no-startup-id feh --bg-fill ~/.background
 
 # manage network interfaces
 exec --no-startup-id nm-applet
+exec --no-startup-id system-config-printer-applet
 
 # enable workspace icons
 exec_always --no-startup-id i3-icons 2> /tmp/i3-icons.log
 
 # set the display layout
 exec --no-startup-id display-reload
-workspace 1 output primary
-workspace 2 output DP-5.1
-workspace 3 output DP-5.2
+exec --no-startup-id i3-msg '[workspace=1] move workspace to output primary'
+exec --no-startup-id i3-msg '[workspace=2] move workspace to output DP-5.1'
+exec --no-startup-id i3-msg '[workspace=3] move workspace to output DP-5.2'
 
 # startup application
 exec --no-startup-id i3-msg 'workspace number 1; exec /usr/bin/firefox'

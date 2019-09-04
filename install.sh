@@ -13,29 +13,30 @@ scriptpath=$(dirname "$script")
 # define cli applications
 #
 declare cli_apps=(
-  cscope
-  ctags
+  #cscope
+  #ctags
   git
-#  hh
+  #hh
   minicom
-  neovim
-  numlockx
+  #neovim
+  #ranger
+  shellcheck
   silversearcher-ag
-  tmux-next
+  #tmux-next
   trash-cli
   tree
   vim
-#  xcape
-#  xclip
-#  xsel
+  #xcape
+  #xclip
+  #xsel
   zsh
 )
 declare cli_ppas=(
-  ppa:git-core/ppa # required for latest git
-  ppa:jonathonf/vim # required for vim 8.0
-  ppa:neovim-ppa/unstable # required for neovim
-  ppa:pi-rho/dev # required for tmux 2.3
-  ppa:ultradvorka/ppa # required for hstr
+  #ppa:git-core/ppa # required for latest git
+  #ppa:jonathonf/vim # required for vim 8.0
+  #ppa:neovim-ppa/unstable # required for neovim
+  #ppa:pi-rho/dev # required for tmux 2.3
+  #ppa:ultradvorka/ppa # required for hstr
 )
 
 #
@@ -46,7 +47,7 @@ declare gui_apps=(
   gedit
   git-gui
   gitk
-#  gnome-tweak-tool
+  #gnome-tweak-tool
   meld
   pinta
   speedcrunch
@@ -54,32 +55,35 @@ declare gui_apps=(
   wireshark
 
   i3
-  i3-lock
   rofi
   xautolock
   compton
+  acpi
+  scrot
+  numlockx
 )
 declare gui_ppas=(
-  ppa:gnome-terminator/nightly-gtk3 # required for terminator 1.91
-  ppa:wireshark-dev/stable # required for latest wireshark
+  #ppa:fkrull/speedcrunch-daily # latest version of speedcrunch
+  #ppa:gnome-terminator/nightly-gtk3 # required for terminator 1.91
+  #ppa:wireshark-dev/stable # required for latest wireshark
 )
 
 #
 # define dotfiles
 #
 declare -A dotfiles=(
-#  [bash_aliases]=.bash_aliases
-#  [bash_profile]=.bash_profile
-#  [bashrc]=.bashrc
+  #[bash_aliases]=.bash_aliases
+  #[bash_profile]=.bash_profile
+  #[bashrc]=.bashrc
   [compton.conf]=.compton.conf
   [dunstrc]=.config/dunst/dunstrc
   [gitignore]=.gitignore
   [i3]=.config/i3/config
-#  [inputrc]=.inputrc
+  #[inputrc]=.inputrc
   [minimacros]=.macros
   [minirc]=.minirc.dfl
-  [nvimrc]=.config/nvim/init.vim
-#  [profile]=.profile
+  #[nvimrc]=.config/nvim/init.vim
+  #[profile]=.profile
   [terminator.conf]=.config/terminator/config
   [tmux.conf]=.tmux.conf
   [vimrc]=.vimrc

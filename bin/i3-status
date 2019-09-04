@@ -79,7 +79,7 @@ add_wifi() {
 add_ethernet() { # $1=interface_number
   # if ethtool eth$1 | grep -q "Link detected: yes" ; then
   if [ -f /sys/class/net/eth$1/operstate ] && [ "$(cat /sys/class/net/eth$1/operstate)" == "up" ] ; then
-    ethernet_value=$(ifconfig eth$1 | grep 'inet addr:' | sed 's/.*inet addr:\([0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\).*/\1/')
+    ethernet_value=$(ifconfig eth$1 | grep 'inet ' | sed 's/.*inet \([0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\).*/\1/')
     if [ "$ethernet_value" = "" ] ; then
       add2bar $warn $ethernet_symbol "eth$1 (no ip address)"
     else
@@ -171,8 +171,11 @@ add_battery() {
       battery_symbol=$battery_0_symbol
       battery_color=$crit
     fi
+    # append a non-breaking-space to the battery symbol to
+    # prevent the symbol from overlapping over other text
+    $battery_symbol="$battery_symbol "
   fi
-  add2bar $battery_color $battery_symbol "$battery_label$battery_value"
+  add2bar $battery_color "$battery_symbol" "$battery_label$battery_value"
 }
 
 add_date() {
@@ -266,11 +269,11 @@ while [1] ; do
   add_wifi
 
   add_disk 0
-#  add_disk 1
+  add_disk 1
 
   # todo ... these three are a bit slow
   add_volume
-  add_backlight
+  #add_backlight
   add_battery
 
   add_date
