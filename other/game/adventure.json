@@ -1,0 +1,54 @@
+{
+  "option": "begin",
+  "story": "You are in a dark cave.\n\nWhat do you do?",
+  "next": [
+    {
+      "option": "walk",
+      "story": "You wander around for hours, but cannot find your way.\n\nWhat do you do?",
+      "next": [
+        {
+          "option": "go to sleep",
+          "story": "...\n\nYou fall asleep and die of cold.\n\n Game Over!"
+        },
+        {
+          "option": "keep on going",
+          "story": "After walking for a few more hours, your feet begin to hurt.\n\n What do you do?",
+          "next": [
+            {
+              "option": "take off your shoes",
+              "story": "You keep on walking, but cut your foot. You eventually bleed out and die.\n\n Game Over!"
+            },
+            {
+              "option": "walk on your hands",
+              "story": "Walking upside down on your hands causes you to accidentally changes directions.\n\nIt turns out that you are now walking in the correct direction. You eventually find the light and the end of the cave.\n\n What do you do?",
+              "next": [
+                {
+                  "option": "head towards the light",
+                  "story": "You make it out alive.\n\n Success!"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "option": "run",
+      "story": "You run into a wall.\n\nThat hurt!\n\nWhat do you do?",
+      "next": [
+        {
+          "option": "shake it off",
+          "story": "You brush yourself off and keep on running.\n\nEventually you see a light at the end of the tunnel. You reach it and escape.\n\nSuccess!"
+        },
+        {
+          "option": "cry yourself to sleep",
+          "story": "You slip into a deep depression and die.\n\nGame Over!"
+        }
+      ]
+    },
+    {
+      "option": "jump",
+      "story": "You hit your head and die.\n\nGame Over!"
+    }
+  ]
+}
