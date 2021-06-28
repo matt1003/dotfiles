@@ -155,6 +155,7 @@ Plug 'tpope/vim-fugitive'
 "}}}
 " gitgutter {{{
 Plug 'airblade/vim-gitgutter'
+let g:gitgutter_max_signs = 5000
 let g:gitgutter_sign_added = '▶'
 let g:gitgutter_sign_modified = '▶'
 let g:gitgutter_sign_modified_removed = '▼'
@@ -186,10 +187,10 @@ augroup MyGruvBox
   autocmd ColorScheme * highlight Search cterm=inverse,bold
   autocmd ColorScheme * highlight IncSearch cterm=inverse,bold
   " use under-line rather than under-curl
-  autocmd ColorScheme * highlight SpellCap cterm=none
-  autocmd ColorScheme * highlight SpellBad cterm=underline
-  autocmd ColorScheme * highlight SpellLocal cterm=underline
-  autocmd ColorScheme * highlight SpellRare cterm=underline
+  autocmd ColorScheme * highlight SpellCap ctermbg=NONE cterm=none
+  autocmd ColorScheme * highlight SpellBad ctermbg=NONE cterm=underline guisp=NONE
+  autocmd ColorScheme * highlight SpellLocal ctermbg=NONE cterm=underline guisp=NONE
+  autocmd ColorScheme * highlight SpellRare ctermbg=NONE cterm=underline guisp=NONE
   " disable the quickfix line
   autocmd ColorScheme * highlight! link QuickFixLine Normal
 
@@ -290,15 +291,15 @@ Plug 'tpope/vim-sleuth'
 Plug 'justinmk/vim-syntax-extra'
 "}}}
 " tagbar {{{
-"Plug 'majutsushi/tagbar'
-"let g:tagbar_compact = 1
-"let g:tagbar_indent = 1
-"let g:tagbar_silent = 1
-"let g:tagbar_width = 30
-"augroup TagBarColor
-"  autocmd!
-"  autocmd ColorScheme * highlight link TagbarHighlight IncSearch
-"augroup END
+Plug 'majutsushi/tagbar'
+let g:tagbar_compact = 1
+let g:tagbar_indent = 1
+let g:tagbar_silent = 1
+let g:tagbar_width = 30
+augroup TagBarColor
+  autocmd!
+  autocmd ColorScheme * highlight link TagbarHighlight IncSearch
+augroup END
 "}}}
 " terminus {{{
 Plug 'wincent/terminus'
@@ -480,8 +481,8 @@ nnoremap <C-H> <C-W><C-H>
 "command! -nargs=+ BuildSys call <SID>ExecuteBuildSys(<q-args>)
 "cabbrev build BuildSys
 
-command! -nargs=+ Build silent call system('build --new-window '.<q-args>.'&')
-command! Result cgetfile /tmp/build | botright copen
+"command! -nargs=+ Build silent call system('build --new-window '.<q-args>.'&')
+"command! Result cgetfile /tmp/build | botright copen
 
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -621,7 +622,7 @@ endif
 " write file with sudo rights
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-if !exists('*SudoWrite')
+if 0
 fun! SudoWrite(path, dir)
   silent doautocmd BufWritePre
 
@@ -650,7 +651,7 @@ fun! SudoWrite(path, dir)
       echo 'sudo write "'.a:path.'"'
     endif
   else
-    write
+    write!
   endif
 
   doautocmd BufWritePost
