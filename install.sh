@@ -19,6 +19,9 @@ declare cli_apps=(
   #hh
   #minicom
   #neovim
+  openconnect
+  python3
+  python3-pip
   #ranger
   shellcheck
   silversearcher-ag
@@ -26,6 +29,7 @@ declare cli_apps=(
   trash-cli
   tree
   vim
+  vim-gtk   # this is needed to pull in system clipboard support
   #xcape
   #xclip
   #xsel
@@ -50,16 +54,18 @@ declare gui_apps=(
   meld
   pinta
   speedcrunch
+  teams-for-linux
   terminator
   wireshark
 
   i3
-  rofi
-  #xautolock
+  feh       # used in i3 config for loading the background wallpaper
+  rofi      # used in i3 config to provide an application launcher
+  xautolock # used by display reload to automatically lock the screen
   #compton
-  acpi
-  #scrot
-  numlockx
+  acpi      # used by the i3 status bar to determine the battery level
+  scrot     # used for getting screenshots
+  numlockx  # used in i3 config for ensuring numlock is enabled when logging in
   #xbacklight
 )
 declare gui_ppas=(
@@ -229,6 +235,12 @@ if [ $1 == "git" ] || [ $1 == "full" ]; then
 fi
 
 #
+# install python packages
+#
+echo -e "\e[34minstalling python packages...\e[0m"
+pip3 install i3ipc # used by i3-icons python script
+
+#
 # other stuff
 #
 #if [ $1 == "full" ]; then
@@ -248,17 +260,3 @@ echo "cp $HOME/work/dotfiles/gruvbox.vim $HOME/.vim/plugged/gruvbox/autoload/air
 # - edit /etc/group so that username is added to minicom and wireshark
 # - edit /etc/default/grub so that there is no splash screen during boot
 #
-# sort out what python modules are needed ...
-# sudo apt-get install pip
-# sudo apt-get install python-pip
-# pip install --upgrade pip
-# pip install config
-# pip install jenkins
-# pip install jenkinsapi
-# pip install BeautifulSoup
-# pip install vim-vint
-# pip install vim-vint
-# pip install ansicolor
-# pip uninstall ansicolor
-# pip install 'ansicolor==0.2.4'
-# sudo apt-get install pylint

@@ -69,7 +69,7 @@ if [[ $num -eq 1 ]]; then
   set_mode "single" "" # 
 elif [[ $num -eq 2 ]]; then
   set_mode "present" "來" # 冷
-elif [[ $num -eq 3 ]]; then
+elif [[ $num -ge 3 ]]; then
   set_mode "multi" ""
 fi
 

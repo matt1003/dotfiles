@@ -245,4 +245,4 @@ alias findtime='find -printf "%Tc %p\n"'
 # disable username and host from window name
 ZSH_THEME_TERM_TITLE_IDLE="zsh"
 
-cp ~/.zsh_history ~/.zsh_history~$(date '+%Y-%m-%d~%H:%M:%S')
+cp ~/.zsh_history ~/.zsh_history_backup/.zsh_history~$(date '+%Y-%m-%d~%H:%M:%S')

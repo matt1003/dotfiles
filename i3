@@ -284,7 +284,7 @@ exec --no-startup-id nm-applet
 exec_always --no-startup-id i3-icons 2> /tmp/i3-icons.log
 
 # set the display layout
-exec --no-startup-id display-single
+exec --no-startup-id display-reload
 #exec --no-startup-id i3-msg '[workspace=1] move workspace to output primary'
 #exec --no-startup-id i3-msg '[workspace=2] move workspace to output DP-5.1'
 #exec --no-startup-id i3-msg '[workspace=3] move workspace to output DP-5.2'
