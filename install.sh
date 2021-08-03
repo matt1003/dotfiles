@@ -17,7 +17,7 @@ declare cli_apps=(
   #ctags
   git
   #hh
-  minicom
+  #minicom
   #neovim
   #ranger
   shellcheck
@@ -47,7 +47,6 @@ declare gui_apps=(
   gedit
   git-gui
   gitk
-  #gnome-tweak-tool
   meld
   pinta
   speedcrunch
@@ -56,11 +55,12 @@ declare gui_apps=(
 
   i3
   rofi
-  xautolock
-  compton
+  #xautolock
+  #compton
   acpi
-  scrot
+  #scrot
   numlockx
+  #xbacklight
 )
 declare gui_ppas=(
   #ppa:fkrull/speedcrunch-daily # latest version of speedcrunch
@@ -75,17 +75,17 @@ declare -A dotfiles=(
   #[bash_aliases]=.bash_aliases
   #[bash_profile]=.bash_profile
   #[bashrc]=.bashrc
-  [compton.conf]=.compton.conf
-  [dunstrc]=.config/dunst/dunstrc
-  [gitignore]=.gitignore
+  #[compton.conf]=.compton.conf
+  #[dunstrc]=.config/dunst/dunstrc
+  #[gitignore]=.gitignore
   [i3]=.config/i3/config
   #[inputrc]=.inputrc
-  [minimacros]=.macros
-  [minirc]=.minirc.dfl
+  #[minimacros]=.macros
+  #[minirc]=.minirc.dfl
   #[nvimrc]=.config/nvim/init.vim
   #[profile]=.profile
   [terminator.conf]=.config/terminator/config
-  [tmux.conf]=.tmux.conf
+  #[tmux.conf]=.tmux.conf
   [vimrc]=.vimrc
   [zshrc]=.zshrc
 )
@@ -94,13 +94,13 @@ declare -A dotfiles=(
 # define launchers
 #
 declare gnome_launchers=(
-  tmux.desktop
+  #tmux.desktop
 )
 
 #
 # define fonts
 #
-fonts=https://github.com/powerline/fonts.git
+fonts="https://github.com/ryanoasis/nerd-fonts/releases/download/v2.1.0/DejaVuSansMono.zip"
 
 #
 # define get info
@@ -126,6 +126,13 @@ if [ $1 == "cli" ] || [ $1 == "full" ]; then
   done
   echo -e "\e[34minstalling apt cli apps...\e[0m"
   sudo apt-get update && sudo apt-get install -y ${cli_apps[*]}
+  # install oh-my-zsh
+  if [ ! -d "$HOME/.oh-my-zsh" ]; then
+    sh -c "$(wget https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh -O -)"
+  fi
+  if [ ! -d "$HOME/.oh-my-zsh/custom/themes/powerlevel10k" ]; then
+    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$HOME/.oh-my-zsh/custom/themes/powerlevel10k"
+  fi
 fi
 
 #
@@ -155,11 +162,9 @@ if [ $1 == "dot" ] || [ $1 == "full" ]; then
     if [ ! -d $(dirname $path) ]; then
       mkdir -p $(dirname $path)
     elif [ -f $path ] && [ ! -h $path ]; then
-      if [ -f $path.orig ]; then
-        echo -e "\e[31merror: $path.orig already exists\e[0m"
-        exit 1
+      if [ ! -f $path.orig ]; then
+        mv -v $path $path.orig
       fi
-      mv -v $path $path.orig
     fi
     ln -sfv $scriptpath/$file $path
   done
@@ -190,10 +195,11 @@ fi
 # install fonts
 #
 if [ $1 == "font" ] || [ $1 == "full" ]; then
-  echo -e "\e[34minstalling powerline fonts...\e[0m"
-  git clone $fonts /tmp/powerlinefonts
-  /tmp/powerlinefonts/install.sh
-  rm -rf /tmp/powerlinefonts
+  echo -e "\e[34minstalling nerd fonts...\e[0m"
+  wget "$fonts" -O /tmp/fonts.zip
+  unzip -o /tmp/fonts.zip -d ~/.fonts
+  fc-cache -fv
+  rm -rf /tmp/fonts.zip
 fi
 
 #
@@ -225,13 +231,16 @@ fi
 #
 # other stuff
 #
-if [ $1 == "full" ]; then
-  echo -e "\e[34mconfiguring other settings...\e[0m"
+#if [ $1 == "full" ]; then
+  #echo -e "\e[34mconfiguring other settings...\e[0m"
   # prevent gnome from stomping on xkb settings
-  gsettings set org.gnome.settings-daemon.plugins.keyboard active false
-fi
+  #gsettings set org.gnome.settings-daemon.plugins.keyboard active false
+#fi
 
 echo -e "\e[34m * COMPLETE * \e[0m"
+
+echo "todo once vim plugged has installed gruvbox:"
+echo "cp $HOME/work/dotfiles/gruvbox.vim $HOME/.vim/plugged/gruvbox/autoload/airline/themes/gruvbox.vim"
 
 #
 # TODO

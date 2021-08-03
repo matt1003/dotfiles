@@ -224,7 +224,7 @@ bar {
             inactive_workspace   $bg      $bg      $fg
             urgent_workspace     $red     $red     $bg
         }
-        status_command exec i3-status
+        status_command exec i3-status 2> /tmp/i3-status.log
         font pango:DejaVuSansMono Nerd Font 10
         #output primary
         tray_output primary
@@ -267,26 +267,33 @@ focus_follows_mouse no
 # enable num lock
 exec --no-startup-id /usr/bin/numlockx on
 
+exec --no-startup-id amixer -q set Master 20% unmute
+
 # enable transparent windows
-exec --no-startup-id compton --config ~/.compton.conf
+#exec --no-startup-id compton --config ~/.compton.conf
 
 # set background image
 exec --no-startup-id feh --bg-fill ~/.background
 
 # manage network interfaces
 exec --no-startup-id nm-applet
-exec --no-startup-id system-config-printer-applet
+#exec --no-startup-id blueman-applet
+#exec --no-startup-id system-config-printer-applet
 
 # enable workspace icons
 exec_always --no-startup-id i3-icons 2> /tmp/i3-icons.log
 
 # set the display layout
-exec --no-startup-id display-reload
-exec --no-startup-id i3-msg '[workspace=1] move workspace to output primary'
-exec --no-startup-id i3-msg '[workspace=2] move workspace to output DP-5.1'
-exec --no-startup-id i3-msg '[workspace=3] move workspace to output DP-5.2'
+exec --no-startup-id display-single
+#exec --no-startup-id i3-msg '[workspace=1] move workspace to output primary'
+#exec --no-startup-id i3-msg '[workspace=2] move workspace to output DP-5.1'
+#exec --no-startup-id i3-msg '[workspace=3] move workspace to output DP-5.2'
+
+#workspace 1 output primary
+#workspace 2 output DP-5.1
+#workspace 3 output DP-5.2
 
 # startup application
-exec --no-startup-id i3-msg 'workspace number 1; exec /usr/bin/firefox'
-exec --no-startup-id i3-msg 'workspace number 3; exec /usr/bin/terminator.wrapper'
+#exec --no-startup-id i3-msg 'workspace number 1; exec /usr/bin/firefox'
+#exec --no-startup-id i3-msg 'workspace number 3; exec /usr/bin/terminator.wrapper'
 

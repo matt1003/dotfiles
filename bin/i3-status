@@ -20,11 +20,16 @@ volume_speaker_symbol=""
 volume_headphone_symbol=""
 volume_mute_symbol=""
 battery_ac_symbol=""
-battery_100_symbol=""
-battery_75_symbol=""
-battery_50_symbol=""
-battery_25_symbol=""
-battery_0_symbol=""
+battery_100_symbol=""
+battery_90_symbol=""
+battery_80_symbol=""
+battery_70_symbol=""
+battery_60_symbol=""
+battery_50_symbol=""
+battery_40_symbol=""
+battery_30_symbol=""
+battery_20_symbol=""
+battery_10_symbol=""
 date_symbol=""
 time_1_symbol=""
 time_2_symbol=""
@@ -68,9 +73,9 @@ add_build() {
 
 add_wifi() {
   wifi_value=$(iwgetid -r)
-  if [ "$wifi_value" = "" ] ; then
-    add2bar $warn $wifi_out_symbol "(no connection)"
-  else
+  if [ "$wifi_value" != "" ] ; then
+#    add2bar $dflt $wifi_out_symbol "(no connection)"
+#  else
     add2bar $dflt $wifi_symbol "$wifi_value"
   fi
 }
@@ -112,11 +117,11 @@ add_backlight() {
   ### TODO ###
   # xbacklight and xrandr are very slow when the work projector is connected,
   # so this is my hack to get around it for now...
-  if [ "$(cat /tmp/display)" == "來" ] ; then
-    backlight_value="100"
-  else
-    backlight_value=$(xbacklight -get | sed 's/\.[0-9]*//g')
-  fi
+  #if [ "$(cat /tmp/display)" == "來" ] ; then
+  #  backlight_value="98"
+  #else
+  #  backlight_value=$(xbacklight -get | sed 's/\.[0-9]*//g')
+  #fi
   backlight_symbol=$(cat /tmp/display)
   add2bar $dflt $backlight_symbol "$backlight_label$backlight_value%"
 }
@@ -155,17 +160,35 @@ add_battery() {
     battery_symbol=$battery_ac_symbol
     battery_color=$dflt
   else
-    if (( ${battery_value::-1} >= 90 )); then
+    if (( ${battery_value::-1} >= 95 )); then
       battery_symbol=$battery_100_symbol
       battery_color=$dflt
-    elif (( ${battery_value::-1} >= 65 )) ; then
-      battery_symbol=$battery_75_symbol
+    elif (( ${battery_value::-1} >= 90 )) ; then
+      battery_symbol=$battery_90_symbol
       battery_color=$dflt
-    elif (( ${battery_value::-1} >= 35 )) ; then
+    elif (( ${battery_value::-1} >= 80 )) ; then
+      battery_symbol=$battery_80_symbol
+      battery_color=$dflt
+    elif (( ${battery_value::-1} >= 70 )) ; then
+      battery_symbol=$battery_70_symbol
+      battery_color=$dflt
+    elif (( ${battery_value::-1} >= 60 )) ; then
+      battery_symbol=$battery_60_symbol
+      battery_color=$dflt
+    elif (( ${battery_value::-1} >= 50 )) ; then
       battery_symbol=$battery_50_symbol
       battery_color=$dflt
+    elif (( ${battery_value::-1} >= 40 )) ; then
+      battery_symbol=$battery_40_symbol
+      battery_color=$dflt
+    elif (( ${battery_value::-1} >= 30 )) ; then
+      battery_symbol=$battery_30_symbol
+      battery_color=$dflt
+    elif (( ${battery_value::-1} >= 20 )) ; then
+      battery_symbol=$battery_20_symbol
+      battery_color=$warn
     elif (( ${battery_value::-1} >= 10 )) ; then
-      battery_symbol=$battery_25_symbol
+      battery_symbol=$battery_10_symbol
       battery_color=$warn
     else
       battery_symbol=$battery_0_symbol
@@ -252,7 +275,7 @@ echo '{"version":1}'
 echo '['
 echo '[],'
 
-while [1] ; do
+while [ 1 ] ; do
 
   line="["
 
@@ -260,11 +283,11 @@ while [1] ; do
     start_time=`date +%s%N`
   fi
 
-  add_build
+  #add_build
 
-  add_ethernet 0
-  add_ethernet 1
-  add_ethernet 2
+  #add_ethernet 0
+  #add_ethernet 1
+  #add_ethernet 2
 
   add_wifi
 
@@ -272,7 +295,7 @@ while [1] ; do
   add_disk 1
 
   # todo ... these three are a bit slow
-  add_volume
+  #add_volume
   #add_backlight
   add_battery
 

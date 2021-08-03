@@ -6,24 +6,28 @@ import os
 debug=False
 
 app_icon_list = {
-    "chromium-browser" :"",
-    "eog"              :"",
-    "evince"           :"",
-    "file-roller"      :"",
-    "firefox"          :"",
-    "gedit"            :"",
-    "git-gui"          :"",
-    "gitk"             :"",
-    "gvim"             :"",
-    "libreoffice-calc" :"",
-    "libreoffice-writer":"",
-    "meld"             :"",
-    "nautilus"         :"",
-    "pinta"            :"",
-    "speedcrunch"      :"",
-    "terminator"       :"",
-    "wireshark"        :"ﯱ",
+    "chromium-browser"   :"",
+    "eog"                :"",
+    "evince"             :"",
+    "file-roller"        :"",
+    "firefox"            :"",
+    "gedit"              :"",
+    "git-gui"            :"",
+    "gitk"               :"",
+    "gvim"               :"",
+    "libreoffice-calc"   :"",
+    "libreoffice-writer" :"",
+    "meld"               :"",
+    "nautilus"           :"",
+    "pinta"              :"",
+    "speedcrunch"        :"",
+    "terminator"         :"",
+    "wireshark"          :"ﯱ",
     "x-terminal-emulator":"",
+    "teams-for-linux"    :"",
+    "microsoft teams - preview":"",
+    "blueman-manager"    : "",
+    "pavucontrol"        : ""
 }
 
 cmd_icon_list = {
@@ -33,6 +37,7 @@ cmd_icon_list = {
     "gdb"              :"",
     "minicom"          :"",
     "vim"              :"",
+    "openconnect"      :"",
 }
 
 seperator = "  "
@@ -50,7 +55,7 @@ def update_workspace(node, text):
     i3cmd(node, "rename workspace \"%s\" to \" %s \"" % (node.name, text))
 
 def find_icon(window):
-    if window.window_class == "Terminator":
+    if window.window_class == "X-terminal-emulator":
         cmd = window.name.split(' ')
         pos = 1 if cmd[0] == "sudo" and len(cmd) > 1 else 0
         name = os.path.basename(cmd[pos].lower())
