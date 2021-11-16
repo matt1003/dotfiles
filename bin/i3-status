@@ -139,9 +139,9 @@ add_volume() {
     else
       volume_symbol=$volume_speaker_symbol
     fi
-    if (( ${volume_value::-1} > 75 )) ; then
+    if (( ${volume_value::-1} > 90 )) ; then
       volume_color=$crit
-    elif (( ${volume_value::-1} > 50 )) ; then
+    elif (( ${volume_value::-1} > 75 )) ; then
       volume_color=$warn
     else
       volume_color=$dflt
@@ -295,7 +295,7 @@ while [ 1 ] ; do
   add_disk 1
 
   # todo ... these three are a bit slow
-  #add_volume
+  add_volume
   #add_backlight
   add_battery
 

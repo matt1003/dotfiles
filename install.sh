@@ -15,6 +15,7 @@ scriptpath=$(dirname "$script")
 declare cli_apps=(
   #cscope
   #ctags
+  curl
   git
   #hh
   #minicom
@@ -49,6 +50,7 @@ declare cli_ppas=(
 declare gui_apps=(
   firefox
   gedit
+  gedit-plugins
   git-gui
   gitk
   meld
@@ -67,6 +69,9 @@ declare gui_apps=(
   scrot     # used for getting screenshots
   numlockx  # used in i3 config for ensuring numlock is enabled when logging in
   #xbacklight
+  pavucontrol # pulse audio gui
+  blueman # needed for bluetooth control
+  arandr
 )
 declare gui_ppas=(
   #ppa:fkrull/speedcrunch-daily # latest version of speedcrunch
@@ -156,6 +161,11 @@ if [ $1 == "gui" ] || [ $1 == "full" ]; then
   done
   echo -e "\e[34minstalling apt gui apps...\e[0m"
   sudo apt-get update && sudo apt-get install -y ${gui_apps[*]}
+  #
+  # gruvbox theme for gedit
+  #
+  wget https://raw.githubusercontent.com/morhetz/gruvbox-contrib/master/gedit/gruvbox-dark.xml
+  wget https://raw.githubusercontent.com/morhetz/gruvbox-contrib/master/gedit/gruvbox-light.xml
 fi
 
 #
@@ -241,6 +251,13 @@ echo -e "\e[34minstalling python packages...\e[0m"
 pip3 install i3ipc # used by i3-icons python script
 
 #
+# install docker
+#
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+sudo usermod -aG docker $USER
+
+#
 # other stuff
 #
 #if [ $1 == "full" ]; then
@@ -256,6 +273,7 @@ echo "cp $HOME/work/dotfiles/gruvbox.vim $HOME/.vim/plugged/gruvbox/autoload/air
 
 #
 # TODO
+# - install ubuntu-restricted-extras
 # - edit /etc/sudoers so that password is not required for sudo
 # - edit /etc/group so that username is added to minicom and wireshark
 # - edit /etc/default/grub so that there is no splash screen during boot

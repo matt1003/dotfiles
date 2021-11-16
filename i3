@@ -30,7 +30,8 @@ font pango:DejaVu Sans Mono Nerd Font, Bold 10
 floating_modifier $mod
 
 # start a terminal
-bindsym $mod+space exec i3-shell
+bindsym $mod+space exec terminator --role=no_floating
+for_window [window_role=no_floating] floating disable
 
 # kill focused window
 bindsym $mod+e kill
