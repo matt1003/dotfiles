@@ -175,11 +175,11 @@ source $ZSH/oh-my-zsh.sh
 # export LANG=en_US.UTF-8
 
 # Preferred editor for local and remote sessions
-# if [[ -n $SSH_CONNECTION ]]; then
-#   export EDITOR='vim'
-# else
-#   export EDITOR='mvim'
-# fi
+ if [[ -n $SSH_CONNECTION ]]; then
+   export EDITOR='vim'
+ else
+   export EDITOR='nvim'
+ fi
 
 # Compilation flags
 # export ARCHFLAGS="-arch x86_64"
@@ -231,8 +231,13 @@ alias u2='minicom -D /dev/ttyUSB2 -C ~/minicom-u2'
 gitkall () { gitk --all $@ & disown %1 ; }
 alias gitk=gitkall
 
-gitopenall () { vim $(git diff --name-only | awk "{print \"$(git rev-parse --show-toplevel)/\"\$1}") ; }
-alias goa=gitopenall
+gitopenall () { nvim $(git diff --name-only | awk "{print \"$(git rev-parse --show-toplevel)/\"\$1}") ; }
+gitopenall2 () { nvim $(git status --short --no-renames --untracked-files=all | awk -F ' ' '{print $2}') ; }
+alias goa=gitopenall2
+
+function nag() {
+  nvim $(aag -l "$@")
+}
 
 alias svim='vim -u ~/.SpaceVim/vimrc --cmd "set rtp^=~/.SpaceVim"'
 

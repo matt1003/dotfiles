@@ -20,17 +20,17 @@ declare cli_apps=(
   #hh
   #minicom
   #neovim
-  openconnect
-  python3
-  python3-pip
+  #openconnect
+  #python3
+  #python3-pip
   #ranger
-  shellcheck
+  #shellcheck
   silversearcher-ag
   #tmux-next
-  trash-cli
+  #trash-cli
   tree
-  vim
-  vim-gtk   # this is needed to pull in system clipboard support
+  #vim
+  #vim-gtk   # this is needed to pull in system clipboard support
   #xcape
   #xclip
   #xsel
@@ -56,22 +56,22 @@ declare gui_apps=(
   meld
   pinta
   speedcrunch
-  teams-for-linux
+  #teams-for-linux
   terminator
-  wireshark
+  #wireshark
 
-  i3
-  feh       # used in i3 config for loading the background wallpaper
-  rofi      # used in i3 config to provide an application launcher
-  xautolock # used by display reload to automatically lock the screen
+  #i3
+  #feh       # used in i3 config for loading the background wallpaper
+  #rofi      # used in i3 config to provide an application launcher
+  #xautolock # used by display reload to automatically lock the screen
   #compton
-  acpi      # used by the i3 status bar to determine the battery level
-  scrot     # used for getting screenshots
-  numlockx  # used in i3 config for ensuring numlock is enabled when logging in
+  #acpi      # used by the i3 status bar to determine the battery level
+  #scrot     # used for getting screenshots
+  #numlockx  # used in i3 config for ensuring numlock is enabled when logging in
   #xbacklight
-  pavucontrol # pulse audio gui
-  blueman # needed for bluetooth control
-  arandr
+  #pavucontrol # pulse audio gui
+  #blueman # needed for bluetooth control
+  #arandr
 )
 declare gui_ppas=(
   #ppa:fkrull/speedcrunch-daily # latest version of speedcrunch
@@ -89,7 +89,7 @@ declare -A dotfiles=(
   #[compton.conf]=.compton.conf
   #[dunstrc]=.config/dunst/dunstrc
   #[gitignore]=.gitignore
-  [i3]=.config/i3/config
+  #[i3]=.config/i3/config
   #[inputrc]=.inputrc
   #[minimacros]=.macros
   #[minirc]=.minirc.dfl
@@ -97,7 +97,7 @@ declare -A dotfiles=(
   #[profile]=.profile
   [terminator.conf]=.config/terminator/config
   #[tmux.conf]=.tmux.conf
-  [vimrc]=.vimrc
+  #[vimrc]=.vimrc
   [zshrc]=.zshrc
 )
 
@@ -111,15 +111,15 @@ declare gnome_launchers=(
 #
 # define fonts
 #
-fonts="https://github.com/ryanoasis/nerd-fonts/releases/download/v2.1.0/DejaVuSansMono.zip"
+fonts="https://github.com/ryanoasis/nerd-fonts/releases/download/v3.1.1/DejaVuSansMono.zip"
 
 #
 # define get info
 #
 git_name=matt1003
 git_email=matt1003@gmail.com
-git_editor=vim
-git_difftool=vimdiff
+git_editor=nvim
+git_difftool=meld
 git_ignorefile=$HOME/.gitignore
 
 #
@@ -247,29 +247,29 @@ fi
 #
 # install python packages
 #
-echo -e "\e[34minstalling python packages...\e[0m"
-pip3 install i3ipc # used by i3-icons python script
+#echo -e "\e[34minstalling python packages...\e[0m"
+#pip3 install i3ipc # used by i3-icons python script
 
 #
 # install docker
 #
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
-sudo usermod -aG docker $USER
+#curl -fsSL https://get.docker.com -o get-docker.sh
+#sudo sh get-docker.sh
+#sudo usermod -aG docker $USER
 
 #
 # other stuff
 #
 #if [ $1 == "full" ]; then
-  #echo -e "\e[34mconfiguring other settings...\e[0m"
-  # prevent gnome from stomping on xkb settings
-  #gsettings set org.gnome.settings-daemon.plugins.keyboard active false
+#echo -e "\e[34mconfiguring other settings...\e[0m"
+# prevent gnome from stomping on xkb settings
+#gsettings set org.gnome.settings-daemon.plugins.keyboard active false
 #fi
 
 echo -e "\e[34m * COMPLETE * \e[0m"
 
-echo "todo once vim plugged has installed gruvbox:"
-echo "cp $HOME/work/dotfiles/gruvbox.vim $HOME/.vim/plugged/gruvbox/autoload/airline/themes/gruvbox.vim"
+#echo "todo once vim plugged has installed gruvbox:"
+#echo "cp $HOME/work/dotfiles/gruvbox.vim $HOME/.vim/plugged/gruvbox/autoload/airline/themes/gruvbox.vim"
 
 #
 # TODO

@@ -46,6 +46,7 @@ set wildmode=longest,list    " setup bash-like auto-complete
 set number                   " display: show absolute line numbers
 set colorcolumn=81,101,121   " display: show 80/100/120 char column
 set scrolloff=999            " display: cursor always centered
+set sidescrolloff=5          " display: cursor always centered
 set spell spelllang=en_us    " display: show spell checking
 set shortmess+=I             " display: hide startup screen
 set noshowmode               " display: hide mode from status bar
@@ -65,7 +66,7 @@ set belloff=all
 try
   set listchars=tab:»―,space:·,nbsp:⚬,eol:↵
 catch
-  set listchars=tab:»―,trail:·,nbsp:⚬,eol:
+  set listchars=tab:»―,trail:·,nbsp:⚬,eol:↵
 endtry
 
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
