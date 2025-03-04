@@ -1,0 +1,425 @@
+#!/bin/bash
+
+script="$(realpath "$0")"
+name="$(basename "$script")"
+
+# options
+path="$HOME/Pictures/Wallpapers"
+extensions=("jpg" "jpeg" "png" "bmp" "gif" "tiff")
+scale="scaled"
+verbose=false
+
+# cron options
+set_cron=false
+clear_cron=false
+expression=""
+
+# other options
+current=false
+delete=false
+rename=false
+dimensions=false
+webp2png=false
+jpeg2jpg=false
+
+# hidden options
+link="$HOME/.wallpaper"
+log="$HOME/.wallpaper.log"
+
+# bash color codes
+BLACK="\e[30m"
+RED="\e[31m"
+GREEN="\e[32m"
+YELLOW="\e[33m"
+BLUE="\e[34m"
+MAGENTA="\e[35m"
+CYAN="\e[36m"
+WHITE="\e[37m"
+
+# bash special codes
+DEFAULT="\e[39m"
+RESET="\e[0m"
+
+print_msg() {
+  [ "$verbose" = true ] && printf "%s\n" "$1"
+}
+
+print_error() {
+  printf "${RED}Error: %s\n${RESET}" "$1"
+}
+
+print_usage() {
+  cat <<EOF
+Usage: $name [OPTIONS] [PATH]
+
+Wallpaper Switcher Script
+This script allows you to easily manage and switch wallpapers.
+
+Path:
+  Specify the PATH to your wallpapers (default: $path). This can be a single file, a directory, or a
+  glob expression. If the specified PATH contains multiple images, one will be selected at random.
+
+Options:
+  -e, --extensions <ext>      Specify the file extensions to include (default: ${extensions[*]}).
+  -s, --scale <option>        Set the scaling option: center|scaled|stretched|zoom|tile (default: $scale).
+  -v, --verbose               Enable verbose output (default: off).
+  -h, --help                  Display this help message and exit.
+
+Cron Options:
+  --set-cron <expression>     Define a cron expression to schedule wallpaper changes.
+                              This sets up the script for automatic triggering at the specified schedule.
+  --clear-cron                Remove the cron job associated with this script, if it exists.
+
+Other Options:
+  --current                   List the current wallpaper.
+  --delete                    Delete the current wallpaper.
+  --rename                    Renames all images to kebab-case.
+  --dimensions                Lists the dimensions of each image in the specified path (excludes gifs).
+  --webp2png                  Converts all images in webp format to png format.
+  --jpeg2jpg                  Renames all images with file extension jpeg to jpg.
+
+Important:
+  The script must be run at least once manually before it can be triggered via cron. 
+  This ensures that the GNOME desktop background settings are correctly configured.
+
+Examples:
+  $name --extensions jpg,png /home/user/Pictures/Wallpapers
+  $name --set-cron "0 6 * * *"
+  $name --clear-cron
+EOF
+}
+
+confirm() {
+  read -p "$1 (y/N) " answer && [[ "$answer" =~ ^[Yy]$ ]]
+}
+
+function progress_bar {
+  local progress=$1 total=$2 width=${3:-50}
+  local percent=$((progress * 100 / total))
+  local filled=$((progress * width / total))
+  printf "\rprogress: [%-${width}s] %d%%" "$(printf '#%.0s' $(seq 1 $filled))" "$percent"
+}
+
+function clear_progress_bar {
+  printf "\r\033[K"
+}
+
+function in_crontab {
+  crontab -l 2>/dev/null | grep -qF "$1"
+}
+
+function update_crontab {
+  (
+    crontab -l 2>/dev/null | sed "\|$1|d"
+    echo "$2"
+  ) | crontab
+}
+
+function find_images {
+  # Enable extended globbing:
+  shopt -s extglob
+  # Expand any globs in the path:
+  local expanded_paths=$(eval echo "$path")
+  # Join extensions into a regex pattern:
+  local extensions_regex=".*\.\($(echo "${@}" | sed 's/ /\\|/g')\)$"
+  # Find with -iregex for case-insensitive extension matching:
+  find $expanded_paths -type f -iregex "$extensions_regex"
+}
+
+function image_count {
+  [ -z "$1" ] && echo 0 || wc -l <<<"$1"
+}
+
+function random_image {
+  shuf -n 1 <<<"$1"
+}
+
+function get_current_wallpaper {
+  readlink -f "$link"
+}
+
+function set_current_wallpaper {
+  ln -sf "$1" "$link"
+}
+
+function remove_quotes {
+  sed 's/^["'\'']*//; s/["'\'']*$//' <<<"$1"
+}
+
+function get_gnome_background_uri {
+  remove_quotes "$(gsettings get org.gnome.desktop.background picture-uri)"
+}
+
+function set_gnome_background_uri {
+  gsettings set org.gnome.desktop.background picture-uri "$1"
+}
+
+function get_gnome_background_options {
+  remove_quotes "$(gsettings get org.gnome.desktop.background picture-options)"
+}
+
+function set_gnome_background_options {
+  gsettings set org.gnome.desktop.background picture-options "$1"
+}
+
+#
+# The following functions depend on ImageMagick
+# sudo apt install imagemagick
+#
+# Also increased the limits:
+# https://github.com/ImageMagick/ImageMagick/issues/396
+
+function convert_webp_to_png {
+  convert "$1" "${1%.webp}.png"
+}
+
+function convert_jpeg_to_jpg {
+  cp "$1" "${1%.jpeg}.jpg"
+}
+
+function get_image_dimensions {
+  identify -format "%wx%h" "$1"
+}
+
+function is_16_9_ratio {
+  IFS='x' read -r width height <<<"$1"
+  ((width * 9 == height * 16)) && echo true || echo false
+}
+
+function dimension_to_size {
+  IFS='x' read -r width height <<<"$1"
+  echo $((width * height))
+}
+
+while [[ "$#" -gt 0 ]]; do
+  case $1 in
+  # options:
+  -e | --extensions)
+    IFS=',' read -r -a extensionso <<<"$2"
+    shift
+    ;;
+  -s | --scale)
+    scale="$2"
+    shift
+    ;;
+  -v | --verbose)
+    verbose=true
+    ;;
+  -h | --help)
+    print_usage
+    exit 0
+    ;;
+  # cron options:
+  --set-cron)
+    set_cron=true
+    expression="$2"
+    shift
+    ;;
+  --clear-cron)
+    clear_cron=true
+    ;;
+  # other options:
+  --current)
+    current=true
+    ;;
+  --delete)
+    delete=true
+    ;;
+  --rename)
+    rename=true
+    ;;
+  --dimensions)
+    dimensions=true
+    ;;
+  --webp2png)
+    webp2png=true
+    ;;
+  --jpeg2jpg)
+    jpeg2jpg=true
+    ;;
+  # hidden options:
+  --link)
+    link="$2"
+    shift
+    ;;
+  --log)
+    log="$2"
+    shift
+    ;;
+  # path:
+  *)
+    if [[ $1 == -* ]]; then
+      print_error "\"$1\" is not a valid option!"
+      print_usage
+      exit 1
+    fi
+    path="$(realpath "$1")"
+    if [ ! -e "$path" ]; then
+      print_error "\"$path\" is not a valid path!"
+      print_usage
+      exit 1
+    fi
+    ;;
+  esac
+  shift
+done
+
+if [ "$set_cron" = true ]; then
+  verbose=true # force verbose
+  options="--extensions \"$(
+    IFS=,
+    echo "${extensions[*]}"
+  )\" --scale \"$scale\" --link \"$link\""
+  cron="$expression $script \"$path\" $options --verbose >> $log 2>&1"
+  if in_crontab "$cron"; then
+    print_msg "$script already added to crontab"
+  else
+    update_crontab "$script" "$cron"
+    print_msg "$script added to crontab"
+  fi
+  exit 0
+fi
+
+if [ "$clear_cron" = true ]; then
+  verbose=true # force verbose
+  if ! in_crontab "$script"; then
+    print_msg "$script already removed from crontab"
+  else
+    update_crontab "$script" ""
+    print_msg "$script removed from crontab"
+  fi
+  exit 0
+fi
+
+if [ "$current" = true ]; then
+  verbose=true # force verbose
+  current="$(get_current_wallpaper)"
+  print_msg "$current"
+  exit 0
+fi
+
+if [ "$delete" = true ]; then
+  verbose=true # force verbose
+  current="$(get_current_wallpaper)"
+  if confirm "Are you sure you want to delete: $current"; then
+    rm "$current"
+    print_msg "deleted: $current"
+  fi
+  verbose=false
+fi
+
+print_msg "$(date)"
+
+if [ "$webp2png" = true ]; then
+  extensions=("webp")
+fi
+if [ "$jpeg2jpg" = true ]; then
+  extensions=("jpeg")
+fi
+
+images="$(find_images "${extensions[@]}")"
+total="$(image_count "$images")"
+print_msg "found $total images at $path"
+
+if [ "$total" -eq 0 ]; then
+  print_error "No valid images found at the specified path."
+  exit 1
+fi
+
+if [ "$rename" = true ]; then
+  verbose=true # force verbose
+  # Rename each image:
+  while IFS= read -r image; do
+    old_name=$(basename "$image")
+    new_name=$(echo "$old_name" | tr '[:upper:]' '[:lower:]' | tr '_' '-')
+    if [[ "$old_name" != "$new_name" ]]; then
+      old_path="$(dirname "$image")/${old_name}"
+      new_path="$(dirname "$image")/${new_name}"
+      if [ -f "${new_path}" ]; then
+        print_error "\"${new_path}\" already exists. Rename aborted."
+      else
+        print_msg "Renaming \"${old_name}\" to \"${new_name}\"."
+        mv "${old_path}" "${new_path}"
+      fi
+    fi
+  done <<<"$images"
+  exit 0
+fi
+
+if [ "$dimensions" = true ]; then
+  verbose=true # force verbose
+  # Create a mapping of image dimensions to images:
+  declare -A map
+  while IFS= read -r image; do
+    progress_bar "$((++count))" "$total"
+    if [[ "$image" != *.gif ]]; then
+      dimensions="$(get_image_dimensions "$image")"
+      map["$dimensions"]="${map["$dimensions"]+${map["$dimensions"]}$'\n'}$image"
+    fi
+  done <<<"$images"
+  clear_progress_bar
+  # Sort dimensions based on combined size (width * height):
+  for dimensions in $(for dimensions in "${!map[@]}"; do
+    echo "$(dimension_to_size "$dimensions"):$dimensions"
+  done | sort -t ':' -k1,1nr | cut -d ':' -f2); do
+    print_msg "$dimensions" "$([ "$(is_16_9_ratio "$dimensions")" = "true" ] && echo "$GREEN" || echo "$RED")"
+    print_msg "${map[$dimensions]}"
+  done
+  exit 0
+fi
+
+if [ "$webp2png" = true ] || [ "$jpeg2jpg" = true ]; then
+  verbose=true # force verbose
+  # Select the conversion:
+  declare -A mapping=(
+    [webp2png]="webp png convert_webp_to_png"
+    [jpeg2jpg]="jpeg jpg convert_jpeg_to_jpg"
+  )
+  for key in "${!mapping[@]}"; do
+    if [ "${!key}" = true ]; then
+      read -r src_ext dest_ext convert_function <<<"${mapping[$key]}"
+      break
+    fi
+  done
+  # Convert each image:
+  while IFS= read -r image; do
+    if [ -f "${image%.$src_ext}.$dest_ext" ]; then
+      print_error "\"${image%.$src_ext}.$dest_ext\" already exists. Conversion aborted."
+    else
+      print_msg "Converting \"${image}\" to ${dest_ext}."
+      if "$convert_function" "$image"; then
+        rm "$image"
+      else
+        print_error "Conversion failed for \"${image}\". Original file retained."
+      fi
+    fi
+  done <<<"$images"
+  exit 0
+fi
+
+selected="$(random_image "$images")"
+print_msg "selected $selected"
+
+if [ "$total" -gt 1 ]; then
+  while [ "$selected" == "$(get_current_wallpaper)" ]; do
+    print_msg "same as current wallpaper; selecting another image"
+    selected="$(random_image "$images")"
+    print_msg "selected $selected"
+  done
+fi
+
+set_current_wallpaper "$selected"
+print_msg "wallpaper set to selected image"
+
+if [[ -n "$DISPLAY" && -n "$DBUS_SESSION_BUS_ADDRESS" ]]; then
+  # Set the GNOME desktop background URI:
+  if [ "file://$link" != "$(get_gnome_background_uri)" ]; then
+    set_gnome_background_uri "file://$link"
+    print_msg "GNOME desktop background URI set to: file://$link"
+  fi
+  # Set the GNOME desktop background options:
+  if [ "$scale" != "$(get_gnome_background_options)" ]; then
+    set_gnome_background_options "$scale"
+    print_msg "GNOME desktop background options set to: $scale"
+  fi
+fi
