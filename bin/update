@@ -1,0 +1,67 @@
+#!/bin/bash
+
+set -e
+
+NVIM_BRANCH="master"
+
+function msg() {
+  echo -e "\033[1m$1\033[0m"
+}
+
+# snap
+msg "snap refresh"
+sudo snap refresh
+
+# apt
+msg "apt update"
+sudo apt update -y
+msg "apt upgrade"
+sudo apt upgrade -y
+msg "apt autoremove"
+sudo apt autoremove -y
+
+if [ ! -d "~/work/gruvbox-plus-icon-pack" ]; then
+  msg "gruvbox icons git clone"
+  git clone https://github.com/SylEleuth/gruvbox-plus-icon-pack.git
+fi
+
+(
+  cd ~/work/gruvbox-plus-icon-pack
+  msg "gruvbox icons git pull"
+  git pull
+)
+
+if [ "$1" == "all" ]; then
+
+  if [ ! -d "~/work/neovim" ]; then
+    msg "neovim git clone"
+    git clone https://github.com/neovim/neovim.git ~/work/neovim
+  fi
+
+  # neovim
+  (
+    cd ~/work/neovim
+    msg "neovim git fetch"
+    git fetch
+
+    msg "neovim git checkout"
+    git checkout $NVIM_BRANCH
+
+    msg "neovim make clean"
+    make distclean
+
+    msg "neovim make"
+    make CMAKE_BUILD_TYPE=Release
+
+    msg "neovim make install"
+    sudo make install
+
+    msg "neovim version"
+    nvim --version
+  )
+
+  rm -rf ~/.cache/nvim ~/.local/share/nvim ~/.local/state/nvim ~/.config/nvim/lazy-lock.json
+
+  nvim
+
+fi
