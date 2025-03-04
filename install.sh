@@ -137,13 +137,6 @@ if [ $1 == "cli" ] || [ $1 == "full" ]; then
   done
   echo -e "\e[34minstalling apt cli apps...\e[0m"
   sudo apt-get update && sudo apt-get install -y ${cli_apps[*]}
-  # install oh-my-zsh
-  if [ ! -d "$HOME/.oh-my-zsh" ]; then
-    sh -c "$(wget https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh -O -)"
-  fi
-  if [ ! -d "$HOME/.oh-my-zsh/custom/themes/powerlevel10k" ]; then
-    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$HOME/.oh-my-zsh/custom/themes/powerlevel10k"
-  fi
 fi
 
 #
