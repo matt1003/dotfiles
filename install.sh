@@ -120,7 +120,7 @@ git_name=matt1003
 git_email=matt1003@gmail.com
 git_editor=nvim
 git_difftool=meld
-git_ignorefile=$HOME/.gitignore
+#git_ignorefile=$HOME/.gitignore
 
 #
 # install cli apps
