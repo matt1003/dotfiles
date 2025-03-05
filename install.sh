@@ -15,7 +15,6 @@ scriptpath=$(dirname "$script")
 declare cli_apps=(
   #cscope
   #ctags
-  curl
   git
   #hh
   #minicom
@@ -35,6 +34,26 @@ declare cli_apps=(
   #xclip
   #xsel
   zsh
+
+  # LazyVim Dependencies
+  curl
+  fd-find
+  fzf
+  git
+  gzip
+  nodejs
+  npm
+  tar
+  python3
+  python3-pip
+  python3-venv
+  ripgrep
+  unzip
+  wget
+  xsel
+  #lazygit
+  #pip3 install neovim
+  #npm install -g neovim
 )
 declare cli_ppas=(
   #ppa:git-core/ppa # required for latest git
