@@ -120,7 +120,11 @@ return {
           },
         },
         lualine_c = {},
-        lualine_x = {},
+        lualine_x = {
+          function()
+            return string.lower(tostring(os.date("%I:%M:%S %p")))
+          end,
+        },
         lualine_y = {},
         lualine_z = {
           function()
