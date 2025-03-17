@@ -260,5 +260,5 @@ ZSH_THEME_TERM_TITLE_IDLE="zsh"
 
 if [ -f "$HOME/.zsh_history" ]; then
   mkdir -p "$HOME/.zsh_history_backup"
-  cp "$HOME/.zsh_history" "$HOME/.zsh_history_backup/.zsh_history~$(date '+%Y-%m-%d~%H:%M:%S')"
+  cp "$HOME/.zsh_history" "$HOME/.zsh_history_backup/zsh_history~$(date '+%Y-%m-%d~%H:%M:%S')"
 fi
