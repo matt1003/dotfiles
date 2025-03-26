@@ -2,6 +2,51 @@
 local Util = require("lazyvim.util")
 local my_icons = { "", "", "", "󱙝", "", "", "󰣙", "󰻖", "", "󰼂", "󰑮", "󱙴" }
 
+local colors = {
+  white = "#ebdbb2", -- fg
+  lightgray = "#d5c4a1", -- fg2
+  gray = "#a89984", -- gray
+  darkgray = "#504945", -- bg2
+  black = "#282828", -- bg
+  red = "#fb4934", -- red
+  green = "#b8bb26", -- green
+  yellow = "#fabd2f", -- yellow
+  purple = "#d3869b", -- purple
+}
+
+local gruvbox = {
+  normal = {
+    a = { bg = colors.gray, fg = colors.black, gui = "bold" },
+    b = { bg = colors.darkgray, fg = colors.white },
+    c = { bg = colors.black, fg = colors.lightgray },
+  },
+  insert = {
+    a = { bg = colors.green, fg = colors.black, gui = "bold" },
+    b = { bg = colors.darkgray, fg = colors.white },
+    c = { bg = colors.black, fg = colors.lightgray },
+  },
+  visual = {
+    a = { bg = colors.yellow, fg = colors.black, gui = "bold" },
+    b = { bg = colors.darkgray, fg = colors.white },
+    c = { bg = colors.black, fg = colors.lightgray },
+  },
+  replace = {
+    a = { bg = colors.red, fg = colors.black, gui = "bold" },
+    b = { bg = colors.darkgray, fg = colors.white },
+    c = { bg = colors.black, fg = colors.lightgray },
+  },
+  command = {
+    a = { bg = colors.purple, fg = colors.black, gui = "bold" },
+    b = { bg = colors.darkgray, fg = colors.white },
+    c = { bg = colors.black, fg = colors.lightgray },
+  },
+  inactive = {
+    a = { bg = colors.black, fg = colors.gray, gui = "bold" },
+    b = { bg = colors.black, fg = colors.gray },
+    c = { bg = colors.black, fg = colors.gray },
+  },
+}
+
 return {
   "matt1003/lualine.nvim",
   lazy = false,
@@ -13,16 +58,18 @@ return {
 
     return {
       options = {
-        theme = "auto",
+        theme = gruvbox,
         globalstatus = true,
         disabled_filetypes = { statusline = { "dashboard", "alpha", "starter" } },
+        section_separators = { left = "", right = "" },
+        component_separators = { left = "", right = "" },
       },
       sections = {
         -- (A b c ... x y z): Mode
         lualine_a = { "mode" },
         -- (a B c ... x y z): Current Directory | Current Branch
         lualine_b = {
-          Util.lualine.root_dir({ icon = "󱉭" }),
+          Util.lualine.root_dir({ color = {}, icon = "󱉭" }),
           "branch",
         },
         -- (a b C ... x y z): Current File | Git Changes Icons | Errors/Warnings Icons
@@ -67,7 +114,10 @@ return {
               return ""
             end
             local denominator = math.min(result.total, result.maxcount)
-            return string.format("%d/%d", result.current, denominator)
+            if denominator == 0 then
+              return ""
+            end
+            return string.format(" %d/%d", result.current, denominator)
           end,
           function()
             local line = vim.fn.line(".")
@@ -109,6 +159,11 @@ return {
         lualine_b = {
           {
             "buffers",
+            max_length = vim.o.columns - 10,
+            --buffers_color = {
+            --active = 'lualine_{section}_normal',
+            --inactive = 'lualine_{section}_inactive',
+            --},
             symbols = {
               modified = "",
               alternate_file = "",
@@ -120,15 +175,11 @@ return {
           },
         },
         lualine_c = {},
-        lualine_x = {
-          function()
-            return string.lower(tostring(os.date("%I:%M:%S %p")))
-          end,
-        },
+        lualine_x = {},
         lualine_y = {},
         lualine_z = {
           function()
-            return my_icons[math.floor(os.date("%M") / 5) + 1] .. " vim"
+            return my_icons[math.floor(os.date("%M") / 5) + 1] .. " nvim"
           end,
         },
       },
