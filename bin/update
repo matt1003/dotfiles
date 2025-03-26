@@ -1,67 +1,579 @@
 #!/bin/bash
+set -euo pipefail
 
-set -e
+##############################################################################
+# CONFIGURATION                                                              #
+##############################################################################
 
-NVIM_BRANCH="master"
+DOTFILE_ROOT="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
+VERSION_LOCK="$DOTFILE_ROOT/install-lock.json"
+DOWNLOAD_DIR="$HOME/.install"
 
-function msg() {
-  echo -e "\033[1m$1\033[0m"
-}
+FONTS_DIR="$HOME/.fonts"
+ICONS_DIR="$HOME/.icons"
 
-# snap
-msg "snap refresh"
-sudo snap refresh
+FONTS_SET="DejaVuSansMNerdFont"
+ICONS_SET="Gruvbox-Plus-Light"
 
 # apt
-msg "apt update"
-sudo apt update -y
-msg "apt upgrade"
-sudo apt upgrade -y
-msg "apt autoremove"
-sudo apt autoremove -y
-
-if [ ! -d "~/work/gruvbox-plus-icon-pack" ]; then
-  msg "gruvbox icons git clone"
-  git clone https://github.com/SylEleuth/gruvbox-plus-icon-pack.git
-fi
-
-(
-  cd ~/work/gruvbox-plus-icon-pack
-  msg "gruvbox icons git pull"
-  git pull
+declare APT_APPS=(
+  ### CLI ###
+  git
+  minicom
+  ncdu
+  silversearcher-ag
+  tree
+  zsh
+  ### GUI ###
+  gedit
+  gedit-plugins
+  git-gui
+  gitk
+  meld
+  speedcrunch
+  terminator
+  ### LazyVim ###
+  curl
+  fd-find
+  fzf
+  git
+  gzip
+  luarocks
+  nodejs
+  npm
+  tar
+  python3
+  python3-pip
+  python3-venv
+  ripgrep
+  unzip
+  wget
+  xclip
+  xsel
+  zip
 )
 
-if [ "$1" == "all" ]; then
+# snap
+declare SNAP_APPS=(
+  firefox
+  gimp
+  pinta
+  prospect-mail
+  robo3t-snap
+  teams-for-linux
+)
 
-  if [ ! -d "~/work/neovim" ]; then
-    msg "neovim git clone"
-    git clone https://github.com/neovim/neovim.git ~/work/neovim
+# pip
+declare PIP_PKGS=(
+  neovim
+)
+
+# npm
+declare NPM_PKGS=(
+  neovim
+)
+
+# dot
+declare -A DOT_FILES=(
+  [minirc]=.minirc.dfl
+  [nvim]=.config/nvim
+  [terminator.conf]=.config/terminator/config
+  [tmux.conf]=.tmux.conf
+  [zshrc]=.zshrc
+)
+
+# git
+GIT_NAME=matt1003
+GIT_EMAIL=matt1003@gmail.com
+GIT_EDITOR=nvim
+GIT_DIFFTOOL=meld
+
+# gnome
+declare -A GNOME_EXTENSIONS=(
+  ["home-sweet-gnome/dash-to-panel"]="dash-to-panel@jderose9.github.com:make zip-file:true"
+  ["KEIII/gnome-shell-panel-date-format"]="panel-date-format@keiii.github.com:make:dconf write /org/gnome/shell/extensions/panel-date-format/format \"$(<"$DOTFILE_ROOT/panel-date-format")\""
+)
+
+# fonts
+NERD_FONTS_GITHUB="ryanoasis/nerd-fonts"
+NERD_FONTS_ARCHIVE="DejaVuSansMono.zip"
+
+# icons
+GRUVBOX_ICONS_GITHUB="SylEleuth/gruvbox-plus-icon-pack"
+
+# snap apt
+APT_DESKTOP_DIR="/usr/share/applications"
+declare -A APT_DESKTOP_ICONS=(
+  ["virtualboxvm.desktop"]="apps/scalable/microsoft.svg"
+)
+
+# snap icons
+SNAP_DESKTOP_DIR="/var/lib/snapd/desktop/applications"
+declare -A SNAP_DESKTOP_ICONS=(
+  ["firefox_firefox.desktop"]="apps/scalable/firefox.svg"
+  ["ghostty_ghostty.desktop"]="apps/scalable/com.mitchellh.ghostty.svg"
+  ["gimp_gimp.desktop"]="apps/scalable/gimp.svg"
+  ["pinta_pinta.desktop"]="apps/scalable/pinta.svg"
+  ["prospect-mail_prospect-mail.desktop"]="apps/scalable/prospect-mail.svg"
+  ["robo3t-snap_robo3t.desktop"]="apps/scalable/robo3t.svg"
+  ["teams-for-linux_teams-for-linux.desktop"]="apps/scalable/teams-for-linux.svg"
+)
+
+# lazygit
+LAZYGIT_GITHUB="jesseduffield/lazygit"
+LAZYGIT_ARCHIVE="lazygit_@VERSION@_Linux_x86_64.tar.gz"
+
+# tmux
+TMUC_GITHUB="tmux/tmux"
+
+# nvim
+NVIM_GITHUB="neovim/neovim"
+
+# wallpaper
+WALLPAPER_CRON="0 * * * *" # on every hour
+WALLPAPER_DIR="$HOME/Pictures/Wallpapers"
+
+# TODO: gruvbox theme for gedit
+#wget https://raw.githubusercontent.com/morhetz/gruvbox-contrib/master/gedit/gruvbox-dark.xml
+#wget https://raw.githubusercontent.com/morhetz/gruvbox-contrib/master/gedit/gruvbox-light.xml
+
+##############################################################################
+# IMPLEMENTATION                                                             #
+##############################################################################
+
+function msg() {
+  echo -e "\033[1;34m$1\033[0m"
+}
+
+function suc() {
+  echo -e "\033[1;32m$1\033[0m"
+}
+
+function wrn() {
+  echo -e "\033[1;33mWarning:\033[0m $1"
+}
+
+function err() {
+  echo -e "\033[1;31mError:\033[0m $1" >&2 && exit 1
+}
+
+function restart_gnome_shell() {
+  killall -1 "gnome-shell" && sleep 3
+}
+
+function set_locked_version() {
+  [ -f "$VERSION_LOCK" ] && jq ".[\"$1\"] = \"$2\"" "$VERSION_LOCK" >"$VERSION_LOCK.tmp" && mv "$VERSION_LOCK.tmp" "$VERSION_LOCK" ||
+    echo -e "{\n  \"$1\": \"$2\"\n}" >"$VERSION_LOCK"
+}
+
+function get_locked_version() {
+  [ -f "$VERSION_LOCK" ] && jq -r ".[\"$1\"]" "$VERSION_LOCK" ||
+    echo "null"
+}
+
+function get_latest_github_version() {
+  curl --fail -s "https://api.github.com/repos/$1/releases/latest" | jq -r '.tag_name' ||
+    echo "null"
+}
+
+function get_latest_github_tag() {
+  curl --fail -s "https://api.github.com/repos/$1/tags" | jq -r '.[0].name' ||
+    echo "null"
+}
+
+function set_github_details() {
+  github_repo="$1"
+  github_name="$(basename "$github_repo")"
+  github_workdir="$DOWNLOAD_DIR/$github_name"
+
+  github_version="$(get_locked_version "$github_repo")"
+  if [[ "$github_version" == "null" || use_latest_github_version -ne 0 ]]; then
+    github_version="$(get_latest_github_version "${github_repo}")"
+    if [[ "$github_version" == "null" ]]; then
+      err "Failed to obtain latest github version for ${github_repo}"
+    fi
   fi
+  set_locked_version "$github_repo" "$github_version"
 
-  # neovim
+  github_archive="${2:+${2//@VERSION@/${github_version#v}}}"
+}
+
+function update_github_repository() {
+  set_github_details "$1"
+  if [[ ! -d "$github_workdir/.git" ]]; then
+    msg "$github_name: git clone"
+    git clone "https://github.com/${github_repo}.git" "$github_workdir"
+  fi
+  msg "$github_name: git fetch"
+  git -C "$github_workdir" fetch --tags --prune
+  msg "$github_name: git checkout"
+  if git -C "$github_workdir" rev-parse --verify --quiet "origin/$github_version" >/dev/null; then
+    # If it's a branch, check it out with tracking
+    git -C "$github_workdir" checkout -B "$github_version" "origin/$github_version"
+  else
+    # Otherwise, checkout tag/commit (detached HEAD)
+    git -C "$github_workdir" checkout "$github_version"
+  fi
+}
+
+function download_github_archive() {
+  set_github_details "$1" "$2"
+  msg "$github_name: remove old ownload"
+  rm -rfv "$github_workdir"
+  mkdir -p "$github_workdir"
+  msg "$github_name: download"
+  local url="https://github.com/${github_repo}/releases/download/${github_version}/${github_archive}"
+  echo "downloading: $url"
+  curl --fail -L -o "$github_workdir/$github_archive" "$url"
+}
+
+function create_symbolic_link() {
+  local link="$1" target="$2"
+  mkdir -p "$(dirname $link)"
+  if [[ -e "$link" ]]; then
+    if [[ -L "$link" ]]; then
+      unlink "$link"
+    else
+      echo "backup: $link"
+      mv "$link" "$link.orig"
+    fi
+  fi
+  ln -sfv "$target" "$link"
+}
+
+function install_dependencies() {
+  for command in "${!dependencies[@]}"; do
+    package="${dependencies[$command]}"
+    if ! command -v "$command" &>/dev/null; then
+      wrn "$command not found, installing $package..."
+      sudo apt install -y "$package"
+    fi
+  done
+}
+
+function copy_desktop_file() {
+  local src=$1 dst="$HOME/.local/share/applications/$(basename "$1")" icon=$2
+  if [ ! -f "$src" ]; then
+    wrn "Desktop file does not exist: $src"
+    return
+  fi
+  if [ ! -e "$icon" ]; then
+    wrn "Icon file does not exist: $icon"
+    return
+  fi
+  cp -v "$src" "$dst"
+  sed -i "s|Icon=.*|Icon=$icon|" "$dst"
+}
+
+function patch_file() {
+  sudo patch --forward --batch --reject-file=/dev/null "$1" <"$2" || echo "Did not apply patch: $2"
+}
+
+##############################################################################
+# INSTALLERS                                                                 #
+##############################################################################
+
+function install_apt_apps() {
+  msg "apt: update"
+  sudo apt update -y
+  msg "apt: install"
+  sudo apt install -y "${APT_APPS[@]}"
+  msg "apt: upgrade"
+  sudo apt upgrade -y
+  msg "apt: autoremove"
+  sudo apt autoremove -y
+}
+
+function install_snap_apps() {
+  msg "snap: install"
+  for app in "${SNAP_APPS[@]}"; do
+    sudo snap install "$app"
+  done
+  msg "snap: refresh"
+  sudo snap refresh
+}
+
+function install_pip_pkgs() {
+  msg "pip: install"
+  for pkg in "${PIP_PKGS[@]}"; do
+    pip3 install "$pkg"
+  done
+}
+
+function install_npm_pkgs() {
+  msg "npm: install"
+  for pkg in "${NPM_PKGS[@]}"; do
+    sudo npm install -g "$pkg"
+  done
+}
+
+function install_dot_files() {
+  msg "dot files: install"
+  for file in "${!DOT_FILES[@]}"; do
+    create_symbolic_link "$HOME/${DOT_FILES[$file]}" "$DOTFILE_ROOT/$file"
+  done
+}
+
+function install_bin_files() {
+  msg "bin files: install"
+  create_symbolic_link "$HOME/bin" "$DOTFILE_ROOT/bin"
+}
+
+function install_git_config() {
+  msg "git config: configure local settings"
+  git -C "$DOTFILE_ROOT" config user.name "$GIT_NAME"
+  echo "name: $GIT_NAME"
+  git -C "$DOTFILE_ROOT" config user.email "$GIT_EMAIL"
+  echo "email: $GIT_EMAIL"
+  msg "git config: configure global settings"
+  git config --global core.editor "$GIT_EDITOR"
+  echo "editor: $GIT_EDITOR"
+  git config --global diff.tool "$GIT_DIFFTOOL"
+  echo "difftool: $GIT_DIFFTOOL"
+  git config --global merge.tool "$GIT_DIFFTOOL"
+  echo "mergetool: $GIT_DIFFTOOL"
+}
+
+function install_gnome_extensions() {
+  # install each extension
+  for ext in "${!GNOME_EXTENSIONS[@]}"; do
+    IFS=":" read -r ext_name make_cmd config_cmd <<<"${GNOME_EXTENSIONS[$ext]}"
+    update_github_repository "$ext"
+    (
+      cd "$github_workdir"
+      # make:
+      msg "gnome extensions: $ext_name: make"
+      eval "$make_cmd"
+      # install:
+      msg "gnome extensions: $ext_name: install"
+      gnome-extensions install --force "${ext_name}.zip"
+    )
+  done
+  # reset gnome
+  msg "gnome extentions: restarting gnome shell"
+  restart_gnome_shell
+  # install each extension
+  for ext in "${!GNOME_EXTENSIONS[@]}"; do
+    IFS=":" read -r ext_name make_cmd config_cmd <<<"${GNOME_EXTENSIONS[$ext]}"
+    # configure:
+    msg "gnome extensions: $ext_name: configure"
+    eval "$config_cmd"
+    # enable:
+    msg "gnome extensions: $ext_name: enable"
+    gnome-extensions enable "${ext_name}"
+  done
+}
+
+function install_fonts() {
+  download_github_archive "$NERD_FONTS_GITHUB" "$NERD_FONTS_ARCHIVE"
   (
-    cd ~/work/neovim
-    msg "neovim git fetch"
-    git fetch
-
-    msg "neovim git checkout"
-    git checkout $NVIM_BRANCH
-
-    msg "neovim make clean"
-    make distclean
-
-    msg "neovim make"
-    make CMAKE_BUILD_TYPE=Release
-
-    msg "neovim make install"
-    sudo make install
-
-    msg "neovim version"
-    nvim --version
+    cd "$github_workdir"
+    # extract:
+    msg "$github_name: extract"
+    unzip -o "$github_archive" -d "${github_archive%.zip}"
+    # install:
+    msg "$github_name: install"
+    mkdir -p "$FONTS_DIR"
+    cp -v ${github_archive%.zip}/*.ttf "$FONTS_DIR"
+    fc-cache -f
   )
+}
 
-  rm -rf ~/.cache/nvim ~/.local/share/nvim ~/.local/state/nvim ~/.config/nvim/lazy-lock.json
+function install_icons() {
+  update_github_repository "$GRUVBOX_ICONS_GITHUB"
+  (
+    cd "$github_workdir"
+    # install:
+    msg "$github_name: install"
+    create_symbolic_link "$ICONS_DIR/Gruvbox-Plus-Dark" "$github_workdir/Gruvbox-Plus-Dark"
+    create_symbolic_link "$ICONS_DIR/Gruvbox-Plus-Light" "$github_workdir/Gruvbox-Plus-Light"
+    gsettings set org.gnome.desktop.interface icon-theme "$ICONS_SET"
+    # icons
+    msg "$github_name: update apt icons"
+    for file in "${!APT_DESKTOP_ICONS[@]}"; do
+      copy_desktop_file "$APT_DESKTOP_DIR/$file" "$ICONS_DIR/$ICONS_SET/${APT_DESKTOP_ICONS[$file]}"
+    done
+    msg "$github_name: update snap icons"
+    for file in "${!SNAP_DESKTOP_ICONS[@]}"; do
+      copy_desktop_file "$SNAP_DESKTOP_DIR/$file" "$ICONS_DIR/$ICONS_SET/${SNAP_DESKTOP_ICONS[$file]}"
+    done
+    msg "$github_name: restarting gnome shell"
+    restart_gnome_shell
+    # git icons
+    msg "$github_name: patching git icons"
+    patch_file /usr/bin/gitk "$DOTFILE_ROOT/gitk.patch"
+    patch_file /usr/lib/git-core/git-gui "$DOTFILE_ROOT/git-gui.patch"
+    for icon in "$DOTFILE_ROOT"/icons/*.png; do
+      create_symbolic_link "$ICONS_DIR/$(basename $icon)" "$icon"
+    done
+  )
+}
 
-  nvim
+function install_lazygit() {
+  download_github_archive "$LAZYGIT_GITHUB" "$LAZYGIT_ARCHIVE"
+  (
+    cd "$github_workdir"
+    # extract:
+    msg "$github_name: extract"
+    tar xfv "$github_archive" lazygit
+    # install:
+    msg "$github_name: install"
+    sudo install lazygit -v -D -t /usr/local/bin/
+  )
+}
 
+function install_tmux() {
+  update_github_repository "$TMUC_GITHUB"
+  (
+    cd "$github_workdir"
+    # build prerequisites
+    msg "$github_name: install dependencies"
+    sudo apt install -y libevent-dev ncurses-dev build-essential bison pkg-config yacc
+    # configure
+    msg "$github_name: configure"
+    sh autogen.sh
+    ./configure
+    # make
+    msg "$github_name: make"
+    make
+    # install
+    msg "$github_name: install"
+    sudo make install
+  )
+}
+
+function install_nvim() {
+  update_github_repository "$NVIM_GITHUB"
+  (
+    cd "$github_workdir"
+    # build prerequisites
+    msg "$github_name: install dependencies"
+    sudo apt-get install -y ninja-build gettext cmake curl build-essential
+    # clean
+    msg "$github_name: clean"
+    make distclean
+    # make
+    msg "$github_name: make"
+    make CMAKE_BUILD_TYPE=Release
+    # install
+    msg "$github_name: install"
+    sudo make install
+  )
+}
+
+function install_git_config() {
+  msg "git config: configure local settings"
+  git -C "$DOTFILE_ROOT" config user.name "$GIT_NAME"
+  echo "name: $GIT_NAME"
+  git -C "$DOTFILE_ROOT" config user.email "$GIT_EMAIL"
+  echo "email: $GIT_EMAIL"
+
+  msg "git config: configure global settings"
+  git config --global core.editor "$GIT_EDITOR"
+  echo "editor: $GIT_EDITOR"
+  git config --global diff.tool "$GIT_DIFFTOOL"
+  echo "difftool: $GIT_DIFFTOOL"
+  git config --global merge.tool "$GIT_DIFFTOOL"
+  echo "mergetool: $GIT_DIFFTOOL"
+}
+
+function install_wallpaper_config() {
+  msg "wallpaper: configure"
+  mkdir -pv "$WALLPAPER_DIR"
+  $DOTFILE_ROOT/bin/wallpaper --set-cron "$WALLPAPER_CRON" "$WALLPAPER_DIR"
+}
+
+##############################################################################
+# EXECUTION                                                                  #
+##############################################################################
+
+# Ensure all commands required to run this script are installed:
+declare -A dependencies=(
+  ["curl"]="curl"
+  ["fc-cache"]="fontconfig"
+  ["git"]="git"
+  ["gnome-extensions"]="gnome-shell-extensions"
+  ["gsettings"]="libglib2.0-bin"
+  ["install"]="coreutils"
+  ["jq"]="jq"
+  ["make"]="make"
+  ["patch"]="patch"
+  ["sed"]="sed"
+  ["tar"]="tar"
+  ["unzip"]="unzip"
+  ["zip"]="zip"
+)
+install_dependencies
+
+# Extract the latest github version argument:
+if [[ " $@ " =~ " latest " ]]; then
+  use_latest_github_version=1
+  set -- "${@/latest/}"
+else
+  use_latest_github_version=0
 fi
+
+# Default to apt and snap when no arguments are present:
+if [ " $@ " == "  " ]; then
+  set -- apt snap
+fi
+
+# Install everything when argument 'all' is present:
+if [[ " $@ " =~ " all " ]]; then
+  set -- apt snap pip npm dot bin git gnome fonts icons lazygit tmux nvim wallpaper
+fi
+
+# Loop through each argument and execute the corresponding installer:
+for arg in "$@"; do
+  case "$arg" in
+  apt)
+    install_apt_apps
+    ;;
+  snap)
+    install_snap_apps
+    ;;
+  pip)
+    install_pip_pkgs
+    ;;
+  npm)
+    install_npm_pkgs
+    ;;
+  dot)
+    install_dot_files
+    ;;
+  bin)
+    install_bin_files
+    ;;
+  git)
+    install_git_config
+    ;;
+  gnome)
+    install_gnome_extensions
+    ;;
+  fonts)
+    install_fonts
+    ;;
+  icons)
+    install_icons
+    ;;
+  lazygit)
+    install_lazygit
+    ;;
+  tmux)
+    install_tmux
+    ;;
+  nvim)
+    install_nvim
+    # TODO: Reset lazy vim (custom reset logic)
+    rm -rf "$HOME/.cache/nvim" "$HOME/.local/share/nvim" "$HOME/.local/state/nvim" "$HOME/.config/nvim/lazy-lock.json"
+    ;;
+  wallpaper)
+    install_wallpaper_config
+    ;;
+  *)
+    err "Unknown argument: $arg"
+    ;;
+  esac
+done
+
+suc " *** COMPLETE ***"

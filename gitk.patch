@@ -1,0 +1,20 @@
+diff --git a/gitk-git/gitk b/gitk-git/gitk
+index 23d9dd1fe0..236727e9be 100755
+--- a/gitk-git/gitk
++++ b/gitk-git/gitk
+@@ -12655,6 +12655,15 @@ catch {
+     image create photo gitlogo32    -width 32 -height 32
+     gitlogo32 copy gitlogo -zoom 2 2
+ 
++    set gitlogopath "$env(HOME)/.icons/git-16.png"
++    if {[file exists $gitlogopath]} {
++      image create photo gitlogo -file $gitlogopath
++    }
++    set gitlogo32path "$env(HOME)/.icons/git-64.png"
++    if {[file exists $gitlogo32path]} {
++      image create photo gitlogo -file $gitlogo32path
++    }
++
+     wm iconphoto . -default gitlogo gitlogo32
+ }
+ # wait for the window to become visible
