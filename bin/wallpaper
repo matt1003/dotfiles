@@ -93,6 +93,16 @@ confirm() {
   read -p "$1 (y/N) " answer && [[ "$answer" =~ ^[Yy]$ ]]
 }
 
+function install_dependencies() {
+  for command in "${!dependencies[@]}"; do
+    package="${dependencies[$command]}"
+    if ! command -v "$command" &>/dev/null; then
+      wrn "$command not found, installing $package..."
+      sudo apt install -y "$package"
+    fi
+  done
+}
+
 function progress_bar {
   local progress=$1 total=$2 width=${3:-50}
   local percent=$((progress * 100 / total))
@@ -264,6 +274,16 @@ while [[ "$#" -gt 0 ]]; do
   shift
 done
 
+# Ensure all commands required to run this script are installed:
+declare -A dependencies=(
+  ["basename"]="coreutils"
+  ["dconf"]="dconf-cli"
+  ["find"]="findutils"
+  ["convert"]="imagemagick"
+  ["sed"]="sed"
+)
+install_dependencies
+
 if [ "$set_cron" = true ]; then
   verbose=true # force verbose
   options="--extensions \"$(
@@ -362,7 +382,7 @@ if [ "$dimensions" = true ]; then
   for dimensions in $(for dimensions in "${!map[@]}"; do
     echo "$(dimension_to_size "$dimensions"):$dimensions"
   done | sort -t ':' -k1,1nr | cut -d ':' -f2); do
-    print_msg "$dimensions" "$([ "$(is_16_9_ratio "$dimensions")" = "true" ] && echo "$GREEN" || echo "$RED")"
+    print_msg "$dimensions$([ "$(is_16_9_ratio "$dimensions")" = "true" ] && echo " (16x9)")"
     print_msg "${map[$dimensions]}"
   done
   exit 0
