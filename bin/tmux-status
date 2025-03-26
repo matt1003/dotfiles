@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+
+tmux_set() {
+  tmux set-option -gq "$1" "$2"
+}
+
+my_icons=#"( \
+    icons=\"󰇥 󱚞  󰠭  󰯈   󱙸   󱀥\"; \
+    minute=\$((\$(date +\"%M\") / 5 + 1)); \
+    echo \$icons | cut -d' ' -f\$minute \
+)"
+
+sessionicon=""
+
+rarrow=''
+larrow=''
+
+white="#ebdbb2"     # fg
+lightgray="#d5c4a1" # fg2
+gray="#a89984"      # gray
+darkgray="#504945"  # bg2
+black="#282828"     # bg
+red="#fb4934"       # red
+green="#b8bb26"     # green
+yellow="#fabd2f"    # yellow
+purple="#d3869b"    # purple
+
+normal=" TMUX "
+prefix="PREFIX"
+copy=" COPY "
+
+# Status options
+tmux_set status-interval 1
+tmux_set status on
+
+# Basic status bar colors
+tmux_set status-bg "$black"
+tmux_set status-fg "$white"
+#TODO: what is this:
+tmux_set status-attr none
+
+# Left side of status bar
+status="#[fg=$black,bold]\
+#{?client_prefix,#[bg=$purple] $prefix#[fg=$purple],\
+#{?pane_in_mode,#[bg=$yellow] $copy#[fg=$yellow],\
+#[bg=$gray] $normal#[fg=$gray]}} \
+#[bg=$darkgray,nobold]$rarrow"
+session="#[fg=$white,bg=$darkgray] $sessionicon #S #[fg=$darkgray,bg=$black]$rarrow"
+tmux_set status-left-bg $black
+tmux_set status-left-length 150
+tmux_set status-left "$status$session"
+
+# Right side of status bar
+datetime="#[fg=$lightgray,bg=$black]#(date '+%-I:%M:%S %p' | tr '[:upper:]' '[:lower:]')  %d/%m/%Y "
+tmux="#[bg=$black]\
+#{?client_prefix,#[fg=$purple]$larrow#[bg=$purple],\
+#{?pane_in_mode,#[fg=$yellow]$larrow#[bg=$yellow],\
+#[fg=$gray]$larrow#[bg=$gray]}} \
+#[fg=$black,bold]$my_icons tmux "
+tmux_set status-right-bg $black
+tmux_set status-right-length 150
+tmux_set status-right "$datetime$tmux"
+
+# Window status format
+tmux_set window-status-format "#[fg=$black,bg=$darkgray]$rarrow#[fg=$white,bg=$darkgray] #I:#W #[fg=$darkgray,bg=$black]$rarrow"
+tmux_set window-status-current-format "#[fg=$black,bg=$gray]$rarrow#[fg=$black,bg=$gray,bold] #I:#W #[fg=$gray,bg=$black,nobold]$rarrow"
+
+# Window status style
+#TODO: what is this:
+tmux_set window-status-style "fg=$gray,bg=$black,none"
+tmux_set window-status-last-style "fg=$gray,bg=$black,none"
+tmux_set window-status-activity-style "fg=$gray,bg=$black,bold"
+
+# Window separator
+#TODO: what is this:
+tmux_set window-status-separator ""
+
+# Pane border
+tmux_set pane-border-style "fg=$darkgray,bg=default"
+tmux_set pane-active-border-style "fg=$gray,bg=default"
+
+# Pane number indicator
+tmux_set display-panes-colour "$darkgray"
+tmux_set display-panes-active-colour "$gray"
+
+# Clock mode
+#TODO: what is this:
+tmux_set clock-mode-colour "$gray"
+tmux_set clock-mode-style 24
+
+# Message
+tmux_set message-style "fg=$green,bg=$black"
+
+# Command message
+tmux_set message-command-style "fg=$purple,bg=$black"
+
+# Copy mode highlight
+tmux_set mode-style "fg=$black,bg=$yellow"

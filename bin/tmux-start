@@ -1,0 +1,15 @@
+#!/bin/bash
+
+tmux=/usr/local/bin/tmux
+
+if [ -z $1 ]; then
+  session=work
+else
+  session=$1
+fi
+
+if $tmux ls | grep -q "$session"; then
+  $tmux attach -t $session
+else
+  $tmux new -s $session
+fi
