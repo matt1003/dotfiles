@@ -1,0 +1,8 @@
+#!/bin/bash
+
+vpn_interfaces=$(ifconfig -a | grep -oE '^vpn[0-9a-f]+')
+
+for iface in $vpn_interfaces; do
+  echo "Nuking interface: $iface"
+  sudo ip link delete "$iface"
+done
