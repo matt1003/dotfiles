@@ -160,14 +160,11 @@ function set_gnome_background_options {
   gsettings set org.gnome.desktop.background picture-options "$1"
 }
 
-#
-# The following functions depend on ImageMagick
-# sudo apt install imagemagick
-#
-# Also increased the limits:
-# https://github.com/ImageMagick/ImageMagick/issues/396
-
 function convert_webp_to_png {
+  #
+  # ImageMagick may need increased limits:
+  # https://github.com/ImageMagick/ImageMagick/issues/396
+  #
   convert "$1" "${1%.webp}.png"
 }
 
