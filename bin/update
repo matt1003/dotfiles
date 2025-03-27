@@ -201,7 +201,7 @@ function update_github_repository() {
     git clone "https://github.com/${github_repo}.git" "$github_workdir"
   fi
   msg "$github_name: git fetch"
-  git -C "$github_workdir" fetch --tags --prune
+  git -C "$github_workdir" fetch --tags --prune --force
   msg "$github_name: git checkout"
   if git -C "$github_workdir" rev-parse --verify --quiet "origin/$github_version" >/dev/null; then
     # If it's a branch, check it out with tracking
