@@ -29,6 +29,7 @@ viag() { nvim $(ag -l "$@") }
 
 ### search local history ###
 
+# TODO: Does this actually work?
 up-line-or-local-history() {
     zle set-local-history 1
     zle up-line-or-history
