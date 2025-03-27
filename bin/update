@@ -18,20 +18,26 @@ ICONS_SET="Gruvbox-Plus-Light"
 # apt
 declare APT_APPS=(
   ### CLI ###
+  docker
   git
+  imagemagick
   minicom
   ncdu
   silversearcher-ag
   tree
   zsh
   ### GUI ###
+  forticlient
   gedit
   gedit-plugins
   git-gui
   gitk
+  google-chrome-stable
   meld
+  microsoft-edge-stable
   speedcrunch
   terminator
+  virtualbox
   ### LazyVim ###
   curl
   fd-find
