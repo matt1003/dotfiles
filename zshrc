@@ -149,11 +149,5 @@ if [ ! -d "$HOME/.oh-my-zsh/custom/themes/powerlevel10k" ]; then
   git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$HOME/.oh-my-zsh/custom/themes/powerlevel10k"
 fi
 
-# backup command history
-if [ -f "$HOME/.zsh_history" ]; then
-  mkdir -p "$HOME/.zsh_history_backup"
-  cp "$HOME/.zsh_history" "$HOME/.zsh_history_backup/zsh_history~$(date '+%Y-%m-%d~%H:%M:%S')"
-fi
-
 # fire up oh-my-zsh
 source $ZSH/oh-my-zsh.sh

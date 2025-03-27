@@ -9,10 +9,10 @@ extensions=("jpg" "jpeg" "png" "bmp" "gif" "tiff")
 scale="scaled"
 verbose=false
 
-# cron options
-set_cron=false
-clear_cron=false
-expression=""
+# schedule options
+schedule=false
+unschedule=false
+expression="0 * * * *"
 
 # other options
 current=false
@@ -24,7 +24,6 @@ jpeg2jpg=false
 
 # hidden options
 link="$HOME/.wallpaper"
-log="$HOME/.wallpaper.log"
 
 # bash color codes
 BLACK="\e[30m"
@@ -65,10 +64,10 @@ Options:
   -v, --verbose               Enable verbose output (default: off).
   -h, --help                  Display this help message and exit.
 
-Cron Options:
-  --set-cron <expression>     Define a cron expression to schedule wallpaper changes.
+Schedule Options:
+  --schedule [expression]     Define a cron expression to schedule wallpaper changes.
                               This sets up the script for automatic triggering at the specified schedule.
-  --clear-cron                Remove the cron job associated with this script, if it exists.
+  --unschedule                Remove the cron job associated with this script, if it exists.
 
 Other Options:
   --current                   List the current wallpaper.
@@ -84,8 +83,8 @@ Important:
 
 Examples:
   $name --extensions jpg,png /home/user/Pictures/Wallpapers
-  $name --set-cron "0 6 * * *"
-  $name --clear-cron
+  $name --schedule "0 6 * * *"
+  $name --unschedule
 EOF
 }
 
@@ -112,17 +111,6 @@ function progress_bar {
 
 function clear_progress_bar {
   printf "\r\033[K"
-}
-
-function in_crontab {
-  crontab -l 2>/dev/null | grep -qF "$1"
-}
-
-function update_crontab {
-  (
-    crontab -l 2>/dev/null | sed "\|$1|d"
-    echo "$2"
-  ) | crontab
 }
 
 function find_images {
@@ -219,14 +207,14 @@ while [[ "$#" -gt 0 ]]; do
     print_usage
     exit 0
     ;;
-  # cron options:
-  --set-cron)
-    set_cron=true
-    expression="$2"
+  # schedule options:
+  --schedule)
+    schedule=true
+    expression="${2:-$expression}"
     shift
     ;;
-  --clear-cron)
-    clear_cron=true
+  --unschedule)
+    unschedule=true
     ;;
   # other options:
   --current)
@@ -250,10 +238,6 @@ while [[ "$#" -gt 0 ]]; do
   # hidden options:
   --link)
     link="$2"
-    shift
-    ;;
-  --log)
-    log="$2"
     shift
     ;;
   # path:
@@ -284,30 +268,17 @@ declare -A dependencies=(
 )
 install_dependencies
 
-if [ "$set_cron" = true ]; then
-  verbose=true # force verbose
+if [ "$schedule" = true ]; then
   options="--extensions \"$(
     IFS=,
     echo "${extensions[*]}"
   )\" --scale \"$scale\" --link \"$link\""
-  cron="$expression $script \"$path\" $options --verbose >> $log 2>&1"
-  if in_crontab "$cron"; then
-    print_msg "$script already added to crontab"
-  else
-    update_crontab "$script" "$cron"
-    print_msg "$script added to crontab"
-  fi
+  cron-set "$expression" "$script" \"$path\" $options --verbose
   exit 0
 fi
 
-if [ "$clear_cron" = true ]; then
-  verbose=true # force verbose
-  if ! in_crontab "$script"; then
-    print_msg "$script already removed from crontab"
-  else
-    update_crontab "$script" ""
-    print_msg "$script removed from crontab"
-  fi
+if [ "$unschedule" = true ]; then
+  cron-del "$script"
   exit 0
 fi
 

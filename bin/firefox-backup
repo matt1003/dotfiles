@@ -1,0 +1,49 @@
+#!/bin/bash
+set -euo pipefail
+
+FIREFOX_PROFILE="snap/firefox/common/.mozilla/firefox/matthew"
+BACKUP_DIRECTORY="/local/backup/firefox"
+DEFAULT_CRON_EXPRESSION="0 2 * * *" # every day at 2am
+
+if [[ "${1:-}" == "--schedule" ]]; then
+  cron-set "${2:-$DEFAULT_CRON_EXPRESSION}" "$(realpath "$0")"
+  exit 0
+fi
+
+if [[ "${1:-}" == "--unschedule" ]]; then
+  cron-del "$(realpath "$0")"
+  exit 0
+fi
+
+src="$HOME/$FIREFOX_PROFILE"
+dst="$BACKUP_DIRECTORY/$(basename "$FIREFOX_PROFILE")~$(date '+%Y-%m-%d~%H:%M:%S').zip"
+
+# Get the process IDs of each firefox instance:
+pids="$(pgrep -x firefox || true)"
+
+# Kill firefox instances:
+if [ ! -z "$pids" ]; then
+  echo "Shutting down firefox..."
+  # Kill each firefox instance gracefully:
+  for pid in $pids; do
+    kill -SIGTERM "$pid"
+  done
+  # Wait for all firefox instances to shut down:
+  while pgrep -x firefox >/dev/null; do
+    sleep 1
+  done
+fi
+
+# Perform the backup:
+echo "Creating backup..."
+mkdir -p "$BACKUP_DIRECTORY"
+zip -r -9 -q "$dst" "$src"
+echo "$dst"
+
+# Restart firefox:
+if [ ! -z "$pids" ]; then
+  echo "Starting firefox..."
+  nohup firefox >&/dev/null &
+fi
+
+echo "*** COMPLETE ***"

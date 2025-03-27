@@ -129,10 +129,6 @@ TMUC_GITHUB="tmux/tmux"
 # nvim
 NVIM_GITHUB="neovim/neovim"
 
-# wallpaper
-WALLPAPER_CRON="0 * * * *" # on every hour
-WALLPAPER_DIR="$HOME/Pictures/Wallpapers"
-
 # TODO: gruvbox theme for gedit
 #wget https://raw.githubusercontent.com/morhetz/gruvbox-contrib/master/gedit/gruvbox-dark.xml
 #wget https://raw.githubusercontent.com/morhetz/gruvbox-contrib/master/gedit/gruvbox-light.xml
@@ -479,8 +475,14 @@ function install_git_config() {
 
 function install_wallpaper_config() {
   msg "wallpaper: configure"
-  mkdir -pv "$WALLPAPER_DIR"
-  $DOTFILE_ROOT/bin/wallpaper --set-cron "$WALLPAPER_CRON" "$WALLPAPER_DIR"
+  $DOTFILE_ROOT/bin/wallpaper --schedule
+}
+
+function install_backups_config() {
+  msg "backups: configure"
+  for backup in $DOTFILE_ROOT/bin/*-backup; do
+    $backup --schedule
+  done
 }
 
 ##############################################################################
@@ -520,7 +522,7 @@ fi
 
 # Install everything when argument 'all' is present:
 if [[ " $@ " =~ " all " ]]; then
-  set -- apt snap pip npm dot bin git gnome fonts icons lazygit tmux nvim wallpaper
+  set -- apt snap pip npm dot bin git gnome fonts icons lazygit tmux nvim wallpaper backups
 fi
 
 # Loop through each argument and execute the corresponding installer:
@@ -569,6 +571,9 @@ for arg in "$@"; do
     ;;
   wallpaper)
     install_wallpaper_config
+    ;;
+  backups)
+    install_backups_config
     ;;
   *)
     err "Unknown argument: $arg"

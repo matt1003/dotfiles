@@ -1,0 +1,25 @@
+#!/bin/bash
+set -euo pipefail
+
+if [ "$#" -ne 1 ]; then
+  echo "Usage: $0 <command>"
+  echo "Example: /path/to/script.sh"
+  exit 1
+fi
+
+cmd="$1" entries=$(crontab -l 2>/dev/null | grep "$cmd" || true)
+
+if [[ -z "$entries" ]]; then
+  echo -e "Command already unscheduled\n$cmd"
+  exit 0
+fi
+
+(
+  crontab -l 2>/dev/null | sed "\|$cmd|d"
+) | crontab
+
+while IFS= read -r entry; do
+  exp=$(echo "$entry" | awk '{print $1, $2, $3, $4, $5}')
+  cmd=$(echo "$entry" | awk '{print substr($0, index($0,$6))}')
+  echo -e "Unscheduled command from running $(cron-to-text "$exp")\n$cmd "
+done <<<"$entries"

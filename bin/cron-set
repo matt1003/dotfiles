@@ -1,0 +1,22 @@
+#!/bin/bash
+set -euo pipefail
+
+if [ "$#" -lt 2 ]; then
+  echo "Usage: $0 <cron-expression> <command> <arguments>"
+  echo "Example: $0 '0 2 * * *' /path/to/script.sh foo bar"
+  exit 1
+fi
+
+exp="$1" cmd="$2" args="${@:3}" log="$HOME/.$(basename "$cmd").log"
+
+if ! command -v "$cmd" &>/dev/null; then
+  echo "ERROR: Command \"$cmd\" not found!"
+  exit 1
+fi
+
+(
+  crontab -l 2>/dev/null | sed "\|$cmd|d"
+  echo "$exp $cmd $args >> $log 2>&1"
+) | crontab
+
+echo -e "Scheduled command to run $(cron-to-text "$exp")\n$cmd $args"

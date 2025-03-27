@@ -1,0 +1,27 @@
+#!/bin/bash
+set -euo pipefail
+
+ZSH_HISTORY=".zsh_history"
+BACKUP_DIRECTORY="/local/backup/zsh"
+DEFAULT_CRON_EXPRESSION="0 2 * * *" # every day at 2am
+
+if [[ "${1:-}" == "--schedule" ]]; then
+  cron-set "${2:-$DEFAULT_CRON_EXPRESSION}" "$(realpath "$0")"
+  exit 0
+fi
+
+if [[ "${1:-}" == "--unschedule" ]]; then
+  cron-del "$(realpath "$0")"
+  exit 0
+fi
+
+src="$HOME/$ZSH_HISTORY"
+dst="$BACKUP_DIRECTORY/${ZSH_HISTORY:1}~$(date '+%Y-%m-%d~%H:%M:%S').zip"
+
+# Perform the backup:
+echo "Creating backup..."
+mkdir -p "$BACKUP_DIRECTORY"
+zip -r -9 -q "$dst" "$src"
+echo "$dst"
+
+echo "*** COMPLETE ***"

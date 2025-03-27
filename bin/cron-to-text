@@ -1,0 +1,100 @@
+#!/bin/bash
+
+pluralize() {
+  printf "%d %s%s" "$1" "$2" "$([[ "$1" == "1" ]] || echo "s")"
+}
+
+str_minute() {
+  pluralize "$1" "minute"
+}
+
+str_hour() {
+  pluralize "$1" "hour"
+}
+
+str_12hour() {
+  local hour=$1 minute=$2 period="am"
+  if ((hour == 0)); then
+    hour=12
+  elif ((hour == 12)); then
+    period="pm"
+  elif ((hour > 12)); then
+    hour=$((hour - 12))
+    period="pm"
+  fi
+  printf "%d:%02d %s" "$hour" "$minute" "$period"
+}
+
+str_weekday() {
+  case "$1" in
+  0) echo "Sunday" ;;
+  1) echo "Monday" ;;
+  2) echo "Tuesday" ;;
+  3) echo "Wednesday" ;;
+  4) echo "Thursday" ;;
+  5) echo "Friday" ;;
+  6) echo "Saturday" ;;
+  esac
+}
+
+str_month() {
+  case "$1" in
+  1) echo "January" ;;
+  2) echo "February" ;;
+  3) echo "March" ;;
+  4) echo "April" ;;
+  5) echo "May" ;;
+  6) echo "June" ;;
+  7) echo "July" ;;
+  8) echo "August" ;;
+  9) echo "September" ;;
+  10) echo "October" ;;
+  11) echo "November" ;;
+  12) echo "December" ;;
+  esac
+}
+
+cron_to_text() {
+  local cron="$1"
+
+  local minute hour day month weekday
+
+  IFS=' ' read -r minute hour day month weekday <<<"$1"
+
+  if [[ "$cron" =~ ^\*(/1)?[[:space:]]+\*[[:space:]]+\*[[:space:]]+\*[[:space:]]+\*$ ]]; then
+    echo "every minute"
+  elif [[ "$cron" =~ ^[[:digit:]]+[[:space:]]+\*[[:space:]]+\*[[:space:]]+\*[[:space:]]+\*$ ]]; then
+    echo "at $(str_minute $minute) past every hour"
+  elif [[ "$cron" =~ ^\*/[[:digit:]]+[[:space:]]+\*[[:space:]]+\*[[:space:]]+\*[[:space:]]+\*$ ]]; then
+    echo "every $(str_minute ${minute:2})"
+  elif [[ "$cron" =~ ^[[:digit:]]+[[:space:]]+[[:digit:]]+[[:space:]]+\*[[:space:]]+\*[[:space:]]+\*$ ]]; then
+    echo "everyday at $(str_12hour $hour $minute)"
+  else
+    echo "custom schedule: $cron"
+  fi
+}
+
+test_expressions=(
+  "* * * * *"
+  "0 * * * *"
+  "1 * * * *"
+  "59 * * * *"
+  "*/1 * * * *"
+  "*/5 * * * *"
+  "0 0 * * *"
+  "59 23 * * *"
+)
+
+if [[ $1 == "" ]]; then
+  echo "cron expression expected"
+  exit 1
+fi
+
+if [[ "$1" == "test" ]]; then
+  echo "test"
+  for expression in "${test_expressions[@]}"; do
+    echo "$expression : $(cron_to_text "$expression")"
+  done
+else
+  echo "$(cron_to_text "$1")"
+fi
