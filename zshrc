@@ -15,10 +15,6 @@
 alias vi='/usr/local/bin/nvim'
 alias nvim='echo use vi!'
 
-alias ll='ls --group-directories-first --time-style=long-iso -hl'
-alias la='ls --group-directories-first --time-style=long-iso -hlA'
-alias lt='ls --group-directories-first --time-style=long-iso -hlAt'
-
 alias u0='minicom -D /dev/ttyUSB0 -C ~/minicom-u0'
 alias u1='minicom -D /dev/ttyUSB1 -C ~/minicom-u1'
 alias u2='minicom -D /dev/ttyUSB2 -C ~/minicom-u2'
@@ -151,3 +147,8 @@ fi
 
 # fire up oh-my-zsh
 source $ZSH/oh-my-zsh.sh
+
+# override the following aliases
+alias ll='ls --group-directories-first --time-style=long-iso -hl'
+alias la='ls --group-directories-first --time-style=long-iso -hlA'
+alias lt='ls --group-directories-first --time-style=long-iso -hlAt'
