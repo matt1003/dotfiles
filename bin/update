@@ -214,7 +214,7 @@ function update_github_repository() {
 
 function download_github_archive() {
   set_github_details "$1" "$2"
-  msg "$github_name: remove old ownload"
+  msg "$github_name: remove old download"
   rm -rfv "$github_workdir"
   mkdir -p "$github_workdir"
   msg "$github_name: download"
