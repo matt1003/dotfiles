@@ -37,7 +37,7 @@ declare APT_APPS=(
   microsoft-edge-stable
   speedcrunch
   terminator
-  virtualbox
+  # virtualbox this will install an old version that does not work
   ### LazyVim ###
   curl
   fd-find
@@ -138,6 +138,9 @@ NVIM_GITHUB="neovim/neovim"
 # TODO: gruvbox theme for gedit
 #wget https://raw.githubusercontent.com/morhetz/gruvbox-contrib/master/gedit/gruvbox-dark.xml
 #wget https://raw.githubusercontent.com/morhetz/gruvbox-contrib/master/gedit/gruvbox-light.xml
+
+# TODO install virtualbox extension pack (needed for usb support)
+# https://download.virtualbox.org/virtualbox/6.1.50/Oracle_VM_VirtualBox_Extension_Pack-6.1.50.vbox-extpack
 
 ##############################################################################
 # IMPLEMENTATION                                                             #
