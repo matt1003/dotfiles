@@ -1,8 +1,20 @@
 #!/bin/bash
 
+nuke_it() {
+  echo "Nuking interface: $1"
+  sudo ip link delete "$1"
+}
+
 vpn_interfaces=$(ifconfig -a | grep -oE '^vpn[0-9a-f]+')
 
 for iface in $vpn_interfaces; do
-  echo "Nuking interface: $iface"
-  sudo ip link delete "$iface"
+  if [[ "$1" == "all" ]]; then
+    nuke_it "$iface"
+  else
+    tx_packets=$(ifconfig "$iface" | grep -oP 'TX packets\s+\K\d+')
+    rx_packets=$(ifconfig "$iface" | grep -oP 'TX packets\s+\K\d+')
+    if [ "$tx_packets" -eq 0 ] && [ "$rx_packets" -eq 0 ]; then
+      nuke_it "$iface"
+    fi
+  fi
 done
