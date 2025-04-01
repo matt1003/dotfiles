@@ -11,7 +11,7 @@
  fi
 
 ### aliases ###
-#
+
 alias vi='/usr/local/bin/nvim'
 alias nvim='echo use vi!'
 
@@ -19,13 +19,13 @@ alias u0='minicom -D /dev/ttyUSB0 -C ~/minicom-u0'
 alias u1='minicom -D /dev/ttyUSB1 -C ~/minicom-u1'
 alias u2='minicom -D /dev/ttyUSB2 -C ~/minicom-u2'
 
-alias gitk='gitk --all $@ & disown %1'
-
 ### commands ###
 
-goa () { nvim $(git status --short --no-renames --untracked-files=all | awk -F ' ' '{print $2}') ; }
+gitk() { command gitk --all "$@" & disown }
 
-viag() { nvim $(ag -l "$@") }
+goa () { /usr/local/bin/nvim $(git status --short --no-renames --untracked-files=all | awk -F ' ' '{print $2}') ; }
+
+viag() { /usr/local/bin/nvim $(ag -l "$@") }
 
 ### search local history ###
 
