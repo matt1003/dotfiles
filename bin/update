@@ -15,6 +15,8 @@ ICONS_DIR="$HOME/.icons"
 FONTS_SET="DejaVuSansMNerdFont"
 ICONS_SET="Gruvbox-Plus-Light"
 
+LOCAL_APPLICATIONS="$HOME/.local/share/applications"
+
 # apt
 declare APT_APPS=(
   ### CLI ###
@@ -64,9 +66,7 @@ declare SNAP_APPS=(
   firefox
   gimp
   pinta
-  prospect-mail
   robo3t-snap
-  teams-for-linux
 )
 
 # pip
@@ -117,12 +117,15 @@ declare -A APT_DESKTOP_ICONS=(
 SNAP_DESKTOP_DIR="/var/lib/snapd/desktop/applications"
 declare -A SNAP_DESKTOP_ICONS=(
   ["firefox_firefox.desktop"]="apps/scalable/firefox.svg"
-  ["ghostty_ghostty.desktop"]="apps/scalable/com.mitchellh.ghostty.svg"
   ["gimp_gimp.desktop"]="apps/scalable/gimp.svg"
   ["pinta_pinta.desktop"]="apps/scalable/pinta.svg"
-  ["prospect-mail_prospect-mail.desktop"]="apps/scalable/prospect-mail.svg"
   ["robo3t-snap_robo3t.desktop"]="apps/scalable/robo3t.svg"
-  ["teams-for-linux_teams-for-linux.desktop"]="apps/scalable/teams-for-linux.svg"
+)
+
+# edge apps
+declare -A EDGE_DESKTOP_ICONS=(
+  ["Microsoft Teams"]="apps/scalable/teams.svg"
+  ["Outlook (PWA)"]="apps/scalable/ms-outlook.svg"
 )
 
 # lazygit
@@ -256,8 +259,12 @@ function install_dependencies() {
   done
 }
 
+function find_desktop_file() {
+  grep -l "Name=${1}" "$2"* || echo "[[ $1 ]]"
+}
+
 function copy_desktop_file() {
-  local src=$1 dst="$HOME/.local/share/applications/$(basename "$1")" icon=$2
+  local src="$1" dst="$2" icon="$3"
   if [ ! -f "$src" ]; then
     wrn "Desktop file does not exist: $src"
     return
@@ -266,7 +273,11 @@ function copy_desktop_file() {
     wrn "Icon file does not exist: $icon"
     return
   fi
-  cp -v "$src" "$dst"
+  if [ "$src" != "$dst" ]; then
+    cp -v "$src" "$dst"
+  else
+    echo "'$src' -> '$dst'"
+  fi
   sed -i "s|Icon=.*|Icon=$icon|" "$dst"
 }
 
@@ -396,11 +407,23 @@ function install_icons() {
     # icons
     msg "$github_name: update apt icons"
     for file in "${!APT_DESKTOP_ICONS[@]}"; do
-      copy_desktop_file "$APT_DESKTOP_DIR/$file" "$ICONS_DIR/$ICONS_SET/${APT_DESKTOP_ICONS[$file]}"
+      local src="$APT_DESKTOP_DIR/$file"
+      local dst="$LOCAL_APPLICATIONS/$file"
+      local icon="$ICONS_DIR/$ICONS_SET/${APT_DESKTOP_ICONS[$file]}"
+      copy_desktop_file "$src" "$dst" "$icon"
     done
     msg "$github_name: update snap icons"
     for file in "${!SNAP_DESKTOP_ICONS[@]}"; do
-      copy_desktop_file "$SNAP_DESKTOP_DIR/$file" "$ICONS_DIR/$ICONS_SET/${SNAP_DESKTOP_ICONS[$file]}"
+      local src="$SNAP_DESKTOP_DIR/$file"
+      local dst="$LOCAL_APPLICATIONS/$file"
+      local icon="$ICONS_DIR/$ICONS_SET/${SNAP_DESKTOP_ICONS[$file]}"
+      copy_desktop_file "$src" "$dst" "$icon"
+    done
+    msg "$github_name: update edge icons"
+    for name in "${!EDGE_DESKTOP_ICONS[@]}"; do
+      local file="$(find_desktop_file "$name" "$LOCAL_APPLICATIONS/msedge-")"
+      local icon="$ICONS_DIR/$ICONS_SET/${EDGE_DESKTOP_ICONS[$name]}"
+      copy_desktop_file "$file" "$file" "$icon"
     done
     msg "$github_name: restarting gnome shell"
     restart_gnome_shell
