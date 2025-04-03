@@ -7,6 +7,7 @@ return {
     opts = {
       transparent_mode = true,
       overrides = {
+        Bold = { bold = true },
         MatchParen = { link = "GruvboxYellowBold" },
         SpellBad = { link = "GruvboxBlueUnderline" },
         Pmenu = { bg = "" },

@@ -3,47 +3,59 @@ local Util = require("lazyvim.util")
 local my_icons = { "", "", "", "󱙝", "", "", "󰣙", "󰻖", "", "󰼂", "󰑮", "󱙴" }
 
 local colors = {
-  white = "#ebdbb2", -- fg
-  lightgray = "#d5c4a1", -- fg2
-  gray = "#a89984", -- gray
-  darkgray = "#504945", -- bg2
-  black = "#282828", -- bg
-  red = "#fb4934", -- red
-  green = "#b8bb26", -- green
-  yellow = "#fabd2f", -- yellow
-  purple = "#d3869b", -- purple
+  status_fg = os.getenv("STATUS_FG"),
+  status_bg = os.getenv("STATUS_BG"),
+  status_section_a_fg = os.getenv("STATUS_SECTION_A_FG"),
+  status_section_a_bg = os.getenv("STATUS_SECTION_A_BG"),
+  status_section_b_fg = os.getenv("STATUS_SECTION_B_FG"),
+  status_section_b_bg = os.getenv("STATUS_SECTION_B_BG"),
+  status_section_c_fg = os.getenv("STATUS_SECTION_C_FG"),
+  status_section_c_bg = os.getenv("STATUS_SECTION_C_BG"),
+  red = os.getenv("RED"),
+  green = os.getenv("GREEN"),
+  yellow = os.getenv("YELLOW"),
+  blue = os.getenv("BLUE"),
+  purple = os.getenv("PURPLE"),
+  aqua = os.getenv("AQUA"),
+  orange = os.getenv("ORANGE"),
+  gray = os.getenv("F4"),
 }
 
 local gruvbox = {
   normal = {
-    a = { bg = colors.gray, fg = colors.black, gui = "bold" },
-    b = { bg = colors.darkgray, fg = colors.white },
-    c = { bg = colors.black, fg = colors.lightgray },
+    a = { fg = colors.status_section_a_fg, bg = colors.status_section_a_bg, gui = "bold" },
+    b = { fg = colors.status_section_b_fg, bg = colors.status_section_b_bg },
+    c = { fg = colors.status_section_c_fg, bg = colors.status_section_c_bg },
   },
   insert = {
-    a = { bg = colors.green, fg = colors.black, gui = "bold" },
-    b = { bg = colors.darkgray, fg = colors.white },
-    c = { bg = colors.black, fg = colors.lightgray },
+    a = { fg = colors.status_section_a_fg, bg = colors.green, gui = "bold" },
+    b = { fg = colors.status_section_b_fg, bg = colors.status_section_b_bg },
+    c = { fg = colors.status_section_c_fg, bg = colors.status_section_c_bg },
   },
   visual = {
-    a = { bg = colors.yellow, fg = colors.black, gui = "bold" },
-    b = { bg = colors.darkgray, fg = colors.white },
-    c = { bg = colors.black, fg = colors.lightgray },
+    a = { fg = colors.status_section_a_fg, bg = colors.yellow, gui = "bold" },
+    b = { fg = colors.status_section_b_fg, bg = colors.status_section_b_bg },
+    c = { fg = colors.status_section_c_fg, bg = colors.status_section_c_bg },
   },
   replace = {
-    a = { bg = colors.red, fg = colors.black, gui = "bold" },
-    b = { bg = colors.darkgray, fg = colors.white },
-    c = { bg = colors.black, fg = colors.lightgray },
+    a = { fg = colors.status_section_a_fg, bg = colors.red, gui = "bold" },
+    b = { fg = colors.status_section_b_fg, bg = colors.status_section_b_bg },
+    c = { fg = colors.status_section_c_fg, bg = colors.status_section_c_bg },
   },
   command = {
-    a = { bg = colors.purple, fg = colors.black, gui = "bold" },
-    b = { bg = colors.darkgray, fg = colors.white },
-    c = { bg = colors.black, fg = colors.lightgray },
+    a = { fg = colors.status_section_a_fg, bg = colors.purple, gui = "bold" },
+    b = { fg = colors.status_section_b_fg, bg = colors.status_section_b_bg },
+    c = { fg = colors.status_section_c_fg, bg = colors.status_section_c_bg },
+  },
+  terminal = {
+    a = { fg = colors.status_section_a_fg, bg = colors.aqua, gui = "bold" },
+    b = { fg = colors.status_section_b_fg, bg = colors.status_section_b_bg },
+    c = { fg = colors.status_section_c_fg, bg = colors.status_section_c_bg },
   },
   inactive = {
-    a = { bg = colors.black, fg = colors.gray, gui = "bold" },
-    b = { bg = colors.black, fg = colors.gray },
-    c = { bg = colors.black, fg = colors.gray },
+    a = { fg = colors.status_section_c_fg, bg = colors.status_section_c_bg, gui = "bold" },
+    b = { fg = colors.status_section_c_fg, bg = colors.status_section_c_bg },
+    c = { fg = colors.status_section_c_fg, bg = colors.status_section_c_bg },
   },
 }
 

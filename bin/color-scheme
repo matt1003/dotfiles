@@ -1,0 +1,286 @@
+#!/bin/bash
+
+# helper functions
+
+function print_usage_and_exit() {
+  local schemes=$(
+    IFS='|'
+    echo "${scheme_values[*]}"
+  )
+  local modes=$(
+    IFS='|'
+    echo "${mode_values[*]}"
+  )
+  local contrasts=$(
+    IFS='|'
+    echo "${contrast_values[*]}"
+  )
+  echo "Usage: $0 <$schemes> <$modes> <$contrasts>"
+  exit 1
+}
+
+function print_bold() {
+  local message="$1"
+  printf "\e[1m%s\e[0m\n" "$message"
+}
+
+function print_color() {
+  local fg="$1" bg="$2"
+  printf "\e[38;2;%d;%d;%dm\e[48;2;%d;%d;%dm  %-16s%s  \e[0m\n" \
+    $((0x${!fg:1:2})) $((0x${!fg:3:2})) $((0x${!fg:5:2})) \
+    $((0x${!bg:1:2})) $((0x${!bg:3:2})) $((0x${!bg:5:2})) \
+    "$bg" "${!bg}"
+}
+
+# process arguments
+
+scheme_values=("gruvbox")
+mode_values=("dark" "light")
+contrast_values=("hard" "medium" "soft")
+
+scheme="${1:-gruvbox}"
+mode="${2:-dark}"
+contrast="${3:-medium}"
+
+if [[ ! " ${scheme_values[@]} " =~ " $scheme " ]]; then
+  print_usage_and_exit
+fi
+
+if [[ ! " ${mode_values[@]} " =~ " $mode " ]]; then
+  print_usage_and_exit
+fi
+
+if [[ ! " ${contrast_values[@]} " =~ " $contrast " ]]; then
+  print_usage_and_exit
+fi
+
+# clear colors
+
+unset BG0_H
+unset BG0
+unset BG0_S
+unset BG1
+unset BG2
+unset BG3
+unset BG4
+
+unset GRAY
+
+unset FG0
+unset FG1
+unset FG2
+unset FG3
+unset FG4
+
+unset RED
+unset GREEN
+unset YELLOW
+unset BLUE
+unset PURPLE
+unset AQUA
+unset ORANGE
+
+unset NEUTRAL_RED
+unset NEUTRAL_GREEN
+unset NEUTRAL_YELLOW
+unset NEUTRAL_BLUE
+unset NEUTRAL_PURPLE
+unset NEUTRAL_AQUA
+unset NEUTRAL_ORANGE
+
+unset BG
+unset FG
+
+unset STATUS_FG
+unset STATUS_BG
+unset STATUS_SECTION_A_FG
+unset STATUS_SECTION_A_BG
+unset STATUS_SECTION_B_FG
+unset STATUS_SECTION_B_BG
+unset STATUS_SECTION_C_FG
+unset STATUS_SECTION_C_BG
+
+# select scheme
+
+if [[ "$scheme" == "gruvbox" ]]; then
+
+  dark0_hard="#1d2021"
+  dark0="#282828"
+  dark0_soft="#32302f"
+  dark1="#3c3836"
+  dark2="#504945"
+  dark3="#665c54"
+  dark4="#7c6f64"
+
+  gray="#928374"
+
+  light0_hard="#f9f5d7"
+  light0="#fbf1c7"
+  light0_soft="#f2e5bc"
+  light1="#ebdbb2"
+  light2="#d5c4a1"
+  light3="#bdae93"
+  light4="#a89984"
+
+  bright_red="#fb4934"
+  bright_green="#b8bb26"
+  bright_yellow="#fabd2f"
+  bright_blue="#83a598"
+  bright_purple="#d3869b"
+  bright_aqua="#8ec07c"
+  bright_orange="#fe8019"
+
+  neutral_red="#cc241d"
+  neutral_green="#98971a"
+  neutral_yellow="#d79921"
+  neutral_blue="#458588"
+  neutral_purple="#b16286"
+  neutral_aqua="#689d6a"
+  neutral_orange="#d65d0e"
+
+  faded_red="#9d0006"
+  faded_green="#79740e"
+  faded_yellow="#b57614"
+  faded_blue="#076678"
+  faded_purple="#8f3f71"
+  faded_aqua="#427b58"
+  faded_orange="#af3a03"
+
+  if [[ "$mode" == "dark" ]]; then
+
+    export BG0_H="$dark0_hard"
+    export BG0="$dark0"
+    export BG0_S="$dark0_soft"
+    export BG1="$dark1"
+    export BG2="$dark2"
+    export BG3="$dark3"
+    export BG4="$dark4"
+
+    export GRAY="$gray"
+
+    export FG0="$light0"
+    export FG1="$light1"
+    export FG2="$light2"
+    export FG3="$light3"
+    export FG4="$light4"
+
+    export RED="$bright_red"
+    export GREEN="$bright_green"
+    export YELLOW="$bright_yellow"
+    export BLUE="$bright_blue"
+    export PURPLE="$bright_purple"
+    export AQUA="$bright_aqua"
+    export ORANGE="$bright_orange"
+
+    export NEUTRAL_RED="$neutral_red"
+    export NEUTRAL_GREEN="$neutral_green"
+    export NEUTRAL_YELLOW="$neutral_yellow"
+    export NEUTRAL_BLUE="$neutral_blue"
+    export NEUTRAL_PURPLE="$neutral_purple"
+    export NEUTRAL_AQUA="$neutral_aqua"
+    export NEUTRAL_ORANGE="$neutral_orange"
+
+  elif [[ "$mode" == "light" ]]; then
+
+    export BG0_H="$light0_hard"
+    export BG0="$light0"
+    export BG0_S="$light0_soft"
+    export BG1="$light1"
+    export BG2="$light2"
+    export BG3="$light3"
+    export BG4="$light4"
+
+    export GRAY="$gray"
+
+    export FG0="$dark0"
+    export FG1="$dark1"
+    export FG2="$dark2"
+    export FG3="$dark3"
+    export FG4="$dark4"
+
+    export RED="$faded_red"
+    export GREEN="$faded_green"
+    export YELLOW="$faded_yellow"
+    export BLUE="$faded_blue"
+    export PURPLE="$faded_purple"
+    export AQUA="$faded_aqua"
+    export ORANGE="$faded_orange"
+
+    export NEUTRAL_RED="$neutral_red"
+    export NEUTRAL_GREEN="$neutral_green"
+    export NEUTRAL_YELLOW="$neutral_yellow"
+    export NEUTRAL_BLUE="$neutral_blue"
+    export NEUTRAL_PURPLE="$neutral_purple"
+    export NEUTRAL_AQUA="$neutral_aqua"
+    export NEUTRAL_ORANGE="$neutral_orange"
+  fi
+fi
+
+# select contrast
+
+if [[ "$contrast" == "hard" ]]; then
+  export BG="$BG0_H"
+  export FG="$FG1"
+elif [[ "$contrast" == "medium" ]]; then
+  export BG="$BG0"
+  export FG="$FG1"
+elif [[ "$contrast" == "soft" ]]; then
+  export BG="$BG0_S"
+  export FG="$FG1"
+fi
+
+# terminal palette
+
+export COLOR_0="$BG"
+export COLOR_1="$NEUTRAL_RED"
+export COLOR_2="$NEUTRAL_GREEN"
+export COLOR_3="$NEUTRAL_YELLOW"
+export COLOR_4="$NEUTRAL_BLUE"
+export COLOR_5="$NEUTRAL_PURPLE"
+export COLOR_6="$NEUTRAL_AQUA"
+export COLOR_7="$FG4"
+export COLOR_8="$GRAY"
+export COLOR_9="$RED"
+export COLOR_10="$GREEN"
+export COLOR_11="$YELLOW"
+export COLOR_12="$BLUE"
+export COLOR_13="$PURPLE"
+export COLOR_14="$AQUA"
+export COLOR_15="$FG"
+
+# status bar
+
+export STATUS_FG="$FG"
+export STATUS_BG=$([[ "$mode" == "dark" ]] && echo "#323030" || echo "#f3e6bc")
+export STATUS_SECTION_A_FG="$STATUS_BG"
+export STATUS_SECTION_A_BG="$FG4"
+export STATUS_SECTION_B_FG="$FG"
+export STATUS_SECTION_B_BG="$BG2"
+export STATUS_SECTION_C_FG="$FG2"
+export STATUS_SECTION_C_BG="$STATUS_BG"
+
+# print exported colors
+
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  print_bold "Gruvbox ${mode^} Mode (${contrast} contrast):"
+
+  for color in BG BG0_H BG0 BG0_S BG1 BG2 BG3 BG4; do
+    print_color "FG" "$color"
+  done
+
+  for color in GRAY; do
+    print_color "FG" "$color"
+  done
+
+  for color in FG FG0 FG1 FG2 FG3 FG4; do
+    print_color "BG" "$color"
+  done
+
+  for color in RED GREEN YELLOW BLUE PURPLE AQUA ORANGE; do
+    print_color "BG" "$color"
+  done
+
+  for color in NEUTRAL_RED NEUTRAL_GREEN NEUTRAL_YELLOW NEUTRAL_BLUE NEUTRAL_PURPLE NEUTRAL_AQUA NEUTRAL_ORANGE; do
+    print_color "FG" "$color"
+  done
+fi

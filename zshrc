@@ -149,6 +149,9 @@ fi
 # fire up oh-my-zsh
 source $ZSH/oh-my-zsh.sh
 
+# load the color scheme
+source "$HOME/bin/color-scheme"
+
 # override the following aliases
 alias ll='ls --group-directories-first --time-style=long-iso -hl'
 alias la='ls --group-directories-first --time-style=long-iso -hlA'
