@@ -1,98 +1,252 @@
 #!/usr/bin/env bash
 
-tmux_set() {
-  tmux set-option -gq "$1" "$2"
+###############################################################################
+# Configuration
+###############################################################################
+
+source "$HOME/bin/color-scheme"
+
+left_separator=''
+right_separator=''
+
+foreground="$STATUS_FG"
+background="$STATUS_BG"
+
+normal_mode_foreground="$STATUS_SECTION_A_FG"
+normal_mode_background="$STATUS_SECTION_A_BG"
+normal_mode_format=" TMUX "
+
+zoom_mode_foreground="$STATUS_SECTION_A_FG"
+zoom_mode_background="$RED"
+zoom_mode_format="ZOOM"
+
+clock_mode_foreground="$STATUS_SECTION_A_FG"
+clock_mode_background="$FG4"
+clock_mode_format="CLOCK"
+
+options_mode_foreground="$STATUS_SECTION_A_FG"
+options_mode_background="$AQUA"
+options_mode_format="OPTIONS"
+
+client_mode_foreground="$STATUS_SECTION_A_FG"
+client_mode_background="$BLUE"
+client_mode_format="CLIENT"
+
+buffer_mode_foreground="$STATUS_SECTION_A_FG"
+buffer_mode_background="$BLUE"
+buffer_mode_format="BUFFER"
+
+tree_mode_foreground="$STATUS_SECTION_A_FG"
+tree_mode_background="$GREEN"
+tree_mode_format=" TREE "
+
+view_mode_foreground="$STATUS_SECTION_A_FG"
+view_mode_background="$YELLOW"
+view_mode_format=" VIEW "
+
+copy_mode_foreground="$STATUS_SECTION_A_FG"
+copy_mode_background="$YELLOW"
+copy_mode_format=" COPY "
+
+prefix_mode_foreground="$STATUS_SECTION_A_FG"
+prefix_mode_background="$PURPLE"
+prefix_mode_format="PREFIX"
+
+session_foreground="$STATUS_SECTION_B_FG"
+session_background="$STATUS_SECTION_B_BG"
+session_format=" #S"
+
+window_foreground="$STATUS_SECTION_B_FG"
+window_background="$STATUS_SECTION_B_BG"
+window_format=" #I:#W "
+
+current_window_foreground="$STATUS_SECTION_A_FG"
+current_window_background="$section_a_background"
+current_window_format=" #I:#W "
+
+time_foreground="$STATUS_SECTION_C_FG"
+time_background="$STATUS_SECTION_C_BG"
+time_format="%-I:%M:%S %P"
+
+date_foreground="$STATUS_SECTION_B_FG"
+date_background="$STATUS_SECTION_B_BG"
+date_format="%-d %B %Y"
+
+vibes_format="@icon@ tmux"
+vibes_icons="󰇥 󱚞  󰠭  󰯈   󱙸   󱀥"
+
+###############################################################################
+# Helper Functions
+###############################################################################
+
+# color
+c() {
+  local fg=$1 bg=$2 bold=${3:-nobold}
+  echo "#[fg=$fg]#[bg=$bg]#[$bold]"
 }
 
-my_icons=#"( \
-    icons=\"󰇥 󱚞  󰠭  󰯈   󱙸   󱀥\"; \
+# left separator
+ls() {
+  local fg=$1 bg=$2
+  echo "$(c $fg $bg)$left_separator"
+}
+
+# right separator
+rs() {
+  local fg=$1 bg=$2
+  echo "$(c $fg $bg)$right_separator"
+}
+
+tmux_set() {
+  local option=$1 value=$2
+  tmux set-option -gq "$option" "$value"
+}
+
+modes=(normal zoom clock options client buffer tree view copy prefix)
+
+generate_actions_selector() {
+  local pane_mode="#{s/-mode//:#{pane_mode}}"
+  local normal_select="${1:-TMUX}"
+  local zoom_select="#{#{?window_zoomed_flag,${2:-ZOOM},$normal_select}}"
+  local clock_select="#{#{?#{==:$pane_mode,clock},${3:-CLOCK},$zoom_select}}"
+  local options_select="#{#{?#{==:$pane_mode,options},${4:-OPTIONS},$clock_select}}"
+  local client_select="#{#{?#{==:$pane_mode,client},${5:-CLIENT},$options_select}}"
+  local buffer_select="#{#{?#{==:$pane_mode,buffer},${6:-BUFFER},$client_select}}"
+  local tree_select="#{#{?#{==:$pane_mode,tree},${7:-TREE},$buffer_select}}"
+  local view_select="#{#{?#{==:$pane_mode,view},${8:-VIEW},$tree_select}}"
+  local copy_select="#{#{?#{==:$pane_mode,copy},${9:-COPY},$view_select}}"
+  local prefix_select="#{#{?client_prefix,${10:-PREFIX},$copy_select}}"
+  echo "$prefix_select"
+}
+
+generate_actions_for_each_mode() {
+  local generate_action=$1 action_list=()
+
+  for mode in "${modes[@]}"; do
+    fg="${mode}_mode_foreground" bg="${mode}_mode_background" fmt="${mode}_mode_format"
+    action_list+=("$("$generate_action" "${!fg}" "${!bg}" "${!fmt}")")
+  done
+
+  echo "$(generate_actions_selector "${action_list[@]}")"
+}
+
+###############################################################################
+# Components
+###############################################################################
+
+########
+# mode #
+########
+
+mode_action() {
+  local fg=$1 bg=$2 fmt=$3
+  echo "$(ls $bg $background)$(c $fg $bg bold) $fmt $(rs $bg $STATUS_SECTION_B_BG)"
+}
+
+mode_component="$(generate_actions_for_each_mode mode_action)"
+
+###########
+# session #
+###########
+
+session_component="\
+$(c $session_foreground $session_background) $session_format $(rs $session_background $background)"
+
+##########
+# window #
+##########
+
+window_component="\
+$(rs $background $window_background)$(c $window_foreground $window_background) $window_format $(rs $window_background $background)"
+
+current_window_component="\
+$(rs $background $current_window_background)$(c $current_window_foreground $current_window_background bold) $current_window_format $(rs $current_window_background $background)"
+
+############
+# datetime #
+############
+
+tmux_set @show_date "0"
+
+tmux bind-key -n MouseDown1StatusRight run-shell " \
+[ \"\$(tmux show-option -gv @show_date)\" = \"1\" ] && tmux set -g @show_date 0 || tmux set -g @show_date 1"
+
+datetime_component="\
+$(c $time_foreground $time_background)$time_format \
+#{?@show_date,$(ls $date_background $time_background)$(c $date_foreground $date_background) $date_format ,}"
+
+#########
+# vibes #
+#########
+
+select_vibes_icon=#"( \
+    icons=\"$vibes_icons\"; \
     minute=\$((\$(date +\"%M\") / 5 + 1)); \
     echo \$icons | cut -d' ' -f\$minute \
 )"
 
-sessionicon=""
+vibes_action() {
+  local fg=$1 bg=$2
+  echo "$(ls $bg)$(c $fg $bg bold) ${vibes_format//@icon@/$select_vibes_icon} $(rs $bg $background)"
+}
 
-rarrow=''
-larrow=''
+vibes_component="$(generate_actions_for_each_mode vibes_action)"
 
-white="#ebdbb2"     # fg
-lightgray="#d5c4a1" # fg2
-gray="#a89984"      # gray
-darkgray="#504945"  # bg2
-black="#282828"     # bg
-red="#fb4934"       # red
-green="#b8bb26"     # green
-yellow="#fabd2f"    # yellow
-purple="#d3869b"    # purple
-
-normal=" TMUX "
-prefix="PREFIX"
-copy=" COPY "
+###############################################################################
+# Tmux Configuration
+###############################################################################
 
 # Status options
 tmux_set status-interval 1
 tmux_set status on
 
 # Basic status bar colors
-tmux_set status-bg "$black"
-tmux_set status-fg "$white"
+tmux_set status-bg "$background"
+tmux_set status-fg "$foreground"
 #TODO: what is this:
 tmux_set status-attr none
 
 # Left side of status bar
-status="#[fg=$black,bold]\
-#{?client_prefix,#[bg=$purple] $prefix#[fg=$purple],\
-#{?pane_in_mode,#[bg=$yellow] $copy#[fg=$yellow],\
-#[bg=$gray] $normal#[fg=$gray]}} \
-#[bg=$darkgray,nobold]$rarrow"
-session="#[fg=$white,bg=$darkgray] $sessionicon #S #[fg=$darkgray,bg=$black]$rarrow"
-tmux_set status-left-bg $black
+tmux_set status-left-bg $background
 tmux_set status-left-length 150
-tmux_set status-left "$status$session"
+tmux_set status-left "$mode_component$session_component"
 
 # Right side of status bar
-datetime="#[fg=$lightgray,bg=$black]#(date '+%-I:%M:%S %p' | tr '[:upper:]' '[:lower:]')  %d/%m/%Y "
-tmux="#[bg=$black]\
-#{?client_prefix,#[fg=$purple]$larrow#[bg=$purple],\
-#{?pane_in_mode,#[fg=$yellow]$larrow#[bg=$yellow],\
-#[fg=$gray]$larrow#[bg=$gray]}} \
-#[fg=$black,bold]$my_icons tmux "
-tmux_set status-right-bg $black
+tmux_set status-right-bg $background
 tmux_set status-right-length 150
-tmux_set status-right "$datetime$tmux"
+tmux_set status-right "$datetime_component$vibes_component"
 
 # Window status format
-tmux_set window-status-format "#[fg=$black,bg=$darkgray]$rarrow#[fg=$white,bg=$darkgray] #I:#W #[fg=$darkgray,bg=$black]$rarrow"
-tmux_set window-status-current-format "#[fg=$black,bg=$gray]$rarrow#[fg=$black,bg=$gray,bold] #I:#W #[fg=$gray,bg=$black,nobold]$rarrow"
+tmux_set window-status-format "$window_component"
+tmux_set window-status-current-format "$current_window_component"
 
 # Window status style
 #TODO: what is this:
-tmux_set window-status-style "fg=$gray,bg=$black,none"
-tmux_set window-status-last-style "fg=$gray,bg=$black,none"
-tmux_set window-status-activity-style "fg=$gray,bg=$black,bold"
+tmux_set window-status-style "fg=$FG4,bg=$background,none"
+tmux_set window-status-last-style "fg=$FG4,bg=$background,none"
+tmux_set window-status-activity-style "fg=$FG4,bg=$background,bold"
 
 # Window separator
 #TODO: what is this:
 tmux_set window-status-separator ""
 
 # Pane border
-tmux_set pane-border-style "fg=$darkgray,bg=default"
-tmux_set pane-active-border-style "fg=$gray,bg=default"
+tmux_set pane-border-style "fg=$BG2,bg=default"
+tmux_set pane-active-border-style "fg=$FG4,bg=default"
 
 # Pane number indicator
-tmux_set display-panes-colour "$darkgray"
-tmux_set display-panes-active-colour "$gray"
+tmux_set display-panes-colour "$BG2"
+tmux_set display-panes-active-colour "$FG4"
 
 # Clock mode
-#TODO: what is this:
-tmux_set clock-mode-colour "$gray"
-tmux_set clock-mode-style 24
+tmux_set clock-mode-colour "$FG4"
+tmux_set clock-mode-style 12
 
 # Message
-tmux_set message-style "fg=$green,bg=$black"
+tmux_set message-style "fg=$GREEN,bg=$background"
 
 # Command message
-tmux_set message-command-style "fg=$purple,bg=$black"
+tmux_set message-command-style "fg=$PURPLE,bg=$background"
 
 # Copy mode highlight
-tmux_set mode-style "fg=$black,bg=$yellow"
+tmux_set mode-style "fg=$background,bg=$YELLOW"
