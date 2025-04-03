@@ -1,6 +1,10 @@
 -- use custom lualine
 local Util = require("lazyvim.util")
-local my_icons = { "", "", "", "󱙝", "", "", "󰣙", "󰻖", "", "󰼂", "󰑮", "󱙴" }
+local Icons = require("lazyvim.config").icons
+
+------------------------------------------------------------------------------
+-- color scheme
+------------------------------------------------------------------------------
 
 local colors = {
   status_fg = os.getenv("STATUS_FG"),
@@ -59,15 +63,265 @@ local gruvbox = {
   },
 }
 
+------------------------------------------------------------------------------
+-- helper functions
+------------------------------------------------------------------------------
+
+local function merge(t1, t2)
+  local result = {}
+
+  for _, v in pairs(t1) do
+    table.insert(result, v)
+  end
+
+  for _, v in pairs(t2) do
+    table.insert(result, v)
+  end
+
+  return result
+end
+
+------------------------------------------------------------------------------
+-- mode component
+------------------------------------------------------------------------------
+
+local function mode_component()
+  return {
+    "mode",
+    separator = { left = "", right = "" },
+  }
+end
+
+------------------------------------------------------------------------------
+-- rood directory component
+------------------------------------------------------------------------------
+
+local function root_directory_component()
+  return Util.lualine.root_dir({ color = {}, icon = "󱉭" })
+end
+
+------------------------------------------------------------------------------
+-- current branch component
+------------------------------------------------------------------------------
+
+local function current_branch_component()
+  return "branch"
+end
+
+------------------------------------------------------------------------------
+-- current file component
+------------------------------------------------------------------------------
+
+local function current_file_component()
+  return Util.lualine.pretty_path({ relative = "root", modified_hl = "GruvBoxOrangeBold" })
+end
+
+------------------------------------------------------------------------------
+-- diff component
+------------------------------------------------------------------------------
+
+local function diff_component()
+  return {
+    "diff",
+    symbols = {
+      added = Icons.git.added,
+      modified = Icons.git.modified,
+      removed = Icons.git.removed,
+    },
+    source = function()
+      local gitsigns = vim.b.gitsigns_status_dict
+      if gitsigns then
+        return {
+          added = gitsigns.added,
+          modified = gitsigns.changed,
+          removed = gitsigns.removed,
+        }
+      end
+    end,
+  }
+end
+
+------------------------------------------------------------------------------
+-- diagnostics component
+------------------------------------------------------------------------------
+
+local function diagnostics_component()
+  return {
+    "diagnostics",
+    symbols = {
+      error = Icons.diagnostics.Error,
+      warn = Icons.diagnostics.Warn,
+      info = Icons.diagnostics.Info,
+      hint = Icons.diagnostics.Hint,
+    },
+  }
+end
+
+------------------------------------------------------------------------------
+-- location component
+------------------------------------------------------------------------------
+
+local function location_component()
+  local function search_count()
+    if vim.v.hlsearch == 0 then
+      return ""
+    end
+    local ok, result = pcall(vim.fn.searchcount, { maxcount = 999, timeout = 500 })
+    if not ok or next(result) == nil then
+      return ""
+    end
+    local denominator = math.min(result.total, result.maxcount)
+    if denominator == 0 then
+      return ""
+    end
+    return string.format("%d/%d ", result.current, denominator)
+  end
+
+  local function line_number()
+    return vim.fn.line(".") .. ""
+  end
+
+  local function column_number()
+    return vim.fn.charcol(".") .. ""
+  end
+
+  local function file_percentage()
+    return math.floor(vim.fn.line(".") / vim.fn.line("$") * 100) .. "%%"
+  end
+
+  local function generate()
+    return table.concat({ search_count(), line_number(), column_number(), file_percentage() }, " ")
+  end
+
+  return {
+    function()
+      return generate()
+    end,
+  }
+end
+
+------------------------------------------------------------------------------
+-- formatters and lsps component
+------------------------------------------------------------------------------
+
+local show_formatters_and_lsps_component = false
+
+local function formatters_and_lsps_component()
+  local function get_formatters()
+    return vim.tbl_map(function(formatter)
+      return "󱇨 " .. formatter.name
+    end, require("conform").list_formatters_to_run(vim.api.nvim_get_current_buf()))
+  end
+
+  local function get_lsps()
+    return vim.tbl_map(function(client)
+      return "󱇨 " .. client.name
+    end, vim.lsp.get_clients({ bufnr = vim.api.nvim_get_current_buf() }))
+  end
+
+  local function generate()
+    return table.concat(merge(get_formatters(), get_lsps()), " | ")
+  end
+
+  return {
+    function()
+      return generate()
+    end,
+    cond = function()
+      return show_formatters_and_lsps_component
+    end,
+  }
+end
+
+------------------------------------------------------------------------------
+-- file type component
+------------------------------------------------------------------------------
+
+local filetype_substitutions = {
+  { "typescript", "ts" },
+  { "javascript", "js" },
+  { "python", "py" },
+}
+
+local function filetype_component()
+  return {
+    "filetype",
+    colored = false,
+    separator = { left = "", right = "" },
+    on_click = function()
+      show_formatters_and_lsps_component = not show_formatters_and_lsps_component
+    end,
+    fmt = function(str)
+      for _, sub in ipairs(filetype_substitutions) do
+        str = str:gsub(sub[1], sub[2])
+      end
+      return str
+    end,
+  }
+end
+
+------------------------------------------------------------------------------
+-- buffers component
+------------------------------------------------------------------------------
+
+local function buffers_component()
+  return {
+    "buffers",
+    max_length = function()
+      return vim.o.columns - 10
+    end,
+    symbols = {
+      modified = "",
+      alternate_file = "",
+      directory = "",
+    },
+    filetype_names = {
+      ["lazy"] = "[Lazy]",
+    },
+    buffers_color = {
+      active = { fg = colors.status_section_a_fg, bg = colors.status_section_a_bg, gui = "bold" },
+      active_modified = { fg = colors.status_section_a_fg, bg = colors.orange, gui = "bold" },
+      active_separator = { fg = colors.status_bg, bg = colors.status_section_a_bg },
+      active_modified_separator = { fg = colors.status_bg, bg = colors.orange },
+      inactive = { fg = colors.gray, bg = colors.status_section_b_bg },
+      inactive_modified = { fg = colors.orange, bg = colors.status_section_b_bg },
+      inactive_separator = { fg = colors.status_bg, bg = colors.status_section_b_bg },
+      inactive_modified_separator = { fg = colors.status_bg, bg = colors.status_section_b_bg },
+    },
+  }
+end
+
+------------------------------------------------------------------------------
+-- vibes component
+------------------------------------------------------------------------------
+
+local vibe_icons = { "", "", "", "󱙝", "", "", "󰣙", "󰻖", "", "󰼂", "󰑮", "󱙴" }
+
+local function vibes_component()
+  local function generate()
+    return vibe_icons[math.floor(os.date("%M") / 5) + 1] .. " nvim"
+  end
+
+  return {
+    function()
+      return generate()
+    end,
+    on_click = function()
+      vim.fn.system("wallpaper")
+    end,
+    separator = { left = "", right = "" },
+  }
+end
+
+------------------------------------------------------------------------------
+-- lualine configuration
+------------------------------------------------------------------------------
+
 return {
   "matt1003/lualine.nvim",
   lazy = false,
   opts = function()
-    local lualine_require = require("lualine_require")
-    lualine_require.require = require
-    local icons = require("lazyvim.config").icons
     vim.o.laststatus = vim.g.lualine_laststatus
-
     return {
       options = {
         theme = gruvbox,
@@ -77,122 +331,38 @@ return {
         component_separators = { left = "", right = "" },
       },
       sections = {
-        -- (A b c ... x y z): Mode
-        lualine_a = { "mode" },
-        -- (a B c ... x y z): Current Directory | Current Branch
+        lualine_a = {
+          mode_component(),
+        },
         lualine_b = {
-          Util.lualine.root_dir({ color = {}, icon = "󱉭" }),
-          "branch",
+          root_directory_component(),
+          current_branch_component(),
         },
-        -- (a b C ... x y z): Current File | Git Changes Icons | Errors/Warnings Icons
         lualine_c = {
-          Util.lualine.pretty_path({ relative = "root", modified_hl = "GruvBoxOrange" }),
-          {
-            "diff",
-            symbols = {
-              added = icons.git.added,
-              modified = icons.git.modified,
-              removed = icons.git.removed,
-            },
-            source = function()
-              local gitsigns = vim.b.gitsigns_status_dict
-              if gitsigns then
-                return {
-                  added = gitsigns.added,
-                  modified = gitsigns.changed,
-                  removed = gitsigns.removed,
-                }
-              end
-            end,
-          },
-          {
-            "diagnostics",
-            symbols = {
-              error = icons.diagnostics.Error,
-              warn = icons.diagnostics.Warn,
-              info = icons.diagnostics.Info,
-              hint = icons.diagnostics.Hint,
-            },
-          },
+          current_file_component(),
+          diff_component(),
+          diagnostics_component(),
         },
-        -- (a b c ... X y z): Search Count + Line Number + Column Number + File Percentage
         lualine_x = {
-          function()
-            if vim.v.hlsearch == 0 then
-              return ""
-            end
-            local ok, result = pcall(vim.fn.searchcount, { maxcount = 999, timeout = 500 })
-            if not ok or next(result) == nil then
-              return ""
-            end
-            local denominator = math.min(result.total, result.maxcount)
-            if denominator == 0 then
-              return ""
-            end
-            return string.format(" %d/%d", result.current, denominator)
-          end,
-          function()
-            local line = vim.fn.line(".")
-            local col = vim.fn.charcol(".")
-            local total = vim.fn.line("$")
-            return line .. " " .. col + 1 .. " " .. math.floor(line / total * 100) .. "%%"
-          end,
+          location_component(),
         },
-        -- (a b c ... x Y z): Formatters + LSPs
         lualine_y = {
-          function()
-            local names = {}
-            local clients = require("conform").list_formatters_to_run(vim.api.nvim_get_current_buf())
-            if next(clients) then
-              for _, client in pairs(clients) do
-                table.insert(names, client.name)
-              end
-            end
-            return table.concat(names, " | ")
-          end,
-          function()
-            local names = {}
-            local clients = vim.lsp.get_clients({ bufnr = vim.api.nvim_get_current_buf() })
-            if next(clients) then
-              for _, client in pairs(clients) do
-                table.insert(names, client.name)
-              end
-            end
-            return table.concat(names, " | ")
-          end,
+          formatters_and_lsps_component(),
         },
-        -- (a b c ... x y Z): File Type
         lualine_z = {
-          { "filetype", colored = false },
+          filetype_component(),
         },
       },
       tabline = {
         lualine_a = {},
         lualine_b = {
-          {
-            "buffers",
-            max_length = vim.o.columns - 10,
-            --buffers_color = {
-            --active = 'lualine_{section}_normal',
-            --inactive = 'lualine_{section}_inactive',
-            --},
-            symbols = {
-              modified = "",
-              alternate_file = "",
-              directory = "",
-            },
-            filetype_names = {
-              ["neo-tree"] = "[file explorer]",
-            },
-          },
+          buffers_component(),
         },
         lualine_c = {},
         lualine_x = {},
         lualine_y = {},
         lualine_z = {
-          function()
-            return my_icons[math.floor(os.date("%M") / 5) + 1] .. " nvim"
-          end,
+          vibes_component(),
         },
       },
       extensions = { "lazy" },
