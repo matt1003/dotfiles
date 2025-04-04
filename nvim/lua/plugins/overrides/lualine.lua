@@ -216,7 +216,7 @@ local function formatters_and_lsps_component()
 
   local function get_lsps()
     return vim.tbl_map(function(client)
-      return "󱇨 " .. client.name
+      return "󰱽 " .. client.name
     end, vim.lsp.get_clients({ bufnr = vim.api.nvim_get_current_buf() }))
   end
 
