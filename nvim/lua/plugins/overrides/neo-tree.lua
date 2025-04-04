@@ -209,7 +209,24 @@ return {
     -- Open neo-tree on startup and set options for neo-tree buffer:
     vim.api.nvim_create_autocmd("VimEnter", {
       pattern = "*",
-      command = "Neotree show",
+      callback = function()
+        local min_width = 130
+        if vim.o.columns >= min_width then
+          vim.cmd("Neotree show")
+        end
+      end,
+    })
+    -- Auto-toggle Neo-tree on window resize
+    vim.api.nvim_create_autocmd("VimResized", {
+      pattern = "*",
+      callback = function()
+        local min_width = 130
+        if vim.o.columns >= min_width then
+          vim.cmd("Neotree show")
+        else
+          vim.cmd("Neotree close")
+        end
+      end,
     })
     vim.api.nvim_create_autocmd("FileType", {
       pattern = "neo-tree",
