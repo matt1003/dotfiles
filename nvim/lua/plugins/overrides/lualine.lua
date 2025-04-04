@@ -1,6 +1,5 @@
 -- use custom lualine
 local Util = require("lazyvim.util")
-local Icons = require("lazyvim.config").icons
 
 ------------------------------------------------------------------------------
 -- color scheme
@@ -121,12 +120,13 @@ end
 ------------------------------------------------------------------------------
 
 local function diff_component()
+  local icons = require("lazyvim.config").icons
   return {
     "diff",
     symbols = {
-      added = Icons.git.added,
-      modified = Icons.git.modified,
-      removed = Icons.git.removed,
+      added = icons.git.added,
+      modified = icons.git.modified,
+      removed = icons.git.removed,
     },
     source = function()
       local gitsigns = vim.b.gitsigns_status_dict
@@ -146,13 +146,14 @@ end
 ------------------------------------------------------------------------------
 
 local function diagnostics_component()
+  local icons = require("lazyvim.config").icons
   return {
     "diagnostics",
     symbols = {
-      error = Icons.diagnostics.Error,
-      warn = Icons.diagnostics.Warn,
-      info = Icons.diagnostics.Info,
-      hint = Icons.diagnostics.Hint,
+      error = icons.diagnostics.Error,
+      warn = icons.diagnostics.Warn,
+      info = icons.diagnostics.Info,
+      hint = icons.diagnostics.Hint,
     },
   }
 end
