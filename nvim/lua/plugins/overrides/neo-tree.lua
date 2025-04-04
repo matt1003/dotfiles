@@ -86,20 +86,104 @@ return {
       git_status = {
         symbols = {
           -- Change type
-          added = "󰜄", -- 
-          modified = "󰏭", -- 
-          deleted = "󰛲", -- 
-          renamed = "󰁕",
+          added = "󰜄",
+          modified = "󰏭",
+          deleted = "󰛲",
+          renamed = "󰰞",
           -- Status type
-          untracked = "",
+          untracked = "󰰧",
           ignored = "",
-          unstaged = "", -- "󰄱",
-          staged = "", -- "󰱒",
-          conflict = "", -- "",
+          unstaged = "",
+          staged = "",
+          conflict = "󰱞",
         },
       },
       modified = {
-        symbol = "",
+        symbol = " ",
+      },
+    },
+    renderers = {
+      directory = {
+        { "indent" },
+        { "icon" },
+        { "current_filter" },
+        {
+          "container",
+          content = {
+            { "name", zindex = 10 },
+            {
+              "symlink_target",
+              zindex = 10,
+              highlight = "NeoTreeSymbolicLinkTarget",
+            },
+            { "clipboard", zindex = 10 },
+            {
+              "diagnostics",
+              errors_only = true,
+              zindex = 20,
+              align = "right",
+              hide_when_expanded = true,
+              symbols = {
+                error = " ",
+                warn = " ",
+                hint = " ",
+                info = " ",
+              },
+            },
+            { "git_status", zindex = 10, align = "right", hide_when_expanded = true },
+            { "file_size", zindex = 10, align = "right" },
+            { "type", zindex = 10, align = "right" },
+            { "last_modified", zindex = 10, align = "right" },
+            { "created", zindex = 10, align = "right" },
+          },
+        },
+      },
+      file = {
+        { "indent" },
+        { "icon" },
+        {
+          "container",
+          content = {
+            {
+              "name",
+              zindex = 10,
+            },
+            {
+              "symlink_target",
+              zindex = 10,
+              highlight = "NeoTreeSymbolicLinkTarget",
+            },
+            { "clipboard", zindex = 10 },
+            { "bufnr", zindex = 10 },
+            { "modified", zindex = 20, align = "right" },
+            {
+              "diagnostics",
+              zindex = 20,
+              align = "right",
+              symbols = {
+                error = " ",
+                warn = " ",
+                hint = " ",
+                info = " ",
+              },
+            },
+            { "git_status", zindex = 10, align = "right" },
+            { "file_size", zindex = 10, align = "right" },
+            { "type", zindex = 10, align = "right" },
+            { "last_modified", zindex = 10, align = "right" },
+            { "created", zindex = 10, align = "right" },
+          },
+        },
+      },
+      message = {
+        { "indent", with_markers = false },
+        { "name", highlight = "NeoTreeMessage" },
+      },
+      terminal = {
+        { "indent" },
+        { "icon" },
+        { "name" },
+        { "bufnr" },
       },
     },
   },
@@ -136,6 +220,12 @@ return {
     vim.api.nvim_set_hl(0, "NeoTreeDirectoryName", { link = "GruvboxBlue" })
     vim.api.nvim_set_hl(0, "NeoTreeFileName", { link = "GruvboxFg4" })
     vim.api.nvim_set_hl(0, "NeoTreeFileNameOpened", { link = "GruvboxFg1" })
+    vim.api.nvim_set_hl(0, "NeoTreeGitAdded", { link = "GruvboxGreen" })
+    vim.api.nvim_set_hl(0, "NeoTreeGitConflict", { link = "GruvboxRed" })
+    vim.api.nvim_set_hl(0, "NeoTreeGitDeleted", { link = "GruvboxRed" })
+    vim.api.nvim_set_hl(0, "NeoTreeGitModified", { link = "GruvboxOrange" })
+    vim.api.nvim_set_hl(0, "NeoTreeGitRenamed", { link = "GruvboxOrange" })
+    vim.api.nvim_set_hl(0, "NeoTreeGitUntracked", { link = "GruvboxPurple" })
     vim.api.nvim_set_hl(0, "NeoTreeModified", { link = "GruvboxOrange" })
     vim.api.nvim_set_hl(0, "NeoTreeRootName", { italic = true })
   end,
