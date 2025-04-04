@@ -61,7 +61,7 @@ window_background="$STATUS_SECTION_B_BG"
 window_format=" #I:#W "
 
 current_window_foreground="$STATUS_SECTION_A_FG"
-current_window_background="$section_a_background"
+current_window_background="$STATUS_SECTION_A_BG"
 current_window_format=" #I:#W "
 
 time_foreground="$STATUS_SECTION_C_FG"
