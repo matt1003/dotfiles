@@ -16,8 +16,8 @@ return {
   },
   {
     "LazyVim/LazyVim",
-    opts = {
-      colorscheme = "gruvbox",
-    },
+    opts = function(_, opts)
+      opts.colorscheme = "gruvbox"
+    end,
   },
 }
