@@ -21,7 +21,9 @@ local colors = {
   purple = os.getenv("PURPLE"),
   aqua = os.getenv("AQUA"),
   orange = os.getenv("ORANGE"),
-  gray = os.getenv("F4"),
+  gray1 = os.getenv("FG2"), -- light
+  gray2 = os.getenv("FG4"), -- medium
+  gray3 = os.getenv("BG4"), -- dark
 }
 
 local gruvbox = {
@@ -62,6 +64,10 @@ local gruvbox = {
   },
 }
 
+vim.api.nvim_set_hl(0, "lualine_a_separator", { fg = colors.gray1, bg = colors.status_section_a_bg })
+vim.api.nvim_set_hl(0, "lualine_b_separator", { fg = colors.gray2, bg = colors.status_section_b_bg })
+vim.api.nvim_set_hl(0, "lualine_c_separator", { fg = colors.gray3, bg = colors.status_section_c_bg })
+
 ------------------------------------------------------------------------------
 -- helper functions
 ------------------------------------------------------------------------------
@@ -80,6 +86,18 @@ local function merge(t1, t2)
   return result
 end
 
+local function hl(color)
+  return "%#" .. color .. "#"
+end
+
+local function section_b_separator(separator)
+  return hl("lualine_b_separator") .. separator .. hl("lualine_b_normal")
+end
+
+local function section_c_separator(separator)
+  return hl("lualine_c_separator") .. separator .. hl("lualine_c_normal")
+end
+
 ------------------------------------------------------------------------------
 -- mode component
 ------------------------------------------------------------------------------
@@ -96,7 +114,9 @@ end
 ------------------------------------------------------------------------------
 
 local function root_directory_component()
-  return Util.lualine.root_dir({ color = {}, icon = "󱉭" })
+  local config = Util.lualine.root_dir({ color = {}, icon = "󱉭" })
+  config.separator = section_b_separator("")
+  return config
 end
 
 ------------------------------------------------------------------------------
@@ -104,7 +124,9 @@ end
 ------------------------------------------------------------------------------
 
 local function current_branch_component()
-  return "branch"
+  return {
+    "branch",
+  }
 end
 
 ------------------------------------------------------------------------------
@@ -112,7 +134,10 @@ end
 ------------------------------------------------------------------------------
 
 local function current_file_component()
-  return Util.lualine.pretty_path({ relative = "root", modified_hl = "GruvBoxOrangeBold" })
+  return {
+    Util.lualine.pretty_path({ relative = "root", modified_hl = "GruvboxOrangeBold" }),
+    separator = section_c_separator(""),
+  }
 end
 
 ------------------------------------------------------------------------------
@@ -138,6 +163,7 @@ local function diff_component()
         }
       end
     end,
+    separator = section_c_separator(""),
   }
 end
 
@@ -155,6 +181,7 @@ local function diagnostics_component()
       info = icons.diagnostics.Info,
       hint = icons.diagnostics.Hint,
     },
+    separator = section_c_separator(""),
   }
 end
 
@@ -221,7 +248,7 @@ local function formatters_and_lsps_component()
   end
 
   local function generate()
-    return table.concat(merge(get_formatters(), get_lsps()), " | ")
+    return table.concat(merge(get_formatters(), get_lsps()), section_b_separator(" | "))
   end
 
   return {
@@ -284,7 +311,7 @@ local function buffers_component()
       active_modified = { fg = colors.status_section_a_fg, bg = colors.orange, gui = "bold" },
       active_separator = { fg = colors.status_bg, bg = colors.status_section_a_bg },
       active_modified_separator = { fg = colors.status_bg, bg = colors.orange },
-      inactive = { fg = colors.gray, bg = colors.status_section_b_bg },
+      inactive = { fg = colors.gray1, bg = colors.status_section_b_bg },
       inactive_modified = { fg = colors.orange, bg = colors.status_section_b_bg },
       inactive_separator = { fg = colors.status_bg, bg = colors.status_section_b_bg },
       inactive_modified_separator = { fg = colors.status_bg, bg = colors.status_section_b_bg },
