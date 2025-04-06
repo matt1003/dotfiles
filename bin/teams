@@ -1,0 +1,17 @@
+#!/bin/bash
+
+app_name="Microsoft Teams"
+desktop_dir="$HOME/.local/share/applications"
+desktop_file=$(grep -l "Name=$app_name" "$desktop_dir"/msedge-*.desktop)
+
+if [[ -z "$desktop_file" ]]; then
+  echo "No matching .desktop file found for \"$app_name\"" >&2
+  exit 1
+fi
+
+exec=$(grep '^Exec=' "$desktop_file" | cut -d= -f2-)
+
+readarray -td '' args < <(printf '%s\0' "$exec")
+IFS=' ' read -r -a cmd_array <<<"${args[0]}"
+
+"${cmd_array[@]}"

@@ -1,0 +1,15 @@
+#!/bin/bash
+
+run() {
+  nohup "$@" >/dev/null 2>&1 &
+  disown
+}
+
+run firefox
+run outlook
+run teams
+run forticlient gui
+
+if [[ "$1" == "update" ]]; then
+  update
+fi
