@@ -323,11 +323,17 @@ end
 -- vibes component
 ------------------------------------------------------------------------------
 
-local vibe_icons = { "", "", "", "󱙝", "", "", "󰣙", "󰻖", "", "󰼂", "󰑮", "󱙴" }
+local vibes_format = "@icon@ nvim"
+
+local vibes_icons = { "", "", "", "󱙝", "", "", "󰣙", "󰻖", "", "󰼂", "󰑮", "󱙴" }
+
+local function select_vibes_icon()
+  return vibes_icons[math.floor(os.date("%M") / #vibes_icons) + 1]
+end
 
 local function vibes_component()
   local function generate()
-    return vibe_icons[math.floor(os.date("%M") / 5) + 1] .. " nvim"
+    return string.gsub(vibes_format, "@icon@", select_vibes_icon())
   end
 
   return {
