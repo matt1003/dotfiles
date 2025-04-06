@@ -193,60 +193,51 @@ vibes_action() {
 vibes_component="$(generate_actions_for_each_mode vibes_action)"
 
 ###############################################################################
-# Tmux Configuration
+# Tmux Status Configuration
 ###############################################################################
 
-# Status options
-tmux_set status-interval 1
+# status bar:
 tmux_set status on
+tmux_set status-interval 1
+tmux_set status-style "fg=$foreground,bg=$background"
 
-# Basic status bar colors
-tmux_set status-bg "$background"
-tmux_set status-fg "$foreground"
-#TODO: what is this:
-tmux_set status-attr none
-
-# Left side of status bar
-tmux_set status-left-bg $background
-tmux_set status-left-length 150
+# left side:
 tmux_set status-left "$mode_component$session_component"
+tmux_set status-left-length 150
 
-# Right side of status bar
-tmux_set status-right-bg $background
-tmux_set status-right-length 150
+# right side:
 tmux_set status-right "$datetime_component$vibes_component"
+tmux_set status-right-length 150
 
-# Window status format
+# windows list:
 tmux_set window-status-format "$window_component"
 tmux_set window-status-current-format "$current_window_component"
-
-# Window status style
-#TODO: what is this:
-tmux_set window-status-style "fg=$FG4,bg=$background,none"
-tmux_set window-status-last-style "fg=$FG4,bg=$background,none"
-tmux_set window-status-activity-style "fg=$FG4,bg=$background,bold"
-
-# Window separator
-#TODO: what is this:
 tmux_set window-status-separator ""
 
-# Pane border
+###############################################################################
+# Tmux Style Configuration
+###############################################################################
+
+# pane borders:
 tmux_set pane-border-style "fg=$BG2,bg=default"
 tmux_set pane-active-border-style "fg=$FG4,bg=default"
 
-# Pane number indicator
-tmux_set display-panes-colour "$BG2"
-tmux_set display-panes-active-colour "$FG4"
+# pane number indicator:
+tmux_set display-panes-colour "$FG"
+tmux_set display-panes-active-colour "$GREEN"
 
-# Clock mode
+# copy mode:
+tmux_set mode-style "fg=$background,bg=$YELLOW"
+tmux_set copy-mode-match-style"fg=$background,bg=$YELLOW"
+tmux_set copy-mode-current-match-style"fg=$background,bg=$ORANGE"
+
+# clock mode:
 tmux_set clock-mode-colour "$FG4"
 tmux_set clock-mode-style 12
 
-# Message
+# TODO: menu styles
+# TODO: popup styles
+#
+# message:
 tmux_set message-style "fg=$GREEN,bg=$background"
-
-# Command message
 tmux_set message-command-style "fg=$PURPLE,bg=$background"
-
-# Copy mode highlight
-tmux_set mode-style "fg=$background,bg=$YELLOW"
