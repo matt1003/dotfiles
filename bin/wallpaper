@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # TODO: track wallpaper history
 
@@ -42,7 +43,13 @@ DEFAULT="\e[39m"
 RESET="\e[0m"
 
 print_msg() {
-  [ "$verbose" = true ] && printf "%s\n" "$1"
+  if [ "$verbose" = true ]; then
+    printf "%s\n" "$1"
+  fi
+}
+
+print_warning() {
+  printf "${YELLOW}Warning: %s\n${RESET}" "$1"
 }
 
 print_error() {
@@ -75,7 +82,7 @@ Other Options:
   --current                   List the current wallpaper.
   --delete                    Delete the current wallpaper.
   --rename                    Renames all images to kebab-case.
-  --dimensions                Lists the dimensions of each image in the specified path (excludes gifs).
+  --dimensions                Lists the dimensions of each image in the specified path.
   --webp2png                  Converts all images in webp format to png format.
   --jpeg2jpg                  Renames all images with file extension jpeg to jpg.
 
@@ -175,7 +182,7 @@ function convert_jpeg_to_jpg {
 }
 
 function get_image_dimensions {
-  identify -format "%wx%h" "$1"
+  identify -format "%wx%h" "$1" || true
 }
 
 function is_16_9_ratio {
@@ -312,8 +319,8 @@ total="$(image_count "$images")"
 print_msg "found $total images at $path"
 
 if [ "$total" -eq 0 ]; then
-  print_error "No valid images found at the specified path."
-  exit 1
+  print_warning "No valid images found at the specified path."
+  exit 0
 fi
 
 if [ "$rename" = true ]; then
@@ -326,7 +333,7 @@ if [ "$rename" = true ]; then
       old_path="$(dirname "$image")/${old_name}"
       new_path="$(dirname "$image")/${new_name}"
       if [ -f "${new_path}" ]; then
-        print_error "\"${new_path}\" already exists. Rename aborted."
+        print_warning "\"${new_path}\" already exists. Rename aborted."
       else
         print_msg "Renaming \"${old_name}\" to \"${new_name}\"."
         mv "${old_path}" "${new_path}"
@@ -340,11 +347,15 @@ if [ "$dimensions" = true ]; then
   verbose=true # force verbose
   # Create a mapping of image dimensions to images:
   declare -A map
+  count=0
   while IFS= read -r image; do
     progress_bar "$((++count))" "$total"
-    if [[ "$image" != *.gif ]]; then
-      dimensions="$(get_image_dimensions "$image")"
+    dimensions="$(get_image_dimensions "$image")"
+    if [[ "$dimensions" =~ ^[0-9]+x[0-9]+$ ]]; then
       map["$dimensions"]="${map["$dimensions"]+${map["$dimensions"]}$'\n'}$image"
+    else
+      print_msg ""
+      print_warning "Invalid dimensions \"$dimensions\" for image: $image"
     fi
   done <<<"$images"
   clear_progress_bar
@@ -374,13 +385,13 @@ if [ "$webp2png" = true ] || [ "$jpeg2jpg" = true ]; then
   # Convert each image:
   while IFS= read -r image; do
     if [ -f "${image%.$src_ext}.$dest_ext" ]; then
-      print_error "\"${image%.$src_ext}.$dest_ext\" already exists. Conversion aborted."
+      print_warning "\"${image%.$src_ext}.$dest_ext\" already exists. Conversion aborted."
     else
       print_msg "Converting \"${image}\" to ${dest_ext}."
       if "$convert_function" "$image"; then
         rm "$image"
       else
-        print_error "Conversion failed for \"${image}\". Original file retained."
+        print_warning "Conversion failed for \"${image}\". Original file retained."
       fi
     fi
   done <<<"$images"
