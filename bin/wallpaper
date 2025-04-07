@@ -265,7 +265,7 @@ while [[ "$#" -gt 0 ]]; do
     fi
     ;;
   esac
-  shift
+  shift || true
 done
 
 # Ensure all commands required to run this script are installed:
