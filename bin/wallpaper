@@ -27,6 +27,7 @@ jpeg2jpg=false
 
 # hidden options
 link="$HOME/.wallpaper"
+all=false
 
 # bash color codes
 BLACK="\e[30m"
@@ -246,6 +247,9 @@ while [[ "$#" -gt 0 ]]; do
     link="$2"
     shift
     ;;
+  --all)
+    all=true
+    ;;
   # path:
   *)
     if [[ $1 == -* ]]; then
@@ -320,6 +324,19 @@ print_msg "found $total images at $path"
 
 if [ "$total" -eq 0 ]; then
   print_warning "No valid images found at the specified path."
+  exit 0
+fi
+
+if [ "$all" = true ]; then
+  verbose=true # force verbose
+  print_msg "Converting all images in webp format to png format."
+  $0 --webp2png
+  print_msg "Renaming all images with file extension jpeg to jpg."
+  $0 --jpeg2jpg
+  print_msg "Renaming all images to kebab-case."
+  $0 --rename
+  print_msg "Listing the dimensions of each image."
+  $0 --dimensions
   exit 0
 fi
 
