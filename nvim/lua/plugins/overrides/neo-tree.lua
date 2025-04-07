@@ -38,166 +38,163 @@ return {
   deactivate = function()
     vim.cmd([[Neotree close]])
   end,
-  opts = {
-    close_if_last_window = true,
-    sources = { "filesystem", "buffers", "git_status" },
-    open_files_do_not_replace_types = { "terminal", "Trouble", "trouble", "qf", "Outline" },
-    filesystem = {
-      bind_to_cwd = false,
-      follow_current_file = { enabled = true },
-      use_libuv_file_watcher = true,
-      filtered_items = {
-        visible = true,
-      },
-    },
-    window = {
-      mappings = {
-        ["l"] = "open",
-        ["h"] = "close_node",
-        ["<space>"] = "none",
-        ["Y"] = {
-          function(state)
-            local node = state.tree:get_node()
-            local path = node:get_id()
-            vim.fn.setreg("+", path, "c")
-          end,
-          desc = "Copy Path to Clipboard",
-        },
-        ["O"] = {
-          function(state)
-            require("lazy.util").open(state.tree:get_node().path, { system = true })
-          end,
-          desc = "Open with System Application",
-        },
-        ["P"] = { "toggle_preview", config = { use_float = false } },
-      },
-    },
-    default_component_configs = {
-      indent = {
-        with_expanders = true, -- if nil and file nesting is enabled, will enable expanders
-        expander_collapsed = "",
-        expander_expanded = "",
-        expander_highlight = "NeoTreeExpander",
-      },
-      name = {
-        use_git_status_colors = false,
-        highlight_opened_files = "all",
-      },
-      git_status = {
-        symbols = {
-          -- Change type
-          added = "󰜄",
-          modified = "󰏭",
-          deleted = "󰛲",
-          renamed = "󰰞",
-          -- Status type
-          untracked = "󰰧",
-          ignored = "",
-          unstaged = "",
-          staged = "",
-          conflict = "󰱞",
-        },
-      },
-      modified = {
-        symbol = " ",
-      },
-    },
-    renderers = {
-      directory = {
-        { "indent" },
-        { "icon" },
-        { "current_filter" },
-        {
-          "container",
-          content = {
-            { "name", zindex = 10 },
-            {
-              "symlink_target",
-              zindex = 10,
-              highlight = "NeoTreeSymbolicLinkTarget",
-            },
-            { "clipboard", zindex = 10 },
-            {
-              "diagnostics",
-              errors_only = true,
-              zindex = 20,
-              align = "right",
-              hide_when_expanded = true,
-              symbols = {
-                error = " ",
-                warn = " ",
-                hint = " ",
-                info = " ",
-              },
-            },
-            { "git_status", zindex = 10, align = "right", hide_when_expanded = true },
-            { "file_size", zindex = 10, align = "right" },
-            { "type", zindex = 10, align = "right" },
-            { "last_modified", zindex = 10, align = "right" },
-            { "created", zindex = 10, align = "right" },
-          },
-        },
-      },
-      file = {
-        { "indent" },
-        { "icon" },
-        {
-          "container",
-          content = {
-            {
-              "name",
-              zindex = 10,
-            },
-            {
-              "symlink_target",
-              zindex = 10,
-              highlight = "NeoTreeSymbolicLinkTarget",
-            },
-            { "clipboard", zindex = 10 },
-            { "bufnr", zindex = 10 },
-            { "modified", zindex = 20, align = "right" },
-            {
-              "diagnostics",
-              zindex = 20,
-              align = "right",
-              symbols = {
-                error = " ",
-                warn = " ",
-                hint = " ",
-                info = " ",
-              },
-            },
-            { "git_status", zindex = 10, align = "right" },
-            { "file_size", zindex = 10, align = "right" },
-            { "type", zindex = 10, align = "right" },
-            { "last_modified", zindex = 10, align = "right" },
-            { "created", zindex = 10, align = "right" },
-          },
-        },
-      },
-      message = {
-        { "indent", with_markers = false },
-        { "name", highlight = "NeoTreeMessage" },
-      },
-      terminal = {
-        { "indent" },
-        { "icon" },
-        { "name" },
-        { "bufnr" },
-      },
-    },
-  },
-  config = function(_, opts)
+  config = function()
     local function on_move(data)
       Snacks.rename.on_rename_file(data.source, data.destination)
     end
-    local events = require("neo-tree.events")
-    opts.event_handlers = opts.event_handlers or {}
-    vim.list_extend(opts.event_handlers, {
-      { event = events.FILE_MOVED, handler = on_move },
-      { event = events.FILE_RENAMED, handler = on_move },
+    require("neo-tree").setup({
+      close_if_last_window = true,
+      sources = { "filesystem", "buffers", "git_status" },
+      open_files_do_not_replace_types = { "terminal", "Trouble", "trouble", "qf", "Outline" },
+      filesystem = {
+        bind_to_cwd = false,
+        follow_current_file = { enabled = true },
+        use_libuv_file_watcher = true,
+        filtered_items = {
+          visible = true,
+        },
+      },
+      window = {
+        mappings = {
+          ["l"] = "open",
+          ["h"] = "close_node",
+          ["<space>"] = "none",
+          ["Y"] = {
+            function(state)
+              local node = state.tree:get_node()
+              local path = node:get_id()
+              vim.fn.setreg("+", path, "c")
+            end,
+            desc = "Copy Path to Clipboard",
+          },
+          ["O"] = {
+            function(state)
+              require("lazy.util").open(state.tree:get_node().path, { system = true })
+            end,
+            desc = "Open with System Application",
+          },
+          ["P"] = { "toggle_preview", config = { use_float = false } },
+        },
+      },
+      default_component_configs = {
+        indent = {
+          with_expanders = true, -- if nil and file nesting is enabled, will enable expanders
+          expander_collapsed = "",
+          expander_expanded = "",
+          expander_highlight = "NeoTreeExpander",
+        },
+        name = {
+          use_git_status_colors = false,
+          highlight_opened_files = "all",
+        },
+        git_status = {
+          symbols = {
+            -- Change type
+            added = "󰜄",
+            modified = "󰏭",
+            deleted = "󰛲",
+            renamed = "󰰞",
+            -- Status type
+            untracked = "󰰧",
+            ignored = "",
+            unstaged = "",
+            staged = "",
+            conflict = "󰱞",
+          },
+        },
+        modified = {
+          symbol = " ",
+        },
+      },
+      renderers = {
+        directory = {
+          { "indent" },
+          { "icon" },
+          { "current_filter" },
+          {
+            "container",
+            content = {
+              { "name", zindex = 10 },
+              {
+                "symlink_target",
+                zindex = 10,
+                highlight = "NeoTreeSymbolicLinkTarget",
+              },
+              { "clipboard", zindex = 10 },
+              {
+                "diagnostics",
+                errors_only = true,
+                zindex = 20,
+                align = "right",
+                hide_when_expanded = true,
+                symbols = {
+                  error = " ",
+                  warn = " ",
+                  hint = " ",
+                  info = " ",
+                },
+              },
+              { "git_status", zindex = 10, align = "right", hide_when_expanded = true },
+              { "file_size", zindex = 10, align = "right" },
+              { "type", zindex = 10, align = "right" },
+              { "last_modified", zindex = 10, align = "right" },
+              { "created", zindex = 10, align = "right" },
+            },
+          },
+        },
+        file = {
+          { "indent" },
+          { "icon" },
+          {
+            "container",
+            content = {
+              {
+                "name",
+                zindex = 10,
+              },
+              {
+                "symlink_target",
+                zindex = 10,
+                highlight = "NeoTreeSymbolicLinkTarget",
+              },
+              { "clipboard", zindex = 10 },
+              { "bufnr", zindex = 10 },
+              { "modified", zindex = 20, align = "right" },
+              {
+                "diagnostics",
+                zindex = 20,
+                align = "right",
+                symbols = {
+                  error = " ",
+                  warn = " ",
+                  hint = " ",
+                  info = " ",
+                },
+              },
+              { "git_status", zindex = 10, align = "right" },
+              { "file_size", zindex = 10, align = "right" },
+              { "type", zindex = 10, align = "right" },
+              { "last_modified", zindex = 10, align = "right" },
+              { "created", zindex = 10, align = "right" },
+            },
+          },
+        },
+        message = {
+          { "indent", with_markers = false },
+          { "name", highlight = "NeoTreeMessage" },
+        },
+        terminal = {
+          { "indent" },
+          { "icon" },
+          { "name" },
+          { "bufnr" },
+        },
+      },
+      event_handlers = {
+        { event = require("neo-tree.events").FILE_MOVED, handler = on_move },
+        { event = require("neo-tree.events").FILE_RENAMED, handler = on_move },
+      },
     })
-    require("neo-tree").setup(opts)
     vim.api.nvim_create_autocmd("TermClose", {
       pattern = "*lazygit",
       callback = function()

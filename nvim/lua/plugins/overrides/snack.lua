@@ -1,20 +1,20 @@
 -- configure current indent level highlighting
 return {
   "folke/snacks.nvim",
-  opts = function(_, opts)
-    opts.indent = {
+  opts = {
+    indent = {
       indent = {
         enabled = false,
       },
       scope = {
         enabled = true,
         only_current = true,
-        hl = "GruvBoxYellow",
+        hl = "GruvboxYellow",
       },
       chunk = {
         enabled = true,
         only_current = true,
-        hl = "GruvBoxYellow",
+        hl = "GruvboxYellow",
         char = {
           corner_top = "╭",
           corner_bottom = "╰",
@@ -23,14 +23,15 @@ return {
           arrow = "─",
         },
       },
-    }
-  end,
+    },
+  },
   keys = {
     {
       "z=",
       function()
         Snacks.picker.spelling({ layout = { preset = "select" } })
       end,
+      mode = { "n" },
       desc = "Spelling",
     },
     {
@@ -38,6 +39,7 @@ return {
       function()
         Snacks.picker.grep()
       end,
+      mode = { "n" },
       desc = "Grep",
     },
     {
@@ -45,8 +47,8 @@ return {
       function()
         Snacks.picker.grep_word()
       end,
-      desc = "Visual selection or word",
       mode = { "n", "x" },
+      desc = "Visual selection or word",
     },
   },
 }

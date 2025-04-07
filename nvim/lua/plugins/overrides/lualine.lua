@@ -354,9 +354,9 @@ end
 return {
   "matt1003/lualine.nvim",
   lazy = false,
-  opts = function()
-    vim.o.laststatus = vim.g.lualine_laststatus
-    return {
+  config = function()
+    --vim.o.laststatus = vim.g.lualine_laststatus
+    require("lualine").setup({
       options = {
         theme = gruvbox,
         globalstatus = true,
@@ -400,6 +400,6 @@ return {
         },
       },
       extensions = { "lazy" },
-    }
+    })
   end,
 }
