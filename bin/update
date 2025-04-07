@@ -260,7 +260,7 @@ function install_dependencies() {
 }
 
 function find_desktop_file() {
-  grep -l "Name=$1" "$2" || echo "[[ $1 ]]"
+  grep -l "Name=$1" "$2"*.desktop || echo "[[ $1 ]]"
 }
 
 function copy_desktop_file() {
@@ -421,7 +421,7 @@ function install_icons() {
     done
     msg "$github_name: update edge icons"
     for name in "${!EDGE_DESKTOP_ICONS[@]}"; do
-      local file="$(find_desktop_file "$name" "$LOCAL_APPLICATIONS"/msedge-*.desktop)"
+      local file="$(find_desktop_file "$name" "$LOCAL_APPLICATIONS/msedge-")"
       local icon="$ICONS_DIR/$ICONS_SET/${EDGE_DESKTOP_ICONS[$name]}"
       copy_desktop_file "$file" "$file" "$icon"
     done
