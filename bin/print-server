@@ -1,0 +1,40 @@
+#!/bin/bash
+set -euo pipefail
+
+CUPS_CONFIG="/etc/cups/client.conf"
+
+print() {
+  echo "$1"
+}
+
+print_usage() {
+  print "Usage: $0 {work|home}"
+}
+
+if [[ "${1:-}" != "work" && "${1:-}" != "home" ]]; then
+  print_usage
+  exit 1
+fi
+
+if [ ! -e "$CUPS_CONFIG" ]; then
+  print "Missing CUPS config: $CUPS_CONFIG"
+  exit 1
+fi
+
+if [ ! -f "$CUPS_CONFIG.work" ]; then
+  sudo mv "$CUPS_CONFIG" "$CUPS_CONFIG.work"
+fi
+
+if [ ! -f "$CUPS_CONFIG.home" ]; then
+  sudo touch "$CUPS_CONFIG.home"
+fi
+
+if [[ "$1" == "work" ]]; then
+  echo "Switching to work CUPS config."
+  sudo ln -sf "$CUPS_CONFIG.work" "$CUPS_CONFIG"
+elif [[ "$1" == "home" ]]; then
+  echo "Switching to home CUPS config."
+  sudo ln -sf "$CUPS_CONFIG.home" "$CUPS_CONFIG"
+fi
+
+sudo systemctl restart cups
