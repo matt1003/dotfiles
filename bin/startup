@@ -9,6 +9,7 @@ run firefox
 run outlook
 run teams
 run forticlient gui
+run libreoffice ~/Documents/hours.ods
 
 if [[ "$1" == "update" ]]; then
   update
