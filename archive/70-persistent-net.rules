@@ -1,4 +1,0 @@
-# copy this to /etc/udev/rules.d/70-persistent-net.rules
-SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", ATTR{address}=="ac:e2:d3:77:0a:f0", ATTR{dev_id}=="0x0", ATTR{type}=="1", NAME="eth0"
-SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", ATTR{address}=="ec:8e:b5:a9:80:a8", ATTR{dev_id}=="0x0", ATTR{type}=="1", NAME="eth1"
-SUBSYSTEM=="net", ACTION=="add", DRIVERS=="?*", ATTR{address}=="00:24:9b:1f:75:59", ATTR{dev_id}=="0x0", ATTR{type}=="1", NAME="eth2"

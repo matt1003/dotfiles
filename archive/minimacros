@@ -1,2 +1,0 @@
-pu pmac1            ssh admin@localhost^M^~yes^M^~admin^M
-pu pmac2            tail -f /var/log/messages^M
