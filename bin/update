@@ -83,6 +83,7 @@ declare NPM_PKGS=(
 declare -A DOT_FILES=(
   [minirc]=.minirc.dfl
   [nvim]=.config/nvim
+  [p10k.zsh]=.p10k.zsh
   [terminator.conf]=.config/terminator/config
   [tmux.conf]=.tmux.conf
   [zshrc]=.zshrc
