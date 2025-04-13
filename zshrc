@@ -86,9 +86,6 @@ HYPHEN_INSENSITIVE="true"
 # enable command auto-correction
 ENABLE_CORRECTION="true"
 
-# display red dots whilst waiting for completion
-COMPLETION_WAITING_DOTS="true"
-
 # disable username and host from window name
 ZSH_THEME_TERM_TITLE_IDLE="zsh"
 
