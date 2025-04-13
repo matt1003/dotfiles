@@ -126,6 +126,7 @@ end
 local function current_branch_component()
   return {
     "branch",
+    icon = "",
   }
 end
 
