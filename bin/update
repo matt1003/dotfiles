@@ -136,10 +136,12 @@ LAZYGIT_GITHUB="jesseduffield/lazygit"
 LAZYGIT_ARCHIVE="lazygit_@VERSION@_Linux_x86_64.tar.gz"
 
 # tmux
-TMUC_GITHUB="tmux/tmux"
+TMUX_GITHUB="tmux/tmux"
+TMUX_BUILD_CLEAN=false
 
 # nvim
 NVIM_GITHUB="neovim/neovim"
+NVIM_BUILD_CLEAN=false
 
 # TODO install virtualbox extension pack (needed for usb support)
 # https://download.virtualbox.org/virtualbox/6.1.50/Oracle_VM_VirtualBox_Extension_Pack-6.1.50.vbox-extpack
@@ -450,7 +452,7 @@ function install_lazygit() {
 }
 
 function install_tmux() {
-  update_github_repository "$TMUC_GITHUB"
+  update_github_repository "$TMUX_GITHUB"
   (
     cd "$github_workdir"
     # build prerequisites
@@ -460,6 +462,11 @@ function install_tmux() {
     msg "$github_name: configure"
     sh autogen.sh
     ./configure
+    # clean
+    if [[ $TMUX_BUILD_CLEAN == "true" ]]; then
+      msg "$github_name: clean"
+      make clean
+    fi
     # make
     msg "$github_name: make"
     make
@@ -477,8 +484,10 @@ function install_nvim() {
     msg "$github_name: install dependencies"
     sudo apt-get install -y ninja-build gettext cmake curl build-essential
     # clean
-    msg "$github_name: clean"
-    make distclean
+    if [[ $NVIM_BUILD_CLEAN == "true" ]]; then
+      msg "$github_name: clean"
+      make distclean
+    fi
     # make
     msg "$github_name: make"
     make CMAKE_BUILD_TYPE=Release
@@ -546,6 +555,12 @@ else
   use_latest_github_version=0
 fi
 
+# Set tmux/build to clean build when argument 'clean' is present:
+if [[ " $@ " =~ " clean " ]]; then
+  TMUX_BUILD_CLEAN=true
+  NVIM_BUILD_CLEAN=true
+fi
+
 # Default to apt and snap when no arguments are present:
 if [ " $@ " == "  " ]; then
   set -- apt snap
@@ -598,13 +613,19 @@ for arg in "$@"; do
   nvim)
     install_nvim
     # TODO: Reset lazy vim (custom reset logic)
-    rm -rf "$HOME/.cache/nvim" "$HOME/.local/share/nvim" "$HOME/.local/state/nvim" "$HOME/.config/nvim/lazy-lock.json"
+    if [[ $NVIM_BUILD_CLEAN == "true" ]]; then
+      msg "lazy vim: clean"
+      rm -rf "$HOME/.cache/nvim" "$HOME/.local/share/nvim" "$HOME/.local/state/nvim" "$HOME/.config/nvim/lazy-lock.json"
+    fi
     ;;
   wallpaper)
     install_wallpaper_config
     ;;
   backups)
     install_backups_config
+    ;;
+  clean)
+    # already handled
     ;;
   *)
     err "Unknown argument: $arg"
