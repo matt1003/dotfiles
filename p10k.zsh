@@ -413,11 +413,46 @@
 
   #####################################[ vcs: git status ]######################################
   # Branch icon. Set this parameter to '\UE0A0 ' for the popular Powerline branch icon.
-  typeset -g POWERLEVEL9K_VCS_BRANCH_ICON='\uF126 '
+  typeset -g POWERLEVEL9K_VCS_BRANCH_ICON=' '
 
   # Untracked files icon. It's really a question mark, your font isn't broken.
   # Change the value of this parameter to show a different icon.
-  typeset -g POWERLEVEL9K_VCS_UNTRACKED_ICON='?'
+  typeset -g POWERLEVEL9K_VCS_UNTRACKED_ICON='󰬜'
+
+  # Icons for Git status.
+  typeset -g POWERLEVEL9K_GIT_BRANCH_ICON=$POWERLEVEL9K_VCS_BRANCH_ICON
+  typeset -g POWERLEVEL9K_GIT_TAG_ICON=' '
+  typeset -g POWERLEVEL9K_GIT_CHANGESET_ICON=' '
+  typeset -g POWERLEVEL9K_GIT_COMMITS_BEHIND_ICON=' '
+  typeset -g POWERLEVEL9K_GIT_COMMITS_AHEAD_ICON=' '
+  typeset -g POWERLEVEL9K_GIT_PUSH_COMMITS_BEHIND_ICON=' '
+  typeset -g POWERLEVEL9K_GIT_PUSH_COMMITS_AHEAD_ICON=' '
+  typeset -g POWERLEVEL9K_GIT_STASHES_ICON=' '
+  typeset -g POWERLEVEL9K_GIT_STATUS_ACTION_ICON=' '
+  typeset -g POWERLEVEL9K_GIT_CONFLICTED_ICON='󰱝 '
+  typeset -g POWERLEVEL9K_GIT_MODIFIED_STAGED_ICON='󰏭 '
+  typeset -g POWERLEVEL9K_GIT_MODIFIED_UNSTAGED_ICON=' '
+  typeset -g POWERLEVEL9K_GIT_UNTRACKED_ICON=$POWERLEVEL9K_VCS_UNTRACKED_ICON
+  typeset -g POWERLEVEL9K_GIT_WARNING_ICON=''
+
+  # Colors for Git status:
+  typeset -g POWERLEVEL9K_GIT_BRANCH_FOREGROUND=10 # green
+  typeset -g POWERLEVEL9K_GIT_TAG_FOREGROUND=10 # green
+  typeset -g POWERLEVEL9K_GIT_CHANGESET_FOREGROUND=10 # green
+  typeset -g POWERLEVEL9K_GIT_TRACKING_BRANCH_FOREGROUND=10 # green
+  typeset -g POWERLEVEL9K_GIT_WIP_FOREGROUND=11 # yellow
+  typeset -g POWERLEVEL9K_GIT_COMMITS_BEHIND_FOREGROUND=10 # green
+  typeset -g POWERLEVEL9K_GIT_COMMITS_AHEAD_FOREGROUND=10 # green
+  typeset -g POWERLEVEL9K_GIT_PUSH_COMMITS_BEHIND_FOREGROUND=10 # green
+  typeset -g POWERLEVEL9K_GIT_PUSH_COMMITS_AHEAD_FOREGROUND=10 # green
+  typeset -g POWERLEVEL9K_GIT_STASHES_FOREGROUND=14 # aqua
+  typeset -g POWERLEVEL9K_GIT_STATUS_ACTION_FOREGROUND=9 # red
+  typeset -g POWERLEVEL9K_GIT_CONFLICTED_FOREGROUND=9 # red
+  typeset -g POWERLEVEL9K_GIT_MODIFIED_STAGED_FOREGROUND=11 # yellow
+  typeset -g POWERLEVEL9K_GIT_MODIFIED_UNSTAGED_FOREGROUND=11 # yellow
+  typeset -g POWERLEVEL9K_GIT_UNTRACKED_FOREGROUND=13 # purple
+  typeset -g POWERLEVEL9K_GIT_WARNING_FOREGROUND=11 # yellow
+  typeset -g POWERLEVEL9K_GIT_INCOMPLETE_FOREGROUND=8 # gray
 
   # Formatter for Git status.
   #
@@ -439,18 +474,40 @@
 
     if (( $1 )); then
       # Styling for up-to-date Git status.
-      local       meta='%f'     # default foreground
-      local      clean='%10F'   # green foreground
-      local   modified='%11F'   # yellow foreground
-      local  untracked='%12F'   # blue foreground
-      local conflicted='%09F'   # red foreground
+      local fg_branch="%${POWERLEVEL9K_GIT_BRANCH_FOREGROUND}F"
+      local fg_tag="%${POWERLEVEL9K_GIT_TAG_FOREGROUND}F"
+      local fg_changeset="%${POWERLEVEL9K_GIT_CHANGESET_FOREGROUND}F"
+      local fg_tracking_branch="%${POWERLEVEL9K_GIT_TRACKING_BRANCH_FOREGROUND}F"
+      local fg_wip="%${POWERLEVEL9K_GIT_WIP_FOREGROUND}F"
+      local fg_commits_behind="%${POWERLEVEL9K_GIT_COMMITS_BEHIND_FOREGROUND}F"
+      local fg_commits_ahead="%${POWERLEVEL9K_GIT_COMMITS_AHEAD_FOREGROUND}F"
+      local fg_push_commits_behind="%${POWERLEVEL9K_GIT_PUSH_COMMITS_BEHIND_FOREGROUND}F"
+      local fg_push_commits_ahead="%${POWERLEVEL9K_GIT_PUSH_COMMITS_AHEAD_FOREGROUND}F"
+      local fg_stashes="%${POWERLEVEL9K_GIT_STASHES_FOREGROUND}F"
+      local fg_status_action="%${POWERLEVEL9K_GIT_STATUS_ACTION_FOREGROUND}F"
+      local fg_conflicted="%${POWERLEVEL9K_GIT_CONFLICTED_FOREGROUND}F"
+      local fg_modified_staged="%${POWERLEVEL9K_GIT_MODIFIED_STAGED_FOREGROUND}F"
+      local fg_modified_unstaged="%${POWERLEVEL9K_GIT_MODIFIED_UNSTAGED_FOREGROUND}F"
+      local fg_untracked="%${POWERLEVEL9K_GIT_UNTRACKED_FOREGROUND}F"
+      local fg_warning="%${POWERLEVEL9K_GIT_WARNING_FOREGROUND}F"
     else
       # Styling for incomplete and stale Git status.
-      local       meta='%08F'  # grey foreground
-      local      clean='%08F'  # grey foreground
-      local   modified='%08F'  # grey foreground
-      local  untracked='%08F'  # grey foreground
-      local conflicted='%08F'  # grey foreground
+      local fg_branch="%${POWERLEVEL9K_GIT_INCOMPLETE_FOREGROUND}F"
+      local fg_tag="%${POWERLEVEL9K_GIT_INCOMPLETE_FOREGROUND}F"
+      local fg_changeset="%${POWERLEVEL9K_GIT_INCOMPLETE_FOREGROUND}F"
+      local fg_tracking_branch="%${POWERLEVEL9K_GIT_INCOMPLETE_FOREGROUND}F"
+      local fg_wip="%${POWERLEVEL9K_GIT_INCOMPLETE_FOREGROUND}F"
+      local fg_commits_behind="%${POWERLEVEL9K_GIT_INCOMPLETE_FOREGROUND}F"
+      local fg_commits_ahead="%${POWERLEVEL9K_GIT_INCOMPLETE_FOREGROUND}F"
+      local fg_push_commits_behind="%${POWERLEVEL9K_GIT_INCOMPLETE_FOREGROUND}F"
+      local fg_push_commits_ahead="%${POWERLEVEL9K_GIT_INCOMPLETE_FOREGROUND}F"
+      local fg_stashes="%${POWERLEVEL9K_GIT_INCOMPLETE_FOREGROUND}F"
+      local fg_status_action="%${POWERLEVEL9K_GIT_INCOMPLETE_FOREGROUND}F"
+      local fg_conflicted="%${POWERLEVEL9K_GIT_INCOMPLETE_FOREGROUND}F"
+      local fg_modified_staged="%${POWERLEVEL9K_GIT_INCOMPLETE_FOREGROUND}F"
+      local fg_modified_unstaged="%${POWERLEVEL9K_GIT_INCOMPLETE_FOREGROUND}F"
+      local fg_untracked="%${POWERLEVEL9K_GIT_INCOMPLETE_FOREGROUND}F"
+      local fg_warning="%${POWERLEVEL9K_GIT_INCOMPLETE_FOREGROUND}F"
     fi
 
     local res
@@ -461,7 +518,7 @@
       # Otherwise show the first 12 … the last 12.
       # Tip: To always show local branch name in full without truncation, delete the next line.
       (( $#branch > 32 )) && branch[13,-13]="…"  # <-- this line
-      res+="${clean}${(g::)POWERLEVEL9K_VCS_BRANCH_ICON}${branch//\%/%%}"
+      res+="${fg_branch}${(g::)POWERLEVEL9K_GIT_BRANCH_ICON}${branch//\%/%%}"
     fi
 
     if [[ -n $VCS_STATUS_TAG
@@ -474,60 +531,60 @@
       # Otherwise show the first 12 … the last 12.
       # Tip: To always show tag name in full without truncation, delete the next line.
       (( $#tag > 32 )) && tag[13,-13]="…"  # <-- this line
-      res+="${meta}#${clean}${tag//\%/%%}"
+      res+="${fg_tag}${(g::)POWERLEVEL9K_GIT_TAG_ICON}${tag//\%/%%}"
     fi
 
     # Display the current Git commit if there is no branch and no tag.
     # Tip: To always display the current Git commit, delete the next line.
     [[ -z $VCS_STATUS_LOCAL_BRANCH && -z $VCS_STATUS_TAG ]] &&  # <-- this line
-      res+="${meta}@${clean}${VCS_STATUS_COMMIT[1,8]}"
+      res+="${fg_changeset}${(g::)POWERLEVEL9K_GIT_CHANGESET_ICON}${VCS_STATUS_COMMIT[1,8]}"
 
     # Show tracking branch name if it differs from local branch.
     if [[ -n ${VCS_STATUS_REMOTE_BRANCH:#$VCS_STATUS_LOCAL_BRANCH} ]]; then
-      res+="${meta}:${clean}${(V)VCS_STATUS_REMOTE_BRANCH//\%/%%}"
+      res+="${fg_tracking_branch}:${(V)VCS_STATUS_REMOTE_BRANCH//\%/%%}"
     fi
 
     # Display "wip" if the latest commit's summary contains "wip" or "WIP".
     if [[ $VCS_STATUS_COMMIT_SUMMARY == (|*[^[:alnum:]])(wip|WIP)(|[^[:alnum:]]*) ]]; then
-      res+=" ${modified}wip"
+      res+=" ${fg_wip}wip"
     fi
 
     if (( VCS_STATUS_COMMITS_AHEAD || VCS_STATUS_COMMITS_BEHIND )); then
       # ⇣42 if behind the remote.
-      (( VCS_STATUS_COMMITS_BEHIND )) && res+=" ${clean}⇣${VCS_STATUS_COMMITS_BEHIND}"
+      (( VCS_STATUS_COMMITS_BEHIND )) && res+=" ${fg_commits_behind}${(g::)POWERLEVEL9K_GIT_COMMITS_BEHIND_ICON}${VCS_STATUS_COMMITS_BEHIND}"
       # ⇡42 if ahead of the remote; no leading space if also behind the remote: ⇣42⇡42.
       (( VCS_STATUS_COMMITS_AHEAD && !VCS_STATUS_COMMITS_BEHIND )) && res+=" "
-      (( VCS_STATUS_COMMITS_AHEAD  )) && res+="${clean}⇡${VCS_STATUS_COMMITS_AHEAD}"
+      (( VCS_STATUS_COMMITS_AHEAD  )) && res+="${fg_commits_ahead}${(g::)POWERLEVEL9K_GIT_COMMITS_AHEAD_ICON}${VCS_STATUS_COMMITS_AHEAD}"
     elif [[ -n $VCS_STATUS_REMOTE_BRANCH ]]; then
       # Tip: Uncomment the next line to display '=' if up to date with the remote.
       # res+=" ${clean}="
     fi
 
     # ⇠42 if behind the push remote.
-    (( VCS_STATUS_PUSH_COMMITS_BEHIND )) && res+=" ${clean}⇠${VCS_STATUS_PUSH_COMMITS_BEHIND}"
+    (( VCS_STATUS_PUSH_COMMITS_BEHIND )) && res+=" ${fg_push_commits_behind}${(g::)POWERLEVEL9K_GIT_PUSH_COMMITS_BEHIND_ICON}${VCS_STATUS_PUSH_COMMITS_BEHIND}"
     (( VCS_STATUS_PUSH_COMMITS_AHEAD && !VCS_STATUS_PUSH_COMMITS_BEHIND )) && res+=" "
     # ⇢42 if ahead of the push remote; no leading space if also behind: ⇠42⇢42.
-    (( VCS_STATUS_PUSH_COMMITS_AHEAD  )) && res+="${clean}⇢${VCS_STATUS_PUSH_COMMITS_AHEAD}"
+    (( VCS_STATUS_PUSH_COMMITS_AHEAD  )) && res+="${fg_push_commits_ahead}${(g::)POWERLEVEL9K_GIT_PUSH_COMMITS_AHEAD_ICON}${VCS_STATUS_PUSH_COMMITS_AHEAD}"
     # *42 if have stashes.
-    (( VCS_STATUS_STASHES        )) && res+=" ${clean}*${VCS_STATUS_STASHES}"
+    (( VCS_STATUS_STASHES        )) && res+=" ${fg_stashes}${(g::)POWERLEVEL9K_GIT_STASHES_ICON}${VCS_STATUS_STASHES}"
     # 'merge' if the repo is in an unusual state.
-    [[ -n $VCS_STATUS_ACTION     ]] && res+=" ${conflicted}${VCS_STATUS_ACTION}"
+    [[ -n $VCS_STATUS_ACTION     ]] && res+=" ${fg_status_action}${(g::)POWERLEVEL9K_GIT_STATUS_ACTION_ICON}${VCS_STATUS_ACTION}"
     # ~42 if have merge conflicts.
-    (( VCS_STATUS_NUM_CONFLICTED )) && res+=" ${conflicted}~${VCS_STATUS_NUM_CONFLICTED}"
+    (( VCS_STATUS_NUM_CONFLICTED )) && res+=" ${fg_conflicted}${(g::)POWERLEVEL9K_GIT_CONFLICTED_ICON}${VCS_STATUS_NUM_CONFLICTED}"
     # +42 if have staged changes.
-    (( VCS_STATUS_NUM_STAGED     )) && res+=" ${modified}+${VCS_STATUS_NUM_STAGED}"
+    (( VCS_STATUS_NUM_STAGED     )) && res+=" ${fg_modified_staged}${(g::)POWERLEVEL9K_GIT_MODIFIED_STAGED_ICON}${VCS_STATUS_NUM_STAGED}"
     # !42 if have unstaged changes.
-    (( VCS_STATUS_NUM_UNSTAGED   )) && res+=" ${modified}!${VCS_STATUS_NUM_UNSTAGED}"
+    (( VCS_STATUS_NUM_UNSTAGED   )) && res+=" ${fg_modified_unstaged}${(g::)POWERLEVEL9K_GIT_MODIFIED_UNSTAGED_ICON}${VCS_STATUS_NUM_UNSTAGED}"
     # ?42 if have untracked files. It's really a question mark, your font isn't broken.
     # See POWERLEVEL9K_VCS_UNTRACKED_ICON above if you want to use a different icon.
     # Remove the next line if you don't want to see untracked files at all.
-    (( VCS_STATUS_NUM_UNTRACKED  )) && res+=" ${untracked}${(g::)POWERLEVEL9K_VCS_UNTRACKED_ICON}${VCS_STATUS_NUM_UNTRACKED}"
+    (( VCS_STATUS_NUM_UNTRACKED  )) && res+=" ${fg_untracked}${(g::)POWERLEVEL9K_GIT_UNTRACKED_ICON}${VCS_STATUS_NUM_UNTRACKED}"
     # "─" if the number of unstaged files is unknown. This can happen due to
     # POWERLEVEL9K_VCS_MAX_INDEX_SIZE_DIRTY (see below) being set to a non-negative number lower
     # than the number of files in the Git index, or due to bash.showDirtyState being set to false
     # in the repository config. The number of staged and untracked files may also be unknown
     # in this case.
-    (( VCS_STATUS_HAS_UNSTAGED == -1 )) && res+=" ${modified}─"
+    (( VCS_STATUS_HAS_UNSTAGED == -1 )) && res+=" ${fg_warning}${(g::)POWERLEVEL9K_GIT_WARNING_ICON}"
 
     typeset -g my_git_format=$res
   }
@@ -559,7 +616,7 @@
   typeset -g POWERLEVEL9K_VCS_VISUAL_IDENTIFIER_COLOR=$GREEN
   typeset -g POWERLEVEL9K_VCS_LOADING_VISUAL_IDENTIFIER_COLOR=$GRAY
   # Custom icon.
-  # typeset -g POWERLEVEL9K_VCS_VISUAL_IDENTIFIER_EXPANSION='⭐'
+  typeset -g POWERLEVEL9K_VCS_VISUAL_IDENTIFIER_EXPANSION=
   # Custom prefix.
   # typeset -g POWERLEVEL9K_VCS_PREFIX='%fon '
 
@@ -571,7 +628,7 @@
   # These settings are used for repositories other than Git or when gitstatusd fails and
   # Powerlevel10k has to fall back to using vcs_info.
   typeset -g POWERLEVEL9K_VCS_CLEAN_FOREGROUND=$GREEN
-  typeset -g POWERLEVEL9K_VCS_UNTRACKED_FOREGROUND=$GREEN
+  typeset -g POWERLEVEL9K_VCS_UNTRACKED_FOREGROUND=$PURPLE
   typeset -g POWERLEVEL9K_VCS_MODIFIED_FOREGROUND=$YELLOW
 
   ##########################[ status: exit code of the last command ]###########################
