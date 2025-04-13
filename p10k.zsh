@@ -32,12 +32,12 @@
   # The list of segments shown on the left. Fill it with the most important segments.
   typeset -g POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(
     # =========================[ Line #1 ]=========================
-    os_icon                 # os identifier
+    dynamic_multiline_prefix_first
     dir                     # current directory
     vcs                     # git status
+    newline
     # =========================[ Line #2 ]=========================
-    newline                 # \n
-    prompt_char             # prompt symbol
+    dynamic_multiline_prefix_last
   )
 
   # The list of segments shown on the right. Fill it with less important segments.
@@ -107,8 +107,8 @@
     per_directory_history   # Oh My Zsh per-directory-history local/global indicator
     # cpu_arch              # CPU architecture
     # time                  # current time
-    # =========================[ Line #2 ]=========================
     newline
+    # =========================[ Line #2 ]=========================
     # ip                    # ip address and bandwidth usage for a specified network interface
     # public_ip             # public IP address
     # proxy                 # system-wide http/https/ftp proxy
@@ -147,16 +147,16 @@
   typeset -g POWERLEVEL9K_PROMPT_ADD_NEWLINE=false
 
   # Connect left prompt lines with these symbols.
-  typeset -g POWERLEVEL9K_MULTILINE_FIRST_PROMPT_PREFIX='%12F╭─'
-  typeset -g POWERLEVEL9K_MULTILINE_NEWLINE_PROMPT_PREFIX='%12F├─'
-  typeset -g POWERLEVEL9K_MULTILINE_LAST_PROMPT_PREFIX='%12F╰─'
+  typeset -g POWERLEVEL9K_MULTILINE_FIRST_PROMPT_PREFIX=' '
+  typeset -g POWERLEVEL9K_MULTILINE_NEWLINE_PROMPT_PREFIX=''
+  typeset -g POWERLEVEL9K_MULTILINE_LAST_PROMPT_PREFIX=''
   # Connect right prompt lines with these symbols.
   typeset -g POWERLEVEL9K_MULTILINE_FIRST_PROMPT_SUFFIX=
   typeset -g POWERLEVEL9K_MULTILINE_NEWLINE_PROMPT_SUFFIX=
   typeset -g POWERLEVEL9K_MULTILINE_LAST_PROMPT_SUFFIX=
 
   # The left end of left prompt.
-  typeset -g POWERLEVEL9K_LEFT_PROMPT_FIRST_SEGMENT_START_SYMBOL=' '
+  typeset -g POWERLEVEL9K_LEFT_PROMPT_FIRST_SEGMENT_START_SYMBOL=''
   # The right end of right prompt.
   typeset -g POWERLEVEL9K_RIGHT_PROMPT_LAST_SEGMENT_END_SYMBOL=
 
@@ -192,6 +192,50 @@
   typeset -g POWERLEVEL9K_OS_ICON_FOREGROUND=
   # Custom icon.
   # typeset -g POWERLEVEL9K_OS_ICON_CONTENT_EXPANSION='⭐'
+
+  #################################[ dynamic_multiline_prefix: dynamic prefixes ]##################################
+  typeset -g POWERLEVEL9K_DYNAMIC_MULTILINE_PREFIX_FIRST='╭─'
+  typeset -g POWERLEVEL9K_DYNAMIC_MULTILINE_PREFIX_MIDDLE='├─'
+  typeset -g POWERLEVEL9K_DYNAMIC_MULTILINE_PREFIX_LAST='╰'
+
+  typeset -g POWERLEVEL9K_DYNAMIC_MULTILINE_PREFIX_DIR_FOREGROUND=$BLUE
+  typeset -g POWERLEVEL9K_DYNAMIC_MULTILINE_PREFIX_DIR_NOT_WRITABLE_FOREGROUND=$YELLOW
+  typeset -g POWERLEVEL9K_DYNAMIC_MULTILINE_PREFIX_DIR_NON_EXISTENT_FOREGROUND=$RED
+
+  # acquire class suffix  and  respectively.
+  function dynamic_multiline_prefix_foreground() {
+    if [[ ! -e $_p9k__cwd ]]; then
+      echo $POWERLEVEL9K_DYNAMIC_MULTILINE_PREFIX_DIR_NON_EXISTENT_FOREGROUND
+    elif [[ ! -w $_p9k__cwd ]]; then
+      echo $POWERLEVEL9K_DYNAMIC_MULTILINE_PREFIX_DIR_NOT_WRITABLE_FOREGROUND
+    else
+      echo $POWERLEVEL9K_DYNAMIC_MULTILINE_PREFIX_DIR_FOREGROUND
+    fi
+  }
+
+  function prompt_dynamic_multiline_prefix_first() {
+    p10k segment -f $(dynamic_multiline_prefix_foreground) -i $POWERLEVEL9K_DYNAMIC_MULTILINE_PREFIX_FIRST
+  }
+
+  function instant_prompt_dynamic_multiline_prefix_first() {
+    p10k segment -f $POWERLEVEL9K_DYNAMIC_MULTILINE_PREFIX_DIR_FOREGROUND -i $POWERLEVEL9K_DYNAMIC_MULTILINE_PREFIX_FIRST
+  }
+
+  function prompt_dynamic_multiline_prefix_middle() {
+    p10k segment -f $(dynamic_multiline_prefix_foreground) -i $POWERLEVEL9K_DYNAMIC_MULTILINE_PREFIX_MIDDLE
+  }
+
+  function instant_prompt_dynamic_multiline_prefix_middle() {
+    p10k segment -f $POWERLEVEL9K_DYNAMIC_MULTILINE_PREFIX_DIR_FOREGROUND -i $POWERLEVEL9K_DYNAMIC_MULTILINE_PREFIX_MIDDLE
+  }
+
+  function prompt_dynamic_multiline_prefix_last() {
+    p10k segment -f $(dynamic_multiline_prefix_foreground) -i $POWERLEVEL9K_DYNAMIC_MULTILINE_PREFIX_LAST
+  }
+
+  function instant_prompt_dynamic_multiline_prefix_last() {
+    p10k segment -f $POWERLEVEL9K_DYNAMIC_MULTILINE_PREFIX_DIR_FOREGROUND -i $POWERLEVEL9K_DYNAMIC_MULTILINE_PREFIX_LAST
+  }
 
   ################################[ prompt_char: prompt symbol ]################################
   # Green prompt symbol if the last command succeeded.
