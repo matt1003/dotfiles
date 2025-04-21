@@ -375,6 +375,18 @@ function make_install() {
   )
 }
 
+function rm_arg() {
+  target="$1"
+  shift
+  args=()
+  for arg in "$@"; do
+    if [[ "$arg" != "$target" ]]; then
+      args+=("$arg")
+    fi
+  done
+  echo "${args[@]}"
+}
+
 ##############################################################################
 # INSTALLERS                                                                 #
 ##############################################################################
@@ -627,7 +639,7 @@ install_dependencies
 # Extract the latest github version argument:
 if [[ " $* " =~ " latest " ]]; then
   use_latest_github_version=true
-  set -- "${@/latest/}"
+  set -- $(rm_arg latest $@)
 else
   use_latest_github_version=false
 fi
@@ -635,7 +647,7 @@ fi
 # Extract the build clean argument:
 if [[ " $* " =~ " clean " ]]; then
   use_clean_build=true
-  set -- "${@/clean/}"
+  set -- $(rm_arg clean $@)
 else
   use_clean_build=false
 fi
@@ -705,9 +717,6 @@ for arg in "$@"; do
     ;;
   backups)
     install_backups_config
-    ;;
-  "")
-    # ignore empty strings
     ;;
   *)
     err "Unknown argument: \"$arg\""
