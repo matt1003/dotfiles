@@ -38,6 +38,7 @@
     # =========================[ Line #1 ]=========================
     dynamic_multiline_prefix_first
     dir                     # current directory
+    background_jobs         # presence of background jobs
     vcs                     # git status
     newline
     # =========================[ Line #2 ]=========================
@@ -52,7 +53,6 @@
     # =========================[ Line #0 ]=========================
     newline
     # =========================[ Line #1 ]=========================
-    background_jobs         # presence of background jobs
     # direnv                # direnv status (https://direnv.net/)
     # asdf                  # asdf version manager (https://github.com/asdf-vm/asdf)
     # virtualenv            # python virtual environment (https://docs.python.org/3/library/venv.html)
@@ -421,7 +421,7 @@
 
   # Untracked files icon. It's really a question mark, your font isn't broken.
   # Change the value of this parameter to show a different icon.
-  typeset -g POWERLEVEL9K_VCS_UNTRACKED_ICON='󰬜'
+  typeset -g POWERLEVEL9K_VCS_UNTRACKED_ICON='󰬜 '
 
   # Icons for Git status.
   typeset -g POWERLEVEL9K_GIT_BRANCH_ICON=$POWERLEVEL9K_VCS_BRANCH_ICON
@@ -450,7 +450,7 @@
   typeset -g POWERLEVEL9K_GIT_PUSH_COMMITS_BEHIND_FOREGROUND=10 # green
   typeset -g POWERLEVEL9K_GIT_PUSH_COMMITS_AHEAD_FOREGROUND=10 # green
   typeset -g POWERLEVEL9K_GIT_STASHES_FOREGROUND=14 # aqua
-  typeset -g POWERLEVEL9K_GIT_STATUS_ACTION_FOREGROUND=9 # red
+  typeset -g POWERLEVEL9K_GIT_STATUS_ACTION_FOREGROUND=12 # blue
   typeset -g POWERLEVEL9K_GIT_CONFLICTED_FOREGROUND=9 # red
   typeset -g POWERLEVEL9K_GIT_MODIFIED_STAGED_FOREGROUND=11 # yellow
   typeset -g POWERLEVEL9K_GIT_MODIFIED_UNSTAGED_FOREGROUND=11 # yellow
@@ -691,9 +691,9 @@
   # Don't show the number of background jobs.
   typeset -g POWERLEVEL9K_BACKGROUND_JOBS_VERBOSE=true
   # Background jobs color.
-  typeset -g POWERLEVEL9K_BACKGROUND_JOBS_FOREGROUND=$ORANGE
+  typeset -g POWERLEVEL9K_BACKGROUND_JOBS_FOREGROUND=$AQUA
   # Custom icon.
-  typeset -g POWERLEVEL9K_BACKGROUND_JOBS_VISUAL_IDENTIFIER_EXPANSION=''
+  typeset -g POWERLEVEL9K_BACKGROUND_JOBS_VISUAL_IDENTIFIER_EXPANSION=' '
 
   #######################[ direnv: direnv status (https://direnv.net/) ]########################
   # Direnv color.
