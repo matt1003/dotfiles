@@ -1,0 +1,502 @@
+#!/bin/bash
+set -euo pipefail
+
+SPIN_DURATION_SEC=2
+SPIN_METHOD="quadratic_ease_in"
+IMAGE_MAX_WIDTH_PX=500
+IMAGE_MAX_HEIGHT_PX=500
+START_MESSAGES=(
+  "Spin the wheel to play!"
+  "Let the games begin!"
+  "Who's it gonna be? Let's find out!"
+  "Welcome players! Who will be picked first?"
+  "Ready, set, fight!"
+  "One of you will be chosen. The rest? Irrelevant!"
+)
+SELECTING_LAST_MESSAGES=(
+  "And the last..."
+)
+DECORATION_LEFT="¸,ø¤º°\`°º¤ø,¸¸,ø¤º°\`°º¤ø,¸¸,ø¤º°\`°º¤ø,¸¸,ø¤º°\`°º¤ø,¸¸,ø¤º°\`°º¤ø,¸¸,ø¤º°\`°º¤ø,¸¸,"
+DECORATION_RIGHT=",¸¸,ø¤º°\`°º¤ø,¸¸,ø¤º°\`°º¤ø,¸¸,ø¤º°\`°º¤ø,¸¸,ø¤º°\`°º¤ø,¸¸,ø¤º°\`°º¤ø,¸¸,ø¤º°\`°º¤ø,¸"
+RAINBOW_TEXT_COLORS=(91 93 92 96 94 95) # Red, Yellow, Green, Cyan, Blue, Magenta
+DEBUG=false
+
+function error() {
+  echo "Error: $1" >&2
+  exit 1
+}
+
+function debug() {
+  if $DEBUG; then
+    echo "$1"
+  fi
+}
+
+function full_path() {
+  realpath -e "${1/#\~/$HOME}"
+}
+
+function check_for_input() { # (non-blocking)
+  # check for any key press:
+  read -rsn1 -t 0.001 KEY
+}
+
+function wait_for_input() { # (blocking)
+  # flush pending input:
+  while read -rsn1 -t 0.001 KEY; do :; done
+  # wait for the next key press:
+  while ! read -rsn1 -t 0.001 KEY; do :; done
+}
+
+function sub_second_sleep() {
+  perl -e "select(undef, undef, undef, $1)"
+}
+
+function esc_cursor_top_left() {
+  echo -en "\033[H"
+}
+
+function esc_clear_screen() {
+  echo -en "\033[2J"
+}
+
+function esc_clear_scrollback() {
+  echo -en "\033[3J"
+}
+
+function esc_format_reset() {
+  echo -en "\033[0m"
+}
+
+function esc_format_bold() {
+  echo -en "\033[1m"
+}
+
+function esc_format_color() {
+  echo -en "\033[${1}m"
+}
+
+function clear_screen_sequence() {
+  if $DEBUG; then
+    echo -en "$(esc_clear_screen)$(esc_cursor_top_left)"
+  else
+    echo -en "$(esc_clear_screen)$(esc_cursor_top_left)$(esc_clear_scrollback)"
+  fi
+}
+
+function bold_text() {
+  echo -en "$(esc_format_bold)${1}$(esc_format_reset)"
+}
+
+function muted_text() {
+  echo -en "$(esc_format_color 90)${1}$(esc_format_reset)"
+}
+
+function rainbow_text() {
+  local output="" i=0
+  while IFS= read -r -n1 c; do
+    [[ -z "$c" ]] && continue # skip empty (like EOF)
+    color="${RAINBOW_TEXT_COLORS[i % ${#RAINBOW_TEXT_COLORS[@]}]}"
+    output+="$(esc_format_color $color)${c}$(esc_format_reset)"
+    ((i++))
+  done <<<"$1"
+  echo -en "$output"
+}
+
+function load_name_image_map() {
+  while IFS="=" read -r name image; do
+    name_image_map["$name"]="$image"
+  done < <(jq -r 'to_entries[] | "\(.key)=\(.value)"' "$1")
+}
+
+function calculate_image_dimensions() {
+  # define pixels per col/row:
+  local px_per_col=7
+  local px_per_row=15
+  debug "px_per_col=$px_per_col"
+  debug "px_per_row=$px_per_row"
+
+  # obtain terminal dimensions in cols/rows:
+  local display_cols=$(tput cols)
+  local display_rows=$(tput lines)
+  debug "display_cols=$display_cols"
+  debug "display_rows=$display_rows"
+
+  # define padding around the image in cols/rows:
+  local image_min_padding_cols=2
+  local image_min_padding_rows=1
+  debug "image_min_padding_cols=$image_min_padding_cols"
+  debug "image_min_padding_rows=$image_min_padding_rows"
+
+  # calculate the max terminal cols/rows available for the image:
+  local image_available_cols=$((display_cols - (image_min_padding_cols * 2)))
+  local image_available_rows=$((display_rows - (image_min_padding_rows * 2)))
+  debug "image_available_cols=$image_available_cols"
+  debug "image_available_rows=$image_available_rows"
+
+  # calculate max image cols/rows from the max width/height in pixels:
+  local image_max_cols=$(((IMAGE_MAX_WIDTH_PX / px_per_col) - (image_min_padding_cols * 2)))
+  local image_max_rows=$(((IMAGE_MAX_HEIGHT_PX / px_per_row) - (image_min_padding_rows * 2)))
+  debug "image_max_cols=$image_max_cols"
+  debug "image_max_rows=$image_max_rows"
+
+  # make the actual image col/rows as large as possible, limited by the max cols/rows:
+  image_cols=$(((image_available_cols < image_max_cols) ? image_available_cols : image_max_cols))
+  image_rows=$(((image_available_rows < image_max_rows) ? image_available_rows : image_max_rows))
+  debug "image_cols=$image_cols"
+  debug "image_rows=$image_rows"
+
+  # convert the actual image cols/rows back to width/height in pixels:
+  image_width_px=$((image_cols * px_per_col))
+  image_height_px=$((image_rows * px_per_row))
+  debug "image_width_px=$image_width_px"
+  debug "image_height_px=$image_height_px"
+}
+
+function generate_padding() {
+  local visible_cols="$1"
+  local display_cols=$(tput cols)
+  local padding_cols=$(((display_cols - visible_cols) / 2))
+  ((padding_cols < 0)) && padding_cols=0
+  printf "%$((padding_cols < 0 ? 0 : padding_cols))s" ""
+}
+
+function generate_contestants() {
+  local output="Contestants: "
+  local length="${#output}"
+  for ((i = 0; i < ${#all_names[@]}; i++)); do
+    local name="${all_names[i]}"
+    length=$((length + ${#name}))
+    local is_last_in_list=$((i == ${#all_names[@]} - 1))
+    local is_remaining=$([[ " ${remaining_names[*]} " == *" $name "* ]] && echo 1 || echo 0)
+    if ((!is_last_in_list)); then
+      name+=", "
+      length=$((length + 2))
+    fi
+    if ((!is_remaining)); then
+      name="$(muted_text "$name")"
+    fi
+    output+="$name"
+  done
+  local padding="$(generate_padding "$length")"
+  printf "%s%s%s" "$padding" "$output" "$padding"
+}
+
+function generate_start_message() {
+  local output="${START_MESSAGES[RANDOM % ${#START_MESSAGES[@]}]}"
+  local length="${#output}"
+  local padding="$(generate_padding "$length")"
+  printf "%s%s%s" "$padding" "$output" "$padding"
+}
+
+function generate_selecting_message() {
+  local output
+  if ((${#remaining_names[@]} > 1)); then
+    output="${selected_name:-}"
+  else
+    output="${SELECTING_LAST_MESSAGES[RANDOM % ${#SELECTING_LAST_MESSAGES[@]}]}${selected_name:-}"
+  fi
+  local length="${#output}"
+  local padding="$(generate_padding "$length")"
+  printf "%s%s%s" "$padding" "$output" "$padding"
+}
+
+function generate_selected_name_with_decorations() {
+  local decoration_length=$(((image_cols - (${#selected_name} + 2)) / 2))
+  local decoration_left_truncated="${DECORATION_LEFT: -$decoration_length}"
+  local decoration_right_truncated="${DECORATION_RIGHT:0:$decoration_length}"
+  local length="$((decoration_length + 1 + ${#selected_name} + 1 + decoration_length))"
+  local padding="$(generate_padding "$length")"
+  printf "%s%s %s %s%s" \
+    "$padding" \
+    "$(rainbow_text "$decoration_left_truncated")" \
+    "$(bold_text "$selected_name")" \
+    "$(rainbow_text "$decoration_right_truncated")" \
+    "$padding"
+}
+
+function selected_image_full_path() {
+  full_path "${name_image_map["$selected_name"]}"
+}
+
+function convert_image_to_sixel() {
+  convert "$1" -resize "$2" sixel:-
+}
+
+function cache_sixel_image() {
+  convert_image_to_sixel "$1" "${image_width_px}x${image_height_px}" >"$image_temp_file"
+}
+
+function display_cached_sixel_image() {
+  cat "$image_temp_file"
+}
+
+function update_display() {
+  update_in_progress=true
+
+  local text="$(clear_screen_sequence)"
+
+  case "$current_screen" in
+  "start")
+    local line1="$(generate_contestants)"
+    local line2="$(generate_start_message)"
+    text+="\n$line1\n\n$line2"
+    ;;
+  "selecting")
+    local line1="$(generate_contestants)"
+    local line2="$(generate_selecting_message)"
+    text+="\n$line1\n\n$line2"
+    ;;
+  "selected")
+    local line1="$(generate_contestants)"
+    local line2="$(generate_selected_name_with_decorations)"
+    text+="\n$line1\n\n$line2"
+    ;;
+  *)
+    error "Unknown screen: \"${current_screen}\"." >&2
+    ;;
+  esac
+
+  local image=""
+
+  case "$current_screen" in
+  "start") ;;
+  "selecting") ;;
+  "selected")
+    image="$(selected_image_full_path)"
+    cache_sixel_image "$image"
+    ;;
+  *)
+    error "Unknown screen: \"${current_screen}\"." >&2
+    ;;
+  esac
+
+  stty -echo # do not echo input text
+  tput civis # disable cursor display
+
+  printf "$text"
+
+  if [ -n "$image" ]; then
+    printf "\n\n$(generate_padding "$image_cols")"
+    display_cached_sixel_image
+  fi
+
+  if [[ "$update_in_progress" == "resize-occurred-during-update" ]]; then
+    calculate_image_dimensions
+    current_screen="${current_screen:-start}"
+    update_display
+  else
+    update_in_progress=false
+  fi
+}
+
+function update_current_line() {
+  update_in_progress=true
+
+  local text="\r"
+
+  case "$current_screen" in
+  "start") ;;
+  "selecting")
+    local current_line="$(generate_selecting_message)"
+    text+="$current_line"
+    ;;
+  "selected") ;;
+  *)
+    error "Unknown screen: \"${current_screen}\"." >&2
+    ;;
+  esac
+
+  printf "$text"
+
+  if [[ "$update_in_progress" == "resize-occurred-during-update" ]]; then
+    calculate_image_dimensions
+    current_screen="${current_screen:-start}"
+    update_display
+  else
+    update_in_progress=false
+  fi
+}
+
+function select_random_name() {
+  echo "${remaining_names[$((RANDOM % ${#remaining_names[@]}))]}"
+}
+
+function remove_name() {
+  local tmp=()
+  for name in "${remaining_names[@]}"; do
+    [[ "$name" != "$1" ]] && tmp+=("$name")
+  done
+  remaining_names=("${tmp[@]}")
+}
+
+function quadratic_ease_out() {
+  bc -l <<<"scale=6; $1 * (2 - $1)"
+}
+
+function cubic_ease_out() {
+  bc -l <<<"scale=6; 1 - (1 - $1)^3"
+}
+
+function exponential_ease_out() {
+  bc -l <<<"scale=6; t = $1; 1 - e(-10 * t * l(2))"
+}
+
+function quadratic_ease_in() {
+  bc -l <<<"scale=6; $1 ^ 2"
+}
+
+function cubic_ease_in() {
+  bc -l <<<"scale=6; $1 ^ 3"
+}
+
+function exponential_ease_in() {
+  bc -l <<<"scale=6; e(-10 * (1 - $1) * l(2))"
+}
+
+function spin_names() {
+  local start_time=$(date +%s.%N)
+
+  while :; do
+    # Grab a name at random:
+    selected_name="$(select_random_name)"
+    current_screen="selecting"
+    update_current_line
+
+    # Check for any key press (non-blocking):
+    if check_for_input; then
+      if [[ "$KEY" == "q" ]]; then
+        exit 0
+      fi
+      break
+    fi
+
+    # Determine how long we have been spinning for:
+    local elapsed=$(bc -l <<<"$(date +%s.%N) - $start_time")
+
+    # Abort once the spin duration has been exceeded:
+    if (($(bc -l <<<"$elapsed >= $SPIN_DURATION_SEC"))); then
+      sub_second_sleep 0.5 # give a little more time to view the selected name
+      break
+    fi
+
+    # Normalized time (0..1):
+    local t=$(bc -l <<<"$elapsed / $SPIN_DURATION_SEC")
+
+    # Ease-out:
+    local eased=$($SPIN_METHOD $t)
+
+    # Map eased progress to delay range (fast → slow):
+    local delay=$(bc -l <<<"0.02 + (0.25 - 0.02) * $eased")
+
+    # Hold up there a minute!
+    sub_second_sleep "$delay"
+  done
+}
+
+function last_name() {
+  # Grab the last remaining name:
+  selected_name="$(select_random_name)"
+  current_screen="selecting"
+  update_current_line
+  sub_second_sleep 1.5 # give a little time to view the selected name
+}
+
+function on_exit() {
+  rm -f "$image_temp_file"
+  stty echo
+  tput cnorm
+  echo -e "$(clear_screen_sequence)"
+}
+
+function on_resize() {
+  if ${update_in_progress:-false}; then
+    update_in_progress="resize-occurred-during-update"
+  else
+    calculate_image_dimensions
+    current_screen="${current_screen:-start}"
+    update_display
+  fi
+}
+
+function main() {
+
+  local contestants_file="${1:-}"
+
+  if [ -z "${contestants_file}" ]; then
+    error "A contestants file must be specified." >&2
+  fi
+
+  if [ ! -r "$contestants_file" ]; then
+    error "Cannot read contestants file: \"${CONTESTANTS_FILE}\"." >&2
+  fi
+
+  # Load the name-image mapping:
+  declare -A name_image_map
+  load_name_image_map "$contestants_file"
+
+  # Extract all names into an array and sort alphabetically:
+  all_names=("${!name_image_map[@]}")
+  all_names=($(printf "%s\n" "${all_names[@]}" | sort))
+  debug "all_names=${all_names[*]}"
+
+  # Keep track of the name that have not been selected:
+  remaining_names=("${all_names[@]}")
+  debug "remaining_names=${remaining_names[*]}"
+
+  # Create a temp file to hold sixel image data
+  image_temp_file="$(mktemp)"
+  debug "image_temp_file=$image_temp_file"
+
+  # Cleanup on exit:
+  trap on_exit INT TERM EXIT
+
+  # Run image dimensions calculations before starting:
+  calculate_image_dimensions
+
+  # Start display:
+  current_screen="start"
+  update_display
+
+  # update display on terminal resize:
+  trap on_resize WINCH
+
+  # Hold your horses:
+  wait_for_input
+  if [[ "$KEY" == "q" ]]; then
+    exit 0
+  fi
+
+  while [ "${#remaining_names[@]}" -gt 0 ]; do
+    # Selecting display:
+    current_screen="selecting"
+    update_display
+    # Selection animation:
+    if [ "${#remaining_names[@]}" -gt 1 ]; then
+      spin_names
+    else
+      last_name
+    fi
+    # Selected display:
+    current_screen="selected"
+    update_display
+    # Hold your horses:
+    wait_for_input
+    if [[ "$KEY" == "q" ]]; then
+      exit 0
+    fi
+    if [[ "$KEY" != "s" ]]; then
+      remove_name "$selected_name"
+    fi
+  done
+}
+
+if ! command -v perl >/dev/null; then
+  error "'perl' not found, install perl." >&2
+fi
+
+if ! command -v convert >/dev/null; then
+  error "'convert' not found, install imagemagick." >&2
+fi
+
+main $@
