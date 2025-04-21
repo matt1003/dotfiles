@@ -1,0 +1,24 @@
+From 3b437b889313d732e0aa23e61011938688af716f Mon Sep 17 00:00:00 2001
+From: matt1003 <matt1003@gmail.com>
+Date: Tue, 22 Apr 2025 05:37:14 +1200
+Subject: [PATCH 1/2] optimize for performance
+
+---
+ config.mk | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/config.mk b/config.mk
+index 7d0c0fe..b115e96 100644
+--- a/config.mk
++++ b/config.mk
+@@ -41,6 +41,7 @@ LIBS = -L$(X11LIB) -lm -lrt -lX11 -lutil -lXft -lgd -lImlib2 ${XRENDER} ${XCURSO
+ STCPPFLAGS = -DVERSION=\"$(VERSION)\" -DICON=\"$(ICONPREFIX)/$(ICONNAME)\" -D_XOPEN_SOURCE=600
+ STCFLAGS = $(INCS) $(STCPPFLAGS) $(CPPFLAGS) $(CFLAGS)
+ STLDFLAGS = $(LIBS) $(LDFLAGS)
++CFLAGS = -O3 -march=native -pipe -fomit-frame-pointer
+ 
+ # OpenBSD:
+ #CPPFLAGS = -DVERSION=\"$(VERSION)\" -D_XOPEN_SOURCE=600 -D_BSD_SOURCE
+-- 
+2.34.1
+

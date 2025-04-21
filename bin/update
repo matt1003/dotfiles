@@ -135,6 +135,10 @@ declare -A EDGE_DESKTOP_ICONS=(
 LAZYGIT_REPO="https://github.com/jesseduffield/lazygit.git"
 LAZYGIT_ARCHIVE="lazygit_@VERSION@_Linux_x86_64.tar.gz"
 
+# st
+ST_REPO="https://github.com/veltza/st-sx.git"
+ST_DEPENDENCIES="build-essential libx11-xcb-dev libxft-dev libimlib2-dev libgd-dev libharfbuzz-dev libpcre2-dev"
+
 # tmux
 TMUX_REPO="https://github.com/tmux/tmux.git"
 TMUX_DEPENDENCIES="build-essential libevent-dev libsixel-dev ncurses-dev pkg-config bison yacc"
@@ -536,6 +540,17 @@ function install_lazygit() {
   )
 }
 
+function install_st() {
+  clone_and_update_git_repository "$ST_REPO"
+  make_install \
+    "$_git_name" \
+    "$_git_directory" \
+    "$ST_DEPENDENCIES" \
+    "$DOTFILE_ROOT/st" \
+    "rm -fv config.h" \
+    "clean"
+}
+
 function install_tmux() {
   clone_and_update_git_repository "$TMUX_REPO"
   make_install \
@@ -632,7 +647,7 @@ fi
 
 # Install everything when argument 'all' is present:
 if [[ " $* " =~ " all " ]]; then
-  set -- apt snap pip npm dot bin git gnome fonts icons lazygit tmux nvim wallpaper backups
+  set -- apt snap pip npm dot bin git gnome fonts icons lazygit st tmux nvim wallpaper backups
 fi
 
 # Loop through each argument and execute the corresponding installer:
@@ -670,6 +685,9 @@ for arg in "$@"; do
     ;;
   lazygit)
     install_lazygit
+    ;;
+  st)
+    install_st
     ;;
   tmux)
     install_tmux

@@ -1,0 +1,145 @@
+From 86f68544a51a47d5214b803eb180885238a96a57 Mon Sep 17 00:00:00 2001
+From: matt1003 <matt1003@gmail.com>
+Date: Tue, 22 Apr 2025 05:38:11 +1200
+Subject: [PATCH 2/2] my settings
+
+---
+ config.def.h | 76 ++++++++++++++++++++++++++--------------------------
+ 1 file changed, 38 insertions(+), 38 deletions(-)
+
+diff --git a/config.def.h b/config.def.h
+index 5f6dd10..e4db3bc 100644
+--- a/config.def.h
++++ b/config.def.h
+@@ -5,7 +5,7 @@
+  *
+  * font: see http://freedesktop.org/software/fontconfig/fontconfig-user.html
+  */
+-static char *font = "Liberation Mono:pixelsize=12:antialias=true:autohint=true";
++static char *font = "DejaVuSansM Nerd Font:pixelsize=12:antialias=true:autohint=true";
+ /* Spare fonts */
+ static char *font2[] = {
+ /*	"Inconsolata for Powerline:pixelsize=12:antialias=true:autohint=true", */
+@@ -59,7 +59,7 @@ unsigned int disable_bold = 0;
+ unsigned int disable_italic = 0;
+ 
+ /* Borders in pixels */
+-static int borderpx = 2;
++static int borderpx = 5;
+ 
+ /* Borders as a percentage of the cell width. If greater than zero, overrides
+  * the borderpx setting. */
+@@ -181,8 +181,8 @@ int ligatures = 0;
+  *    Bold affects lines thickness if boxdraw_bold is not 0. Italic is ignored.
+  * 0: disable (render all U25XX glyphs normally from the font).
+  */
+-int boxdraw = 0;
+-int boxdraw_bold = 0;
++int boxdraw = 1;
++int boxdraw_bold = 1;
+ 
+ /* braille (U28XX):  1: render as adjacent "pixels",  0: use font */
+ int boxdraw_braille = 0;
+@@ -243,40 +243,40 @@ char *termname = "st-256color";
+ unsigned int tabspaces = 8;
+ 
+ /* bg opacity */
+-float alpha = 0.93;
+-float alphaUnfocused = 0.6;
++float alpha = 0.90;
++float alphaUnfocused = 0.90;
+ 
+ /* Terminal colors (16 first used in escape sequence) */
+ static const char *colorname[] = {
+ 	/* 8 normal colors */
+-	"black",
+-	"red3",
+-	"green3",
+-	"yellow3",
+-	"blue2",
+-	"magenta3",
+-	"cyan3",
+-	"gray90",
++	[0] = "#282828", /* black   */
++	[1] = "#cc241d", /* red     */
++	[2] = "#98971a", /* green   */
++	[3] = "#d79921", /* yellow  */
++	[4] = "#458588", /* blue    */
++	[5] = "#b16286", /* magenta (gruvbox purple) */
++	[6] = "#689d6a", /* cyan    (gruvbox aqua) */
++	[7] = "#a89984", /* white   (gruvbox gray) */
+ 
+ 	/* 8 bright colors */
+-	"gray50",
+-	"red",
+-	"green",
+-	"yellow",
+-	"#5c5cff",
+-	"magenta",
+-	"cyan",
+-	"white",
++	[8]  = "#928374", /* black   */
++	[9]  = "#fb4934", /* red     */
++	[10] = "#b8bb26", /* green   */
++	[11] = "#fabd2f", /* yellow  */
++	[12] = "#83a598", /* blue    */
++	[13] = "#d3869b", /* magenta (gruvbox purple) */
++	[14] = "#8ec07c", /* cyan    (gruvbox aqua) */
++	[15] = "#ebdbb2", /* white   (gruvbox fg) */
+ 
+ 	[255] = 0,
+ 
+ 	/* more colors can be added after 255 to use with DefaultXX */
+-	"#cccccc", /* 256 -> cursor */
+-	"#555555", /* 257 -> rev cursor */
+-	"gray90",  /* 258 -> foreground */
+-	"black",   /* 259 -> background */
+-	"black",   /* 260 -> background unfocused */
+-	"gray90",  /* 261 -> visual bell */
++	"#ebdbb2", /* 256 -> cursor */
++	"#282828", /* 257 -> rev cursor */
++	"#ebdbb2", /* 258 -> foreground */
++	"#282828", /* 259 -> background */
++	"#282828", /* 260 -> background unfocused */
++	"#ebdbb2", /* 261 -> visual bell */
+ };
+ 
+ /*
+@@ -425,16 +425,16 @@ static Shortcut shortcuts[] = {
+ 	{ ControlMask,          XK_Print,       toggleprinter,   {.i =  0} },
+ 	{ ShiftMask,            XK_Print,       printscreen,     {.i =  0} },
+ 	{ XK_ANY_MOD,           XK_Print,       printsel,        {.i =  0} },
+-	{ TERMMOD,              XK_Prior,       zoom,            {.f = +1} },
+-	{ TERMMOD,              XK_Next,        zoom,            {.f = -1} },
+-	{ TERMMOD,              XK_Home,        zoomreset,       {.f =  0} },
++	{ ControlMask,          XK_equal,       zoom,            {.f = +1} },
++	{ ControlMask,          XK_minus,       zoom,            {.f = -1} },
++	{ ControlMask,          XK_0,           zoomreset,       {.f =  0} },
+ 	{ TERMMOD,              XK_C,           clipcopy,        {.i =  0} },
+-	{ TERMMOD,              XK_V,           clippaste,       {.i =  0} },
+-	{ TERMMOD,              XK_O,           changealpha,     {.f = +0.05} },
+-	{ TERMMOD,              XK_P,           changealpha,     {.f = -0.05} },
+-	{ TERMMOD,              XK_L,           changealpha,     {.f = 0} },
+-	//{ TERMMOD,              XK_,           changealphaunfocused, {.f = +0.05} },
+-	//{ TERMMOD,              XK_,           changealphaunfocused, {.f = -0.05} },
++	{ ControlMask,          XK_v,           clippaste,       {.i =  0} },
++	{ ControlMask|Mod1Mask, XK_equal,       changealpha,     {.f = +0.025} },
++	{ ControlMask|Mod1Mask, XK_minus,       changealpha,     {.f = -0.025} },
++	{ ControlMask|Mod1Mask, XK_0,           changealpha,     {.f =  0} },
++	//{ TERMMOD,              XK_,           changealphaunfocused, {.f = +0.025} },
++	//{ TERMMOD,              XK_,           changealphaunfocused, {.f = -0.025} },
+ 	//{ TERMMOD,              XK_,           changealphaunfocused, {.f = 0} },
+ 	{ ShiftMask,            XK_Page_Up,     kscrollup,       {.i = -1}, S_PRI },
+ 	{ ShiftMask,            XK_Page_Down,   kscrolldown,     {.i = -1}, S_PRI },
+@@ -741,7 +741,7 @@ static char ascii_printable[] =
+ #define UNDERCURL_SPIKY 2
+ #define UNDERCURL_CAPPED 3
+ // Active style
+-int undercurl_style = UNDERCURL_SPIKY;
++int undercurl_style = UNDERCURL_CAPPED;
+ // Adds 1 pixel of thickness for every undercurl_thickness_threshold pixels of font size
+ int undercurl_thickness_threshold  = 28;
+ // Extra thickness for spiky and capped waves: 0 = off, 1 = on
+-- 
+2.34.1
+
