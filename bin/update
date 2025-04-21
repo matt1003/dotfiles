@@ -104,11 +104,11 @@ declare -A GNOME_EXTENSIONS=(
 )
 
 # fonts
-NERD_FONTS_GITHUB="ryanoasis/nerd-fonts"
+NERD_FONTS_REPO="https://github.com/ryanoasis/nerd-fonts.git"
 NERD_FONTS_ARCHIVE="DejaVuSansMono.zip"
 
 # icons
-GRUVBOX_ICONS_GITHUB="SylEleuth/gruvbox-plus-icon-pack"
+GRUVBOX_ICONS_REPO="https://github.com/SylEleuth/gruvbox-plus-icon-pack.git"
 
 # snap apt
 APT_DESKTOP_DIR="/usr/share/applications"
@@ -132,16 +132,16 @@ declare -A EDGE_DESKTOP_ICONS=(
 )
 
 # lazygit
-LAZYGIT_GITHUB="jesseduffield/lazygit"
+LAZYGIT_REPO="https://github.com/jesseduffield/lazygit.git"
 LAZYGIT_ARCHIVE="lazygit_@VERSION@_Linux_x86_64.tar.gz"
 
 # tmux
-TMUX_GITHUB="tmux/tmux"
-TMUX_BUILD_CLEAN=false
+TMUX_REPO="https://github.com/tmux/tmux.git"
+TMUX_DEPENDENCIES="build-essential libevent-dev libsixel-dev ncurses-dev pkg-config bison yacc"
 
 # nvim
-NVIM_GITHUB="neovim/neovim"
-NVIM_BUILD_CLEAN=false
+NVIM_REPO="https://github.com/neovim/neovim.git"
+NVIM_DEPENDENCIES="build-essential ninja-build gettext cmake curl unzip pkg-config libtool libtool-bin autoconf automake"
 
 # TODO install virtualbox extension pack (needed for usb support)
 # https://download.virtualbox.org/virtualbox/6.1.50/Oracle_VM_VirtualBox_Extension_Pack-6.1.50.vbox-extpack
@@ -180,6 +180,14 @@ function get_locked_version() {
     echo "null"
 }
 
+function is_git_url() {
+  [[ "$1" =~ ^(https?|git|ssh)://.+(\.git)?$ ]]
+}
+
+function is_github_url() {
+  [[ "$1" =~ ^(https?|ssh|git)://(www\.)?github\.com/[^/]+/[^/]+(\.git)?$ ]]
+}
+
 function get_latest_github_version() {
   curl --fail -s "https://api.github.com/repos/$1/releases/latest" | jq -r '.tag_name' ||
     echo "null"
@@ -190,50 +198,68 @@ function get_latest_github_tag() {
     echo "null"
 }
 
-function set_github_details() {
-  github_repo="$1"
-  github_name="$(basename "$github_repo")"
-  github_workdir="$DOWNLOAD_DIR/$github_name"
-
-  github_version="$(get_locked_version "$github_repo")"
-  if [[ "$github_version" == "null" || use_latest_github_version -ne 0 ]]; then
-    github_version="$(get_latest_github_version "${github_repo}")"
-    if [[ "$github_version" == "null" ]]; then
-      err "Failed to obtain latest github version for ${github_repo}"
+function set_git_details() {
+  # ensure we are working with a git repository:
+  if ! is_git_url "$1"; then
+    err "Not a valid git repository: $1"
+  fi
+  # extract the necessary details:
+  _git_url="$1"
+  _git_name="$(basename "${_git_url%.git}")"
+  _git_directory="$DOWNLOAD_DIR/$_git_name"
+  _git_version="$(get_locked_version "$_git_url")"
+  # automatically grab the latest published version:
+  if [[ "$_git_version" == "null" || "$use_latest_github_version" == "true" ]]; then
+    if ! is_github_url "$_git_url"; then
+      err "Auto version is currently support for GitHub repositories only."
+    else
+      # TODO: include: get_latest_github_tag
+      _git_version="$(get_latest_github_version "${_git_url}")"
     fi
   fi
-  set_locked_version "$github_repo" "$github_version"
-
-  github_archive="${2:+${2//@VERSION@/${github_version#v}}}"
+  # save the latest published version:
+  if [[ "$_git_version" == "null" ]]; then
+    err "Version not set for git repository: ${_git_url}"
+  else
+    set_locked_version "$_git_url" "$_git_version"
+  fi
+  # determine the details of the archive file to be downloaded:
+  if [[ -n "${2-}" ]]; then
+    if ! is_github_url "$_git_url"; then
+      err "Download archive is currently support for GitHub repositories only."
+    else
+      _git_archive_file="${2:+${2//@VERSION@/${_git_version#v}}}"
+      _git_archive_url="${_git_url%.git}/releases/download/${_git_version}/${_git_archive_file}"
+    fi
+  fi
 }
 
-function update_github_repository() {
-  set_github_details "$1"
-  if [[ ! -d "$github_workdir/.git" ]]; then
-    msg "$github_name: git clone"
-    git clone "https://github.com/${github_repo}.git" "$github_workdir"
+function clone_and_update_git_repository() {
+  set_git_details "$1"
+  if [[ ! -d "$_git_directory/.git" ]]; then
+    msg "$_git_name: git clone"
+    git clone "$_git_url" "$_git_directory"
   fi
-  msg "$github_name: git fetch"
-  git -C "$github_workdir" fetch --tags --prune --force
-  msg "$github_name: git checkout"
-  if git -C "$github_workdir" rev-parse --verify --quiet "origin/$github_version" >/dev/null; then
+  msg "$_git_name: git fetch"
+  git -C "$_git_directory" fetch --tags --prune --force
+  msg "$_git_name: git checkout"
+  if git -C "$_git_directory" rev-parse --verify --quiet "origin/$_git_version" >/dev/null; then
     # If it's a branch, check it out with tracking
-    git -C "$github_workdir" checkout -B "$github_version" "origin/$github_version"
+    git -C "$_git_directory" checkout -B "$_git_version" "origin/$_git_version"
   else
     # Otherwise, checkout tag/commit (detached HEAD)
-    git -C "$github_workdir" checkout "$github_version"
+    git -C "$_git_directory" checkout "$_git_version"
   fi
 }
 
 function download_github_archive() {
-  set_github_details "$1" "$2"
-  msg "$github_name: remove old download"
-  rm -rfv "$github_workdir"
-  mkdir -p "$github_workdir"
-  msg "$github_name: download"
-  local url="https://github.com/${github_repo}/releases/download/${github_version}/${github_archive}"
-  echo "downloading: $url"
-  curl --fail -L -o "$github_workdir/$github_archive" "$url"
+  set_git_details "$1" "$2"
+  msg "$_git_name: remove old download"
+  rm -rfv "$_git_directory"
+  mkdir -p "$_git_directory"
+  msg "$_git_name: download"
+  echo "downloading: $_git_archive_url"
+  curl --fail -L -o "$_git_directory/$_git_archive_file" "$_git_archive_url"
 }
 
 function create_symbolic_link() {
@@ -282,8 +308,67 @@ function copy_desktop_file() {
   sed -i "s|Icon=.*|Icon=$icon|" "$dst"
 }
 
-function patch_file() {
+function apply_patch() {
   sudo patch --forward --batch --reject-file=/dev/null "$1" <"$2" || echo "Did not apply patch: $2"
+}
+
+function apply_git_patch() {
+  git am <$1
+}
+
+function apply_git_patches() {
+  local patch_dir=$1
+  local target=${2:-master}
+  local branch=${3:-patched}
+  # create a branch to apply the patches on
+  git branch -f "$branch" "$target"
+  git checkout "$branch"
+  # apply each patch
+  for patch in "$patch_dir/"*.patch; do
+    apply_git_patch "$patch"
+  done
+}
+
+NO_CONFIGURATION=""
+NO_PATCHES=""
+
+function make_install() {
+  local name=$1
+  local directory=$2
+  local dependencies=${3:-}
+  local patch_dir=${4:-}
+  local configure_cmd=${5:-}
+  local make_clean_args=${6:-clean}
+  local make_args=${7:-}
+  (
+    cd "$directory"
+    # build prerequisites
+    if [[ -n "$dependencies" ]]; then
+      msg "$name: install dependencies"
+      sudo apt install -y $dependencies
+    fi
+    # patch
+    if [[ -n "$patch_dir" ]]; then
+      msg "$name: patch"
+      apply_git_patches "$patch_dir" "$_git_version"
+    fi
+    # configure
+    if [[ -n "$configure_cmd" ]]; then
+      msg "$name: configure"
+      eval "$configure_cmd"
+    fi
+    # clean
+    if [[ "$use_clean_build" == "true" ]]; then
+      msg "$name: clean"
+      make ${make_clean_args:+$make_clean_args}
+    fi
+    # make
+    msg "$name: make"
+    make ${make_args:+$make_args} -j"$(nproc)"
+    # install
+    msg "$name: install"
+    sudo make install
+  )
 }
 
 ##############################################################################
@@ -355,9 +440,9 @@ function install_gnome_extensions() {
   # install each extension
   for ext in "${!GNOME_EXTENSIONS[@]}"; do
     IFS=":" read -r ext_name make_cmd config_cmd <<<"${GNOME_EXTENSIONS[$ext]}"
-    update_github_repository "$ext"
+    clone_and_update_git_repository "$ext"
     (
-      cd "$github_workdir"
+      cd "$_git_directory"
       # make:
       msg "gnome extensions: $ext_name: make"
       eval "$make_cmd"
@@ -382,56 +467,56 @@ function install_gnome_extensions() {
 }
 
 function install_fonts() {
-  download_github_archive "$NERD_FONTS_GITHUB" "$NERD_FONTS_ARCHIVE"
+  download_github_archive "$NERD_FONTS_REPO" "$NERD_FONTS_ARCHIVE"
   (
-    cd "$github_workdir"
+    cd "$_git_directory"
     # extract:
-    msg "$github_name: extract"
-    unzip -o "$github_archive" -d "${github_archive%.zip}"
+    msg "$_git_name: extract"
+    unzip -o "$_git_archive_file" -d "${_git_archive_file%.zip}"
     # install:
-    msg "$github_name: install"
+    msg "$_git_name: install"
     mkdir -p "$FONTS_DIR"
-    cp -v ${github_archive%.zip}/*.ttf "$FONTS_DIR"
+    cp -v ${_git_archive_file%.zip}/*.ttf "$FONTS_DIR"
     fc-cache -f
   )
 }
 
 function install_icons() {
-  update_github_repository "$GRUVBOX_ICONS_GITHUB"
+  clone_and_update_git_repository "$GRUVBOX_ICONS_REPO"
   (
-    cd "$github_workdir"
+    cd "$_git_directory"
     # install:
-    msg "$github_name: install"
-    create_symbolic_link "$ICONS_DIR/Gruvbox-Plus-Dark" "$github_workdir/Gruvbox-Plus-Dark"
-    create_symbolic_link "$ICONS_DIR/Gruvbox-Plus-Light" "$github_workdir/Gruvbox-Plus-Light"
+    msg "$_git_name: install"
+    create_symbolic_link "$ICONS_DIR/Gruvbox-Plus-Dark" "$_git_directory/Gruvbox-Plus-Dark"
+    create_symbolic_link "$ICONS_DIR/Gruvbox-Plus-Light" "$_git_directory/Gruvbox-Plus-Light"
     gsettings set org.gnome.desktop.interface icon-theme "$ICONS_SET"
     # icons
-    msg "$github_name: update apt icons"
+    msg "$_git_name: update apt icons"
     for file in "${!APT_DESKTOP_ICONS[@]}"; do
       local src="$APT_DESKTOP_DIR/$file"
       local dst="$LOCAL_APPLICATIONS/$file"
       local icon="$ICONS_DIR/$ICONS_SET/${APT_DESKTOP_ICONS[$file]}"
       copy_desktop_file "$src" "$dst" "$icon"
     done
-    msg "$github_name: update snap icons"
+    msg "$_git_name: update snap icons"
     for file in "${!SNAP_DESKTOP_ICONS[@]}"; do
       local src="$SNAP_DESKTOP_DIR/$file"
       local dst="$LOCAL_APPLICATIONS/$file"
       local icon="$ICONS_DIR/$ICONS_SET/${SNAP_DESKTOP_ICONS[$file]}"
       copy_desktop_file "$src" "$dst" "$icon"
     done
-    msg "$github_name: update edge icons"
+    msg "$_git_name: update edge icons"
     for name in "${!EDGE_DESKTOP_ICONS[@]}"; do
       local file="$(find_desktop_file "$name" "$LOCAL_APPLICATIONS/msedge-")"
       local icon="$ICONS_DIR/$ICONS_SET/${EDGE_DESKTOP_ICONS[$name]}"
       copy_desktop_file "$file" "$file" "$icon"
     done
-    msg "$github_name: restarting gnome shell"
+    msg "$_git_name: restarting gnome shell"
     restart_gnome_shell
     # git icons
-    msg "$github_name: patching git icons"
-    patch_file /usr/bin/gitk "$DOTFILE_ROOT/gitk.patch"
-    patch_file /usr/lib/git-core/git-gui "$DOTFILE_ROOT/git-gui.patch"
+    msg "$_git_name: patching git icons"
+    apply_patch /usr/bin/gitk "$DOTFILE_ROOT/gitk.patch"
+    apply_patch /usr/lib/git-core/git-gui "$DOTFILE_ROOT/git-gui.patch"
     for icon in "$DOTFILE_ROOT"/icons/*.png; do
       create_symbolic_link "$ICONS_DIR/$(basename $icon)" "$icon"
     done
@@ -439,62 +524,39 @@ function install_icons() {
 }
 
 function install_lazygit() {
-  download_github_archive "$LAZYGIT_GITHUB" "$LAZYGIT_ARCHIVE"
+  download_github_archive "$LAZYGIT_REPO" "$LAZYGIT_ARCHIVE"
   (
-    cd "$github_workdir"
+    cd "$_git_directory"
     # extract:
-    msg "$github_name: extract"
-    tar xfv "$github_archive" lazygit
+    msg "$_git_name: extract"
+    tar xfv "$_git_archive_file" lazygit
     # install:
-    msg "$github_name: install"
+    msg "$_git_name: install"
     sudo install lazygit -v -D -t /usr/local/bin/
   )
 }
 
 function install_tmux() {
-  update_github_repository "$TMUX_GITHUB"
-  (
-    cd "$github_workdir"
-    # build prerequisites
-    msg "$github_name: install dependencies"
-    sudo apt install -y libevent-dev ncurses-dev build-essential bison pkg-config yacc
-    # configure
-    msg "$github_name: configure"
-    sh autogen.sh
-    ./configure
-    # clean
-    if [[ $TMUX_BUILD_CLEAN == "true" ]]; then
-      msg "$github_name: clean"
-      make clean
-    fi
-    # make
-    msg "$github_name: make"
-    make
-    # install
-    msg "$github_name: install"
-    sudo make install
-  )
+  clone_and_update_git_repository "$TMUX_REPO"
+  make_install \
+    "$_git_name" \
+    "$_git_directory" \
+    "$TMUX_DEPENDENCIES" \
+    "$NO_PATCHES" \
+    "sh autogen.sh && ./configure --enable-sixel" \
+    "clean"
 }
 
 function install_nvim() {
-  update_github_repository "$NVIM_GITHUB"
-  (
-    cd "$github_workdir"
-    # build prerequisites
-    msg "$github_name: install dependencies"
-    sudo apt-get install -y ninja-build gettext cmake curl build-essential
-    # clean
-    if [[ $NVIM_BUILD_CLEAN == "true" ]]; then
-      msg "$github_name: clean"
-      make distclean
-    fi
-    # make
-    msg "$github_name: make"
-    make CMAKE_BUILD_TYPE=Release
-    # install
-    msg "$github_name: install"
-    sudo make install
-  )
+  clone_and_update_git_repository "$NVIM_REPO"
+  make_install \
+    "$_git_name" \
+    "$_git_directory" \
+    "$NVIM_DEPENDENCIES" \
+    "$NO_PATCHES" \
+    "$NO_CONFIGURATION" \
+    "distclean" \
+    "CMAKE_BUILD_TYPE=Release"
 }
 
 function install_git_config() {
@@ -548,26 +610,28 @@ declare -A dependencies=(
 install_dependencies
 
 # Extract the latest github version argument:
-if [[ " $@ " =~ " latest " ]]; then
-  use_latest_github_version=1
+if [[ " $* " =~ " latest " ]]; then
+  use_latest_github_version=true
   set -- "${@/latest/}"
 else
-  use_latest_github_version=0
+  use_latest_github_version=false
 fi
 
-# Set tmux/build to clean build when argument 'clean' is present:
-if [[ " $@ " =~ " clean " ]]; then
-  TMUX_BUILD_CLEAN=true
-  NVIM_BUILD_CLEAN=true
+# Extract the build clean argument:
+if [[ " $* " =~ " clean " ]]; then
+  use_clean_build=true
+  set -- "${@/clean/}"
+else
+  use_clean_build=false
 fi
 
 # Default to apt and snap when no arguments are present:
-if [ " $@ " == "  " ]; then
+if [[ $# -eq 0 ]]; then
   set -- apt snap
 fi
 
 # Install everything when argument 'all' is present:
-if [[ " $@ " =~ " all " ]]; then
+if [[ " $* " =~ " all " ]]; then
   set -- apt snap pip npm dot bin git gnome fonts icons lazygit tmux nvim wallpaper backups
 fi
 
@@ -624,11 +688,11 @@ for arg in "$@"; do
   backups)
     install_backups_config
     ;;
-  clean)
-    # already handled
+  "")
+    # ignore empty strings
     ;;
   *)
-    err "Unknown argument: $arg"
+    err "Unknown argument: \"$arg\""
     ;;
   esac
 done

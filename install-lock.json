@@ -1,9 +1,9 @@
 {
-  "SylEleuth/gruvbox-plus-icon-pack": "master",
-  "home-sweet-gnome/dash-to-panel": "v56",
-  "KEIII/gnome-shell-panel-date-format": "36b0138357213cf70e9a1de88a8b3ca38982d876",
-  "ryanoasis/nerd-fonts": "v3.3.0",
-  "jesseduffield/lazygit": "v0.48.0",
-  "neovim/neovim": "v0.10.4",
-  "tmux/tmux": "3.5a"
+  "https://github.com/SylEleuth/gruvbox-plus-icon-pack.git": "master",
+  "https://github.com/home-sweet-gnome/dash-to-panel.git": "v56",
+  "https://github.com/KEIII/gnome-shell-panel-date-format.git": "36b0138",
+  "https://github.com/ryanoasis/nerd-fonts.git": "v3.3.0",
+  "https://github.com/jesseduffield/lazygit.git": "v0.48.0",
+  "https://github.com/neovim/neovim.git": "v0.11.0",
+  "https://github.com/tmux/tmux.git": "3.5a",
 }
