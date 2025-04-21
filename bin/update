@@ -99,8 +99,8 @@ GIT_DIFFTOOL=meld
 
 # gnome
 declare -A GNOME_EXTENSIONS=(
-  ["home-sweet-gnome/dash-to-panel"]="dash-to-panel@jderose9.github.com:make zip-file:true"
-  ["KEIII/gnome-shell-panel-date-format"]="panel-date-format@keiii.github.com:make:dconf write /org/gnome/shell/extensions/panel-date-format/format \"$(<"$DOTFILE_ROOT/panel-date-format")\""
+  ["https://github.com/home-sweet-gnome/dash-to-panel.git"]="dash-to-panel@jderose9.github.com:make zip-file:true"
+  ["https://github.com/KEIII/gnome-shell-panel-date-format.git"]="panel-date-format@keiii.github.com:make:dconf write /org/gnome/shell/extensions/panel-date-format/format \"$(<"$DOTFILE_ROOT/panel-date-format")\""
 )
 
 # fonts
@@ -135,9 +135,9 @@ declare -A EDGE_DESKTOP_ICONS=(
 LAZYGIT_REPO="https://github.com/jesseduffield/lazygit.git"
 LAZYGIT_ARCHIVE="lazygit_@VERSION@_Linux_x86_64.tar.gz"
 
-# st
-ST_REPO="https://github.com/veltza/st-sx.git"
-ST_DEPENDENCIES="build-essential libx11-xcb-dev libxft-dev libimlib2-dev libgd-dev libharfbuzz-dev libpcre2-dev"
+# st-sx
+STSX_REPO="https://github.com/veltza/st-sx.git"
+STSX_DEPENDENCIES="build-essential libx11-xcb-dev libxft-dev libimlib2-dev libgd-dev libharfbuzz-dev libpcre2-dev"
 
 # tmux
 TMUX_REPO="https://github.com/tmux/tmux.git"
@@ -552,13 +552,13 @@ function install_lazygit() {
   )
 }
 
-function install_st() {
-  clone_and_update_git_repository "$ST_REPO"
+function install_stsx() {
+  clone_and_update_git_repository "$STSX_REPO"
   make_install \
     "$_git_name" \
     "$_git_directory" \
-    "$ST_DEPENDENCIES" \
-    "$DOTFILE_ROOT/st" \
+    "$STSX_DEPENDENCIES" \
+    "$DOTFILE_ROOT/st-sx" \
     "rm -fv config.h" \
     "clean"
 }
@@ -637,17 +637,17 @@ declare -A dependencies=(
 install_dependencies
 
 # Extract the latest github version argument:
-if [[ " $* " =~ " latest " ]]; then
+if [[ " $* " =~ " --latest " ]]; then
   use_latest_github_version=true
-  set -- $(rm_arg latest $@)
+  set -- $(rm_arg "--latest" $@)
 else
   use_latest_github_version=false
 fi
 
 # Extract the build clean argument:
-if [[ " $* " =~ " clean " ]]; then
+if [[ " $* " =~ " --clean " ]]; then
   use_clean_build=true
-  set -- $(rm_arg clean $@)
+  set -- $(rm_arg "--clean" $@)
 else
   use_clean_build=false
 fi
@@ -659,7 +659,7 @@ fi
 
 # Install everything when argument 'all' is present:
 if [[ " $* " =~ " all " ]]; then
-  set -- apt snap pip npm dot bin git gnome fonts icons lazygit st tmux nvim wallpaper backups
+  set -- apt snap pip npm dot bin git gnome fonts icons lazygit stsx tmux nvim wallpaper backups
 fi
 
 # Loop through each argument and execute the corresponding installer:
@@ -698,8 +698,8 @@ for arg in "$@"; do
   lazygit)
     install_lazygit
     ;;
-  st)
-    install_st
+  stsx)
+    install_stsx
     ;;
   tmux)
     install_tmux
@@ -707,7 +707,7 @@ for arg in "$@"; do
   nvim)
     install_nvim
     # TODO: Reset lazy vim (custom reset logic)
-    if [[ $NVIM_BUILD_CLEAN == "true" ]]; then
+    if [[ "$use_clean_build" == "true" ]]; then
       msg "lazy vim: clean"
       rm -rf "$HOME/.cache/nvim" "$HOME/.local/share/nvim" "$HOME/.local/state/nvim" "$HOME/.config/nvim/lazy-lock.json"
     fi
