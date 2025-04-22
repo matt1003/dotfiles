@@ -235,9 +235,15 @@ tmux_set copy-mode-current-match-style"fg=$background,bg=$ORANGE"
 tmux_set clock-mode-colour "$FG4"
 tmux_set clock-mode-style 12
 
-# TODO: menu styles
-# TODO: popup styles
-#
+# menu:
+tmux_set menu-style "fg=$FG,bg=default"
+tmux_set menu-selected-style "fg=$background,bg=$YELLOW"
+tmux_set menu-border-style "fg=$FG4,bg=default"
+
+# popup:
+tmux_set popup-style "fg=$FG,bg=default"
+tmux_set popup-border-style "fg=$FG4,bg=default"
+
 # message:
 tmux_set message-style "fg=$GREEN,bg=$background"
 tmux_set message-command-style "fg=$PURPLE,bg=$background"
