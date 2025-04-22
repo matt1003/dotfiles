@@ -88,6 +88,7 @@ declare -A DOT_FILES=(
   [p10k.zsh]=.p10k.zsh
   [terminator.conf]=.config/terminator/config
   [tmux.conf]=.tmux.conf
+  [zshenv]=.zshenv
   [zshrc]=.zshrc
 )
 

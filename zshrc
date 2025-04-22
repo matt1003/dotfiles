@@ -28,14 +28,6 @@ fi
 # zsh configuration
 ###############################################################################
 
-### preferred editor ###
-
- if [[ -n $SSH_CONNECTION ]]; then
-   export EDITOR='vim'
- else
-   export EDITOR='nvim'
- fi
-
 ### aliases ###
 
 alias vi='/usr/local/bin/nvim'
@@ -117,3 +109,7 @@ source $ZSH/oh-my-zsh.sh
 alias ll='ls --group-directories-first --time-style=long-iso -hl'
 alias la='ls --group-directories-first --time-style=long-iso -hlA'
 alias lt='ls --group-directories-first --time-style=long-iso -hlAt'
+
+# load work settings
+[ -r "$HOME/work/.zshrc" ] && source "$HOME/work/.zshrc"
+
