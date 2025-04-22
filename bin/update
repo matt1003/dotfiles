@@ -139,6 +139,7 @@ LAZYGIT_ARCHIVE="lazygit_@VERSION@_Linux_x86_64.tar.gz"
 # st-sx
 STSX_REPO="https://github.com/veltza/st-sx.git"
 STSX_DEPENDENCIES="build-essential libx11-xcb-dev libxft-dev libimlib2-dev libgd-dev libharfbuzz-dev libpcre2-dev"
+STSX_PATCH_DIRECTORY="$DOTFILE_ROOT/st-sx"
 
 # tmux
 TMUX_REPO="https://github.com/tmux/tmux.git"
@@ -334,17 +335,18 @@ function apply_git_patches() {
   done
 }
 
-NO_CONFIGURATION=""
 NO_PATCHES=""
+NO_CONFIGURATION=""
 
 function make_install() {
   local name=$1
   local directory=$2
   local dependencies=${3:-}
   local patch_dir=${4:-}
-  local configure_cmd=${5:-}
-  local make_clean_args=${6:-clean}
-  local make_args=${7:-}
+  local clean_cmd=${5:-"make clean"}
+  local configure_cmd=${6:-}
+  local make_cmd=${7:-"make"}
+  local install_cmd=${8:-"sudo make install"}
   (
     cd "$directory"
     # build prerequisites
@@ -357,22 +359,22 @@ function make_install() {
       msg "$name: patch"
       apply_git_patches "$patch_dir" "$_git_version"
     fi
+    # clean
+    if [[ -n "$clean_cmd" && "$use_clean_build" == "true" ]]; then
+      msg "$name: clean"
+      eval "$clean_cmd"
+    fi
     # configure
     if [[ -n "$configure_cmd" ]]; then
       msg "$name: configure"
       eval "$configure_cmd"
     fi
-    # clean
-    if [[ "$use_clean_build" == "true" ]]; then
-      msg "$name: clean"
-      make ${make_clean_args:+$make_clean_args}
-    fi
     # make
     msg "$name: make"
-    make ${make_args:+$make_args} -j"$(nproc)"
+    eval "$make_cmd"
     # install
     msg "$name: install"
-    sudo make install
+    eval "$install_cmd"
   )
 }
 
@@ -559,9 +561,9 @@ function install_stsx() {
     "$_git_name" \
     "$_git_directory" \
     "$STSX_DEPENDENCIES" \
-    "$DOTFILE_ROOT/st-sx" \
-    "rm -fv config.h" \
-    "clean"
+    "$STSX_PATCH_DIRECTORY" \
+    "make clean" \
+    "rm -fv config.h"
 }
 
 function install_tmux() {
@@ -571,8 +573,8 @@ function install_tmux() {
     "$_git_directory" \
     "$TMUX_DEPENDENCIES" \
     "$NO_PATCHES" \
-    "sh autogen.sh && ./configure --enable-sixel" \
-    "clean"
+    "[ ! -f config.status ] || make distclean" \
+    "sh autogen.sh && ./configure --enable-sixel"
 }
 
 function install_nvim() {
@@ -582,9 +584,9 @@ function install_nvim() {
     "$_git_directory" \
     "$NVIM_DEPENDENCIES" \
     "$NO_PATCHES" \
+    "make distclean" \
     "$NO_CONFIGURATION" \
-    "distclean" \
-    "CMAKE_BUILD_TYPE=Release"
+    "make CMAKE_BUILD_TYPE=Release"
 }
 
 function install_git_config() {
