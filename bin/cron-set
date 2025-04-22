@@ -7,12 +7,14 @@ if [ "$#" -lt 2 ]; then
   exit 1
 fi
 
-exp="$1" cmd="$2" args="${@:3}" log="$HOME/.$(basename "$cmd").log"
+exp="$1" cmd="$2" args="${@:3}" log="$HOME/.log/$(basename "$cmd").log"
 
 if ! command -v "$cmd" &>/dev/null; then
   echo "ERROR: Command \"$cmd\" not found!"
   exit 1
 fi
+
+mkdir -p "$HOME/.log"
 
 (
   crontab -l 2>/dev/null | sed "\|$cmd|d"
