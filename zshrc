@@ -45,23 +45,6 @@ goa () { /usr/local/bin/nvim $(git status --short --no-renames --untracked-files
 
 viag() { /usr/local/bin/nvim $(ag -l "$@") }
 
-### search local history ###
-
-# TODO: Does this actually work?
-up-line-or-local-history() {
-    zle set-local-history 1
-    zle up-line-or-history
-    zle set-local-history 0
-}
-zle -N up-line-or-local-history
-
-down-line-or-local-history() {
-    zle set-local-history 1
-    zle down-line-or-history
-    zle set-local-history 0
-}
-zle -N down-line-or-local-history
-
 ###############################################################################
 # oh-my-zsh configuration
 ###############################################################################
