@@ -15,6 +15,15 @@ if [[ "${1:-}" == "--unschedule" ]]; then
   exit 0
 fi
 
+function set_environment_variables() {
+  if [ -z "${DISPLAY:-}" ]; then
+    export DISPLAY="$(who | grep -o ':[0-9]\+' | head -n 1)"
+  fi
+  if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ]; then
+    export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u)/bus"
+  fi
+}
+
 src="$HOME/$FIREFOX_PROFILE"
 dst="$BACKUP_DIRECTORY/$(basename "$FIREFOX_PROFILE")~$(date '+%Y-%m-%d~%H:%M:%S').zip"
 
@@ -43,7 +52,9 @@ echo "$dst"
 # Restart firefox:
 if [ ! -z "$pids" ]; then
   echo "Starting firefox..."
-  nohup firefox >&/dev/null &
+  set_environment_variables
+  nohup /snap/bin/firefox &
+  disown
 fi
 
 echo "*** COMPLETE ***"
