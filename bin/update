@@ -27,7 +27,6 @@ declare APT_APPS=(
   ncdu
   silversearcher-ag
   tree
-  zsh
   ### GUI ###
   forticlient
   gedit
@@ -144,6 +143,10 @@ STSX_PATCH_DIRECTORY="$DOTFILE_ROOT/st-sx"
 # tmux
 TMUX_REPO="https://github.com/tmux/tmux.git"
 TMUX_DEPENDENCIES="build-essential libevent-dev libsixel-dev ncurses-dev pkg-config bison yacc"
+
+# zsh
+ZSH_REPO="https://github.com/zsh-users/zsh.git"
+ZSH_DEPENDENCIES="build-essential libncursesw5-dev libreadline-dev libssl-dev libpcre2-dev zlib1g-dev texinfo gawk"
 
 # nvim
 NVIM_REPO="https://github.com/neovim/neovim.git"
@@ -577,6 +580,19 @@ function install_tmux() {
     "sh autogen.sh && ./configure --enable-sixel"
 }
 
+function install_zsh() {
+  clone_and_update_git_repository "$ZSH_REPO"
+  make_install \
+    "$_git_name" \
+    "$_git_directory" \
+    "$ZSH_DEPENDENCIES" \
+    "$NO_PATCHES" \
+    "[ ! -f config.status ] || make distclean" \
+    "./Util/preconfig && ./configure --prefix=/usr/local --enable-multibyte --enable-pcre --with-tcsetpgrp --enable-zsh-secure-free" \
+    "make" \
+    "sudo make install.bin install.modules install.fns"
+}
+
 function install_nvim() {
   clone_and_update_git_repository "$NVIM_REPO"
   make_install \
@@ -662,7 +678,7 @@ fi
 
 # Install everything when argument 'all' is present:
 if [[ " $* " =~ " all " ]]; then
-  set -- apt snap pip npm dot bin git gnome fonts icons lazygit stsx tmux nvim wallpaper backups
+  set -- apt snap pip npm dot bin git gnome fonts icons lazygit stsx tmux zsh nvim wallpaper backups
 fi
 
 # Loop through each argument and execute the corresponding installer:
@@ -706,6 +722,9 @@ for arg in "$@"; do
     ;;
   tmux)
     install_tmux
+    ;;
+  zsh)
+    install_zsh
     ;;
   nvim)
     install_nvim

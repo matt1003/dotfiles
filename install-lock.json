@@ -6,5 +6,6 @@
   "https://github.com/jesseduffield/lazygit.git": "v0.48.0",
   "https://github.com/neovim/neovim.git": "v0.11.0",
   "https://github.com/tmux/tmux.git": "3.5a",
-  "https://github.com/veltza/st-sx.git": "main"
+  "https://github.com/veltza/st-sx.git": "main",
+  "https://github.com/zsh-users/zsh.git": "zsh-5.9"
 }
