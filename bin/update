@@ -38,7 +38,7 @@ declare APT_APPS=(
   microsoft-edge-stable
   speedcrunch
   terminator
-  # virtualbox this will install an old version that does not work
+  # virtualbox - TODO: this will install an old version, need at least 7.0.26
   ### LazyVim ###
   curl
   fd-find
@@ -603,6 +603,11 @@ function install_nvim() {
     "make distclean" \
     "$NO_CONFIGURATION" \
     "make CMAKE_BUILD_TYPE=Release"
+  # Also nuke lazy vim on clean build:
+  if [[ "$use_clean_build" == "true" ]]; then
+    msg "lazy vim: clean"
+    rm -rf "$HOME/.cache/nvim" "$HOME/.local/share/nvim" "$HOME/.local/state/nvim" "$HOME/.config/nvim/lazy-lock.json"
+  fi
 }
 
 function install_git_config() {
@@ -728,11 +733,6 @@ for arg in "$@"; do
     ;;
   nvim)
     install_nvim
-    # TODO: Reset lazy vim (custom reset logic)
-    if [[ "$use_clean_build" == "true" ]]; then
-      msg "lazy vim: clean"
-      rm -rf "$HOME/.cache/nvim" "$HOME/.local/share/nvim" "$HOME/.local/state/nvim" "$HOME/.config/nvim/lazy-lock.json"
-    fi
     ;;
   wallpaper)
     install_wallpaper_config
