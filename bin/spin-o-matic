@@ -72,6 +72,10 @@ function esc_format_bold() {
   echo -en "\033[1m"
 }
 
+function esc_format_faint() {
+  echo -en "\033[2m"
+}
+
 function esc_format_color() {
   echo -en "\033[${1}m"
 }
@@ -88,8 +92,8 @@ function bold_text() {
   echo -en "$(esc_format_bold)${1}$(esc_format_reset)"
 }
 
-function muted_text() {
-  echo -en "$(esc_format_color 90)${1}$(esc_format_reset)"
+function faint_text() {
+  echo -en "$(esc_format_faint)${1}$(esc_format_reset)"
 }
 
 function rainbow_text() {
@@ -174,7 +178,7 @@ function generate_contestants() {
       length=$((length + 2))
     fi
     if ((!is_remaining)); then
-      name="$(muted_text "$name")"
+      name="$(faint_text "$name")"
     fi
     output+="$name"
   done
