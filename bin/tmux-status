@@ -140,7 +140,7 @@ generate_actions_for_each_mode() {
 
 mode_action() {
   local fg=$1 bg=$2 fmt=$3
-  echo "$(ls $bg $background)$(c $fg $bg bold) $fmt $(rs $bg $STATUS_SECTION_B_BG)"
+  echo "$(ls $bg $STATUS_SECTION_B_BG)$(c $fg $bg bold) $fmt $(rs $bg $STATUS_SECTION_B_BG)"
 }
 
 mode_component="$(generate_actions_for_each_mode mode_action)"
@@ -187,7 +187,7 @@ select_vibes_icon=#"( \
 
 vibes_action() {
   local fg=$1 bg=$2
-  echo "$(ls $bg)$(c $fg $bg bold) ${vibes_format//@icon@/$select_vibes_icon} $(rs $bg $background)"
+  echo "$(ls $bg)$(c $fg $bg bold) ${vibes_format//@icon@/$select_vibes_icon} $(rs $bg $STATUS_SECTION_B_BG)"
 }
 
 vibes_component="$(generate_actions_for_each_mode vibes_action)"
