@@ -17,4 +17,4 @@ vim.opt.spelllang = "en_us"
 vim.opt.spell = true
 
 -- terminal settings
-vim.opt.shell = "/bin/zsh"
+vim.opt.shell = "/usr/local/bin/zsh"
