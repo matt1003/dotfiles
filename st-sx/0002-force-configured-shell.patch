@@ -1,0 +1,25 @@
+From 356747fcb8ff5cf0ce1ef6a71b025577f10280df Mon Sep 17 00:00:00 2001
+From: Matthew Bright <matthew.bright@aviatnet.com>
+Date: Wed, 23 Apr 2025 13:13:15 +1200
+Subject: [PATCH 2/3] force configured shell
+
+---
+ st.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/st.c b/st.c
+index e90d4b2..f56878e 100644
+--- a/st.c
++++ b/st.c
+@@ -755,6 +755,8 @@ execsh(char *cmd, char **args)
+ 	if ((sh = getenv("SHELL")) == NULL)
+ 		sh = (pw->pw_shell[0]) ? pw->pw_shell : cmd;
+ 
++	sh = cmd; // force usage of configured shell
++
+ 	if (args) {
+ 		prog = args[0];
+ 		arg = NULL;
+-- 
+2.34.1
+

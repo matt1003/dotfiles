@@ -1,14 +1,14 @@
-From 86f68544a51a47d5214b803eb180885238a96a57 Mon Sep 17 00:00:00 2001
+From eeeced368fcf97f55b132c6895db7f1b3b1a85c1 Mon Sep 17 00:00:00 2001
 From: matt1003 <matt1003@gmail.com>
 Date: Tue, 22 Apr 2025 05:38:11 +1200
-Subject: [PATCH 2/2] my settings
+Subject: [PATCH 3/3] my settings
 
 ---
- config.def.h | 76 ++++++++++++++++++++++++++--------------------------
- 1 file changed, 38 insertions(+), 38 deletions(-)
+ config.def.h | 78 ++++++++++++++++++++++++++--------------------------
+ 1 file changed, 39 insertions(+), 39 deletions(-)
 
 diff --git a/config.def.h b/config.def.h
-index 5f6dd10..e4db3bc 100644
+index 5f6dd10..64c0f61 100644
 --- a/config.def.h
 +++ b/config.def.h
 @@ -5,7 +5,7 @@
@@ -29,6 +29,15 @@ index 5f6dd10..e4db3bc 100644
  
  /* Borders as a percentage of the cell width. If greater than zero, overrides
   * the borderpx setting. */
+@@ -83,7 +83,7 @@ static uint url_opener_modkey = XK_ANY_MOD;
+  * 4: value of shell in /etc/passwd
+  * 5: value of shell in config.h
+  */
+-static char *shell = "/bin/sh";
++static char *shell = "/usr/local/bin/zsh";
+ char *utmp = NULL;
+ /* scroll program: to enable use a string like "scroll" */
+ char *scroll = NULL;
 @@ -181,8 +181,8 @@ int ligatures = 0;
   *    Bold affects lines thickness if boxdraw_bold is not 0. Italic is ignored.
   * 0: disable (render all U25XX glyphs normally from the font).
