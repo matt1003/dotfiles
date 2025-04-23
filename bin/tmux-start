@@ -1,15 +1,20 @@
 #!/bin/bash
 
 tmux=/usr/local/bin/tmux
+st=/usr/local/bin/st
 
-if [ -z $1 ]; then
-  session=work
-else
-  session=$1
-fi
+launch() {
+  if [[ -t 0 ]]; then
+    "$@"
+  else
+    exec $st -F -c "tmux" -e "$@"
+  fi
+}
+
+session=${1:-work}
 
 if $tmux ls | grep -q "$session"; then
-  $tmux attach -t $session
+  launch $tmux attach -t $session
 else
-  $tmux new -s $session
+  launch $tmux new -s $session
 fi

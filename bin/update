@@ -109,26 +109,19 @@ NERD_FONTS_ARCHIVE="DejaVuSansMono.zip"
 
 # icons
 GRUVBOX_ICONS_REPO="https://github.com/SylEleuth/gruvbox-plus-icon-pack.git"
-
-# snap apt
-APT_DESKTOP_DIR="/usr/share/applications"
-declare -A APT_DESKTOP_ICONS=(
-  ["virtualboxvm.desktop"]="apps/scalable/microsoft.svg"
-)
-
-# snap icons
-SNAP_DESKTOP_DIR="/var/lib/snapd/desktop/applications"
-declare -A SNAP_DESKTOP_ICONS=(
-  ["firefox_firefox.desktop"]="apps/scalable/firefox.svg"
-  ["gimp_gimp.desktop"]="apps/scalable/gimp.svg"
-  ["pinta_pinta.desktop"]="apps/scalable/pinta.svg"
-  ["robo3t-snap_robo3t.desktop"]="apps/scalable/robo3t.svg"
-)
-
-# edge apps
-declare -A EDGE_DESKTOP_ICONS=(
-  ["Microsoft Teams"]="apps/scalable/teams.svg"
-  ["Outlook (PWA)"]="apps/scalable/ms-outlook.svg"
+declare -A DESKTOP_ENTRIES=(
+  # apt
+  ["/usr/share/applications/virtualboxvm.desktop"]="apps/scalable/microsoft.svg"
+  # snapd
+  ["/var/lib/snapd/desktop/applications/firefox_firefox.desktop"]="apps/scalable/firefox.svg"
+  ["/var/lib/snapd/desktop/applications/gimp_gimp.desktop"]="apps/scalable/gimp.svg"
+  ["/var/lib/snapd/desktop/applications/pinta_pinta.desktop"]="apps/scalable/pinta.svg"
+  ["/var/lib/snapd/desktop/applications/robo3t-snap_robo3t.desktop"]="apps/scalable/robo3t.svg"
+  # edge
+  ["$LOCAL_APPLICATIONS/Microsoft Teams"]="apps/scalable/teams.svg"
+  ["$LOCAL_APPLICATIONS/Outlook (PWA)"]="apps/scalable/ms-outlook.svg"
+  # custom
+  ["$DOTFILE_ROOT/tmux.desktop"]="apps/scalable/terminix.svg"
 )
 
 # lazygit
@@ -295,13 +288,17 @@ function install_dependencies() {
   done
 }
 
-function find_desktop_file() {
-  grep -l "Name=$1" "$2"*.desktop || echo "[[ $1 ]]"
+function resolve_desktop_entry() {
+  if [[ "$1" == *.desktop ]]; then
+    realpath "$1"
+  else
+    grep -l "Name=$(basename "$1")" "$(dirname "$1")/"*.desktop || echo "[[ $1 ]]"
+  fi
 }
 
-function copy_desktop_file() {
+function copy_and_update_desktop_entry() {
   local src="$1" dst="$2" icon="$3"
-  if [ ! -f "$src" ]; then
+  if [ ! -e "$src" ]; then
     wrn "Desktop file does not exist: $src"
     return
   fi
@@ -314,7 +311,10 @@ function copy_desktop_file() {
   else
     echo "'$src' -> '$dst'"
   fi
-  sed -i "s|Icon=.*|Icon=$icon|" "$dst"
+  sed -i \
+    -e "s|Icon=.*|Icon=$icon|" \
+    -e "s|@HOME@|$HOME|" \
+    "$dst"
 }
 
 function apply_patch() {
@@ -512,36 +512,23 @@ function install_icons() {
     create_symbolic_link "$ICONS_DIR/Gruvbox-Plus-Dark" "$_git_directory/Gruvbox-Plus-Dark"
     create_symbolic_link "$ICONS_DIR/Gruvbox-Plus-Light" "$_git_directory/Gruvbox-Plus-Light"
     gsettings set org.gnome.desktop.interface icon-theme "$ICONS_SET"
-    # icons
-    msg "$_git_name: update apt icons"
-    for file in "${!APT_DESKTOP_ICONS[@]}"; do
-      local src="$APT_DESKTOP_DIR/$file"
-      local dst="$LOCAL_APPLICATIONS/$file"
-      local icon="$ICONS_DIR/$ICONS_SET/${APT_DESKTOP_ICONS[$file]}"
-      copy_desktop_file "$src" "$dst" "$icon"
-    done
-    msg "$_git_name: update snap icons"
-    for file in "${!SNAP_DESKTOP_ICONS[@]}"; do
-      local src="$SNAP_DESKTOP_DIR/$file"
-      local dst="$LOCAL_APPLICATIONS/$file"
-      local icon="$ICONS_DIR/$ICONS_SET/${SNAP_DESKTOP_ICONS[$file]}"
-      copy_desktop_file "$src" "$dst" "$icon"
-    done
-    msg "$_git_name: update edge icons"
-    for name in "${!EDGE_DESKTOP_ICONS[@]}"; do
-      local file="$(find_desktop_file "$name" "$LOCAL_APPLICATIONS/msedge-")"
-      local icon="$ICONS_DIR/$ICONS_SET/${EDGE_DESKTOP_ICONS[$name]}"
-      copy_desktop_file "$file" "$file" "$icon"
+    # desktop entries
+    msg "$_git_name: update desktop entry icons"
+    for entry in "${!DESKTOP_ENTRIES[@]}"; do
+      local src="$(resolve_desktop_entry "$entry")"
+      local dst="$LOCAL_APPLICATIONS/$(basename "$src")"
+      local icon="$ICONS_DIR/$ICONS_SET/${DESKTOP_ENTRIES[$entry]}"
+      copy_and_update_desktop_entry "$src" "$dst" "$icon"
     done
     msg "$_git_name: restarting gnome shell"
     restart_gnome_shell
     # git icons
     msg "$_git_name: patching git icons"
-    apply_patch /usr/bin/gitk "$DOTFILE_ROOT/gitk.patch"
-    apply_patch /usr/lib/git-core/git-gui "$DOTFILE_ROOT/git-gui.patch"
     for icon in "$DOTFILE_ROOT"/icons/*.png; do
       create_symbolic_link "$ICONS_DIR/$(basename $icon)" "$icon"
     done
+    apply_patch /usr/bin/gitk "$DOTFILE_ROOT/gitk.patch"
+    apply_patch /usr/lib/git-core/git-gui "$DOTFILE_ROOT/git-gui.patch"
   )
 }
 

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=tmux
+Comment=tmux is a simple terminal multiplexer
+Exec=@HOME@/bin/tmux-start
+Icon=utilities-terminal
+Terminal=false
+Type=Application
+Categories=System;TerminalEmulator;
+StartupWMClass=tmux
