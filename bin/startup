@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 run() {
   nohup "$@" >/dev/null 2>&1 &

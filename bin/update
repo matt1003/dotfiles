@@ -2,6 +2,100 @@
 set -euo pipefail
 
 ##############################################################################
+# ARGUMENTS                                                                  #
+##############################################################################
+
+TARGETS=(
+  apt snap pip npm dot bin git gnome fonts icons lazygit st tmux zsh nvim wallpaper backups
+)
+
+DEFAULT_TARGETS=(
+  apt snap
+)
+
+declare -A TARGET_DESCRIPTION=(
+  [apt]="install/update apt packages"
+  [snap]="install/update snap packages"
+  [pip]="install/update python packages"
+  [npm]="install/update node packages"
+  [dot]="install dotfiles"
+  [bin]="install binaries"
+  [git]="configure git"
+  [gnome]="install/update gnome extensions"
+  [fonts]="install/update fonts"
+  [icons]="install/update icons"
+  [lazygit]="install/update lazygit"
+  [st]="install/update st terminal"
+  [tmux]="install/update tmux terminal multiplexer"
+  [zsh]="install/update zsh shell"
+  [nvim]="install/update neovim editor"
+  [wallpaper]="schedule wallpaper changes"
+  [backups]="schedule nightly backups"
+)
+
+OPTIONS=(
+  --latest --clean --help
+)
+
+declare -A OPTION_DESCRIPTION=(
+  [--latest]="get latest version when downloading targets"
+  [--clean]="use \"make clean\" when building targets"
+  [--help]="print help and exit"
+)
+
+function print_help_and_exit() {
+  echo "Usage: $(basename "$0") [OPTIONS] TARGETS..."
+  echo
+  echo "When no targets are specified, the following default targets will be used:"
+  echo " ${DEFAULT_TARGETS[*]}"
+  echo
+  echo "When \"all\" is specified, all targets will be used:"
+  echo " ${TARGETS[*]}"
+  echo
+  echo "TARGETS:"
+  for key in "${TARGETS[@]}"; do
+    printf "  %-10s %s\n" "$key" "${TARGET_DESCRIPTION[$key]}"
+  done
+  echo
+  echo "OPTIONS:"
+  for key in "${OPTIONS[@]}"; do
+    printf "  %-10s %s\n" "$key" "${OPTION_DESCRIPTION[$key]}"
+  done
+  echo
+  exit 0
+}
+
+##############################################################################
+# DEPENDENCIES                                                                  #
+##############################################################################
+
+declare -A DEPENDENCIES=(
+  ["curl"]="curl"
+  ["fc-cache"]="fontconfig"
+  ["git"]="git"
+  ["gnome-extensions"]="gnome-shell-extensions"
+  ["gsettings"]="libglib2.0-bin"
+  ["install"]="coreutils"
+  ["jq"]="jq"
+  ["make"]="make"
+  ["patch"]="patch"
+  ["sed"]="sed"
+  ["tar"]="tar"
+  ["unzip"]="unzip"
+  ["zip"]="zip"
+)
+
+function install_dependencies() {
+  for command in "${!DEPENDENCIES[@]}"; do
+    package="${DEPENDENCIES[$command]}"
+    if ! command -v "$command" &>/dev/null; then
+      wrn "$command not found, installing $package..."
+      sudo apt install -y "$package"
+    fi
+  done
+}
+
+##############################################################################
 # CONFIGURATION                                                              #
 ##############################################################################
 
@@ -128,10 +222,10 @@ declare -A DESKTOP_ENTRIES=(
 LAZYGIT_REPO="https://github.com/jesseduffield/lazygit.git"
 LAZYGIT_ARCHIVE="lazygit_@VERSION@_Linux_x86_64.tar.gz"
 
-# st-sx
-STSX_REPO="https://github.com/veltza/st-sx.git"
-STSX_DEPENDENCIES="build-essential libx11-xcb-dev libxft-dev libimlib2-dev libgd-dev libharfbuzz-dev libpcre2-dev"
-STSX_PATCH_DIRECTORY="$DOTFILE_ROOT/st-sx"
+# st
+ST_REPO="https://github.com/veltza/st-sx.git"
+ST_DEPENDENCIES="build-essential libx11-xcb-dev libxft-dev libimlib2-dev libgd-dev libharfbuzz-dev libpcre2-dev"
+ST_PATCH_DIRECTORY="$DOTFILE_ROOT/st-sx"
 
 # tmux
 TMUX_REPO="https://github.com/tmux/tmux.git"
@@ -168,8 +262,36 @@ function err() {
   echo -e "\033[1;31mError:\033[0m $1" >&2 && exit 1
 }
 
-function restart_gnome_shell() {
-  killall -1 "gnome-shell" && sleep 3
+function in_array() {
+  local target="$1"
+  shift
+  for x in "$@"; do
+    [[ "$x" == "$target" ]] && return 0
+  done
+  return 1
+}
+
+function rm_array() {
+  local target="$1" array=()
+  shift
+  for x in "$@"; do
+    [[ "$x" != "$target" ]] && array+=("$x")
+  done
+  echo "${array[@]}"
+}
+
+function create_symbolic_link() {
+  local link="$1" target="$2"
+  mkdir -p "$(dirname $link)"
+  if [[ -e "$link" ]]; then
+    if [[ -L "$link" ]]; then
+      unlink "$link"
+    else
+      echo "backup: $link"
+      mv "$link" "$link.orig"
+    fi
+  fi
+  ln -sfv "$target" "$link"
 }
 
 function set_locked_version() {
@@ -264,59 +386,6 @@ function download_github_archive() {
   curl --fail -L -o "$_git_directory/$_git_archive_file" "$_git_archive_url"
 }
 
-function create_symbolic_link() {
-  local link="$1" target="$2"
-  mkdir -p "$(dirname $link)"
-  if [[ -e "$link" ]]; then
-    if [[ -L "$link" ]]; then
-      unlink "$link"
-    else
-      echo "backup: $link"
-      mv "$link" "$link.orig"
-    fi
-  fi
-  ln -sfv "$target" "$link"
-}
-
-function install_dependencies() {
-  for command in "${!dependencies[@]}"; do
-    package="${dependencies[$command]}"
-    if ! command -v "$command" &>/dev/null; then
-      wrn "$command not found, installing $package..."
-      sudo apt install -y "$package"
-    fi
-  done
-}
-
-function resolve_desktop_entry() {
-  if [[ "$1" == *.desktop ]]; then
-    realpath "$1"
-  else
-    grep -l "Name=$(basename "$1")" "$(dirname "$1")/"*.desktop || echo "[[ $1 ]]"
-  fi
-}
-
-function copy_and_update_desktop_entry() {
-  local src="$1" dst="$2" icon="$3"
-  if [ ! -e "$src" ]; then
-    wrn "Desktop file does not exist: $src"
-    return
-  fi
-  if [ ! -e "$icon" ]; then
-    wrn "Icon file does not exist: $icon"
-    return
-  fi
-  if [ "$src" != "$dst" ]; then
-    cp -v "$src" "$dst"
-  else
-    echo "'$src' -> '$dst'"
-  fi
-  sed -i \
-    -e "s|Icon=.*|Icon=$icon|" \
-    -e "s|@HOME@|$HOME|" \
-    "$dst"
-}
-
 function apply_patch() {
   sudo patch --forward --batch --reject-file=/dev/null "$1" <"$2" || echo "Did not apply patch: $2"
 }
@@ -381,23 +450,44 @@ function make_install() {
   )
 }
 
-function rm_arg() {
-  target="$1"
-  shift
-  args=()
-  for arg in "$@"; do
-    if [[ "$arg" != "$target" ]]; then
-      args+=("$arg")
-    fi
-  done
-  echo "${args[@]}"
+function resolve_desktop_entry() {
+  if [[ "$1" == *.desktop ]]; then
+    realpath "$1"
+  else
+    grep -l "Name=$(basename "$1")" "$(dirname "$1")/"*.desktop || echo "[[ $1 ]]"
+  fi
+}
+
+function copy_and_update_desktop_entry() {
+  local src="$1" dst="$2" icon="$3"
+  if [ ! -e "$src" ]; then
+    wrn "Desktop file does not exist: $src"
+    return
+  fi
+  if [ ! -e "$icon" ]; then
+    wrn "Icon file does not exist: $icon"
+    return
+  fi
+  if [ "$src" != "$dst" ]; then
+    cp -v "$src" "$dst"
+  else
+    echo "'$src' -> '$dst'"
+  fi
+  sed -i \
+    -e "s|Icon=.*|Icon=$icon|" \
+    -e "s|@HOME@|$HOME|" \
+    "$dst"
+}
+
+function restart_gnome_shell() {
+  killall -1 "gnome-shell" && sleep 3
 }
 
 ##############################################################################
 # INSTALLERS                                                                 #
 ##############################################################################
 
-function install_apt_apps() {
+function install_apt() {
   msg "apt: update"
   sudo apt update -y
   msg "apt: install"
@@ -408,7 +498,7 @@ function install_apt_apps() {
   sudo apt autoremove -y
 }
 
-function install_snap_apps() {
+function install_snap() {
   msg "snap: install"
   for app in "${SNAP_APPS[@]}"; do
     sudo snap install "$app"
@@ -417,33 +507,33 @@ function install_snap_apps() {
   sudo snap refresh
 }
 
-function install_pip_pkgs() {
+function install_pip() {
   msg "pip: install"
   for pkg in "${PIP_PKGS[@]}"; do
     pip3 install "$pkg"
   done
 }
 
-function install_npm_pkgs() {
+function install_npm() {
   msg "npm: install"
   for pkg in "${NPM_PKGS[@]}"; do
     sudo npm install -g "$pkg"
   done
 }
 
-function install_dot_files() {
+function install_dot() {
   msg "dot files: install"
   for file in "${!DOT_FILES[@]}"; do
     create_symbolic_link "$HOME/${DOT_FILES[$file]}" "$DOTFILE_ROOT/$file"
   done
 }
 
-function install_bin_files() {
+function install_bin() {
   msg "bin files: install"
   create_symbolic_link "$HOME/bin" "$DOTFILE_ROOT/bin"
 }
 
-function install_git_config() {
+function install_git() {
   msg "git config: configure local settings"
   git -C "$DOTFILE_ROOT" config user.name "$GIT_NAME"
   echo "name: $GIT_NAME"
@@ -458,7 +548,7 @@ function install_git_config() {
   echo "mergetool: $GIT_DIFFTOOL"
 }
 
-function install_gnome_extensions() {
+function install_gnome() {
   # install each extension
   for ext in "${!GNOME_EXTENSIONS[@]}"; do
     IFS=":" read -r ext_name make_cmd config_cmd <<<"${GNOME_EXTENSIONS[$ext]}"
@@ -545,13 +635,13 @@ function install_lazygit() {
   )
 }
 
-function install_stsx() {
-  clone_and_update_git_repository "$STSX_REPO"
+function install_st() {
+  clone_and_update_git_repository "$ST_REPO"
   make_install \
     "$_git_name" \
     "$_git_directory" \
-    "$STSX_DEPENDENCIES" \
-    "$STSX_PATCH_DIRECTORY" \
+    "$ST_DEPENDENCIES" \
+    "$ST_PATCH_DIRECTORY" \
     "make clean" \
     "rm -fv config.h"
 }
@@ -597,28 +687,12 @@ function install_nvim() {
   fi
 }
 
-function install_git_config() {
-  msg "git config: configure local settings"
-  git -C "$DOTFILE_ROOT" config user.name "$GIT_NAME"
-  echo "name: $GIT_NAME"
-  git -C "$DOTFILE_ROOT" config user.email "$GIT_EMAIL"
-  echo "email: $GIT_EMAIL"
-
-  msg "git config: configure global settings"
-  git config --global core.editor "$GIT_EDITOR"
-  echo "editor: $GIT_EDITOR"
-  git config --global diff.tool "$GIT_DIFFTOOL"
-  echo "difftool: $GIT_DIFFTOOL"
-  git config --global merge.tool "$GIT_DIFFTOOL"
-  echo "mergetool: $GIT_DIFFTOOL"
-}
-
-function install_wallpaper_config() {
+function install_wallpaper() {
   msg "wallpaper: configure"
   $DOTFILE_ROOT/bin/wallpaper --schedule
 }
 
-function install_backups_config() {
+function install_backups() {
   msg "backups: configure"
   for backup in $DOTFILE_ROOT/bin/*-backup; do
     $backup --schedule
@@ -629,108 +703,53 @@ function install_backups_config() {
 # EXECUTION                                                                  #
 ##############################################################################
 
-# Ensure all commands required to run this script are installed:
-declare -A dependencies=(
-  ["curl"]="curl"
-  ["fc-cache"]="fontconfig"
-  ["git"]="git"
-  ["gnome-extensions"]="gnome-shell-extensions"
-  ["gsettings"]="libglib2.0-bin"
-  ["install"]="coreutils"
-  ["jq"]="jq"
-  ["make"]="make"
-  ["patch"]="patch"
-  ["sed"]="sed"
-  ["tar"]="tar"
-  ["unzip"]="unzip"
-  ["zip"]="zip"
-)
+targets=()
+options=()
+
+for arg in "$@"; do
+  if [[ "$arg" != --* ]]; then
+    if in_array "$arg" "${TARGETS[@]}" || [[ "$arg" == "all" ]]; then
+      targets+=("$arg")
+    else
+      err "Unknown target: \"$arg\""
+    fi
+  else
+    if in_array "$arg" "${OPTIONS[@]}"; then
+      options+=("$arg")
+    else
+      err "Unknown option: \"$arg\""
+    fi
+  fi
+done
+
+if in_array "--help" "${options[@]}"; then
+  print_help_and_exit
+fi
+
+use_latest_github_version=false
+if in_array "--latest" "${options[@]}"; then
+  use_latest_github_version=true
+fi
+
+use_clean_build=false
+if in_array "--clean" "${options[@]}"; then
+  use_clean_build=true
+fi
+
+if ((${#targets[@]} == 0)); then
+  targets=("${DEFAULT_TARGETS[@]}")
+fi
+
+if in_array "all" "${targets[@]}"; then
+  targets=("${TARGETS[@]}")
+fi
+
 install_dependencies
 
-# Extract the latest github version argument:
-if [[ " $* " =~ " --latest " ]]; then
-  use_latest_github_version=true
-  set -- $(rm_arg "--latest" $@)
-else
-  use_latest_github_version=false
-fi
-
-# Extract the build clean argument:
-if [[ " $* " =~ " --clean " ]]; then
-  use_clean_build=true
-  set -- $(rm_arg "--clean" $@)
-else
-  use_clean_build=false
-fi
-
-# Default to apt and snap when no arguments are present:
-if [[ $# -eq 0 ]]; then
-  set -- apt snap
-fi
-
-# Install everything when argument 'all' is present:
-if [[ " $* " =~ " all " ]]; then
-  set -- apt snap pip npm dot bin git gnome fonts icons lazygit stsx tmux zsh nvim wallpaper backups
-fi
-
-# Loop through each argument and execute the corresponding installer:
-for arg in "$@"; do
-  case "$arg" in
-  apt)
-    install_apt_apps
-    ;;
-  snap)
-    install_snap_apps
-    ;;
-  pip)
-    install_pip_pkgs
-    ;;
-  npm)
-    install_npm_pkgs
-    ;;
-  dot)
-    install_dot_files
-    ;;
-  bin)
-    install_bin_files
-    ;;
-  git)
-    install_git_config
-    ;;
-  gnome)
-    install_gnome_extensions
-    ;;
-  fonts)
-    install_fonts
-    ;;
-  icons)
-    install_icons
-    ;;
-  lazygit)
-    install_lazygit
-    ;;
-  stsx)
-    install_stsx
-    ;;
-  tmux)
-    install_tmux
-    ;;
-  zsh)
-    install_zsh
-    ;;
-  nvim)
-    install_nvim
-    ;;
-  wallpaper)
-    install_wallpaper_config
-    ;;
-  backups)
-    install_backups_config
-    ;;
-  *)
-    err "Unknown argument: \"$arg\""
-    ;;
-  esac
+for target in "${TARGETS[@]}"; do
+  if in_array "$target" "${targets[@]}"; then
+    eval "install_${target}"
+  fi
 done
 
 suc " *** COMPLETE ***"
