@@ -239,9 +239,6 @@ ZSH_DEPENDENCIES="build-essential libncursesw5-dev libreadline-dev libssl-dev li
 NVIM_REPO="https://github.com/neovim/neovim.git"
 NVIM_DEPENDENCIES="build-essential ninja-build gettext cmake curl unzip pkg-config libtool libtool-bin autoconf automake"
 
-# TODO install virtualbox extension pack (needed for usb support)
-# https://download.virtualbox.org/virtualbox/6.1.50/Oracle_VM_VirtualBox_Extension_Pack-6.1.50.vbox-extpack
-
 ##############################################################################
 # IMPLEMENTATION                                                             #
 ##############################################################################
@@ -336,25 +333,22 @@ function set_git_details() {
   if [[ "$_git_version" == "null" || "$use_latest_github_version" == "true" ]]; then
     if ! is_github_url "$_git_url"; then
       err "Auto version is currently support for GitHub repositories only."
-    else
-      # TODO: include: get_latest_github_tag
-      _git_version="$(get_latest_github_version "${_git_url}")"
     fi
+    # TODO: include: get_latest_github_tag
+    _git_version="$(get_latest_github_version "${_git_url}")"
   fi
   # save the latest published version:
   if [[ "$_git_version" == "null" ]]; then
     err "Version not set for git repository: ${_git_url}"
-  else
-    set_locked_version "$_git_url" "$_git_version"
   fi
+  set_locked_version "$_git_url" "$_git_version"
   # determine the details of the archive file to be downloaded:
   if [[ -n "${2-}" ]]; then
     if ! is_github_url "$_git_url"; then
       err "Download archive is currently support for GitHub repositories only."
-    else
-      _git_archive_file="${2:+${2//@VERSION@/${_git_version#v}}}"
-      _git_archive_url="${_git_url%.git}/releases/download/${_git_version}/${_git_archive_file}"
     fi
+    _git_archive_file="${2:+${2//@VERSION@/${_git_version#v}}}"
+    _git_archive_url="${_git_url%.git}/releases/download/${_git_version}/${_git_archive_file}"
   fi
 }
 
