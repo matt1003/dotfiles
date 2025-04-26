@@ -1,4 +1,4 @@
-From eeeced368fcf97f55b132c6895db7f1b3b1a85c1 Mon Sep 17 00:00:00 2001
+From e6f0ab79948c6078ef30d370c2b16b6062ca7794 Mon Sep 17 00:00:00 2001
 From: matt1003 <matt1003@gmail.com>
 Date: Tue, 22 Apr 2025 05:38:11 +1200
 Subject: [PATCH 3/3] my settings
@@ -8,7 +8,7 @@ Subject: [PATCH 3/3] my settings
  1 file changed, 39 insertions(+), 39 deletions(-)
 
 diff --git a/config.def.h b/config.def.h
-index 5f6dd10..64c0f61 100644
+index 020c3be..ba9cf7f 100644
 --- a/config.def.h
 +++ b/config.def.h
 @@ -5,7 +5,7 @@
@@ -49,14 +49,14 @@ index 5f6dd10..64c0f61 100644
  
  /* braille (U28XX):  1: render as adjacent "pixels",  0: use font */
  int boxdraw_braille = 0;
-@@ -243,40 +243,40 @@ char *termname = "st-256color";
- unsigned int tabspaces = 8;
- 
- /* bg opacity */
+@@ -247,40 +247,40 @@ unsigned int tabspaces = 8;
+  * To disable the unfocused bg opacity, set alphaUnfocused=-1. This will
+  * cause alpha to be used for both the focused and unfocused bg opacity.
+  */
 -float alpha = 0.93;
 -float alphaUnfocused = 0.6;
 +float alpha = 0.90;
-+float alphaUnfocused = 0.90;
++float alphaUnfocused = -1;
  
  /* Terminal colors (16 first used in escape sequence) */
  static const char *colorname[] = {
@@ -114,7 +114,7 @@ index 5f6dd10..64c0f61 100644
  };
  
  /*
-@@ -425,16 +425,16 @@ static Shortcut shortcuts[] = {
+@@ -429,16 +429,16 @@ static Shortcut shortcuts[] = {
  	{ ControlMask,          XK_Print,       toggleprinter,   {.i =  0} },
  	{ ShiftMask,            XK_Print,       printscreen,     {.i =  0} },
  	{ XK_ANY_MOD,           XK_Print,       printsel,        {.i =  0} },
@@ -140,7 +140,7 @@ index 5f6dd10..64c0f61 100644
  	//{ TERMMOD,              XK_,           changealphaunfocused, {.f = 0} },
  	{ ShiftMask,            XK_Page_Up,     kscrollup,       {.i = -1}, S_PRI },
  	{ ShiftMask,            XK_Page_Down,   kscrolldown,     {.i = -1}, S_PRI },
-@@ -741,7 +741,7 @@ static char ascii_printable[] =
+@@ -745,7 +745,7 @@ static char ascii_printable[] =
  #define UNDERCURL_SPIKY 2
  #define UNDERCURL_CAPPED 3
  // Active style
