@@ -1,8 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-# TODO: track wallpaper history
-
 script="$(realpath "$0")"
 name="$(basename "$script")"
 
@@ -27,6 +25,7 @@ jpeg2jpg=false
 
 # hidden options
 link="$HOME/.wallpaper"
+history="$HOME/.wallpaper_history"
 all=false
 
 # bash color codes
@@ -98,8 +97,11 @@ Examples:
 EOF
 }
 
-confirm() {
-  read -p "$1 (y/N) " answer && [[ "$answer" =~ ^[Yy]$ ]]
+function confirm() {
+  echo -ne "\033[1;35m$1 (y/N) \033[0m"
+  read -n 1 -r answer
+  echo
+  [[ "$answer" =~ ^[Yy]$ ]]
 }
 
 function install_dependencies() {
@@ -196,6 +198,18 @@ function dimension_to_size {
   echo $((width * height))
 }
 
+function read_history() {
+  cat "$history" || echo ""
+}
+
+function add_to_history() {
+  echo "$1" >>"$history"
+}
+
+function reset_history() {
+  rm -f "$history"
+}
+
 while [[ "$#" -gt 0 ]]; do
   case $1 in
   # options:
@@ -245,6 +259,10 @@ while [[ "$#" -gt 0 ]]; do
   # hidden options:
   --link)
     link="$2"
+    shift
+    ;;
+  --history)
+    history="$2"
     shift
     ;;
   --all)
@@ -322,7 +340,7 @@ images="$(find_images "${extensions[@]}")"
 total="$(image_count "$images")"
 print_msg "found $total images at $path"
 
-if [ "$total" -eq 0 ]; then
+if ((total == 0)); then
   print_warning "No valid images found at the specified path."
   exit 0
 fi
@@ -415,18 +433,27 @@ if [ "$webp2png" = true ] || [ "$jpeg2jpg" = true ]; then
   exit 0
 fi
 
-selected="$(random_image "$images")"
-print_msg "selected $selected"
-
-if [ "$total" -gt 1 ]; then
-  while [ "$selected" == "$(get_current_wallpaper)" ]; do
-    print_msg "same as current wallpaper; selecting another image"
-    selected="$(random_image "$images")"
-    print_msg "selected $selected"
-  done
+if ((total == 1)); then
+  # Select the only image:
+  selected="$images"
+  print_msg "selected image: $selected"
+else
+  # Filter out images that exist in the history:
+  remaining=$(grep -Fxv -f <(read_history) <<<"$images" || true)
+  # Reset the history if all images were filtered out:
+  if [ -z "$remaining" ]; then
+    reset_history
+    remaining="$images"
+  fi
+  # Spit out the remaining count:
+  print_msg "$(image_count "$remaining") of those images have yet to be displayed"
+  # Select an image at random from what's remaining:
+  selected="$(random_image "$remaining")"
+  print_msg "selected image: $selected"
 fi
 
 set_current_wallpaper "$selected"
+add_to_history "$selected"
 print_msg "wallpaper set to selected image"
 
 if [[ -n "$DISPLAY" && -n "$DBUS_SESSION_BUS_ADDRESS" ]]; then
