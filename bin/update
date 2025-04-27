@@ -259,6 +259,13 @@ function err() {
   echo -e "\033[1;31mError:\033[0m $1" >&2 && exit 1
 }
 
+function confirm() {
+  echo -ne "\033[1;35m$1 (y/N) \033[0m"
+  read -n 1 -r answer
+  echo
+  [[ "$answer" =~ ^[Yy]$ ]]
+}
+
 function in_array() {
   local target="$1"
   shift
@@ -309,14 +316,44 @@ function is_github_url() {
   [[ "$1" =~ ^(https?|ssh|git)://(www\.)?github\.com/[^/]+/[^/]+(\.git)?$ ]]
 }
 
+function get_github_owner_and_name() {
+  echo "$1" | sed -E 's#https://github.com/([^/]+/[^.]+)(\.git)?#\1#'
+}
+
 function get_latest_github_version() {
-  curl --fail -s "https://api.github.com/repos/$1/releases/latest" | jq -r '.tag_name' ||
-    echo "null"
+  curl --fail -s "https://api.github.com/repos/$1/releases/latest" | jq -r '.tag_name'
 }
 
 function get_latest_github_tag() {
-  curl --fail -s "https://api.github.com/repos/$1/tags" | jq -r '.[0].name' ||
-    echo "null"
+  curl --fail -s "https://api.github.com/repos/$1/tags" | jq -r '.[0].name'
+}
+
+function set_latest_version() {
+  if ! is_github_url "$_git_url"; then
+    wrn "Auto version is currently support for GitHub repositories only."
+    return
+  fi
+
+  local owner_and_name="$(get_github_owner_and_name "$_git_url")"
+  local latest_version="$(get_latest_github_version "$owner_and_name" || get_latest_github_tag "$owner_and_name" || true)"
+
+  if [[ "$latest_version" == "null" ]]; then
+    wrn "Unable to obtain latest version for $_git_name"
+    return
+  fi
+
+  if [[ "$latest_version" == "$_git_version" ]]; then
+    suc "$_git_name is already at latest version (\"$latest_version\")"
+    return
+  fi
+
+  if ! confirm "Upgrade $_git_name from version \"$_git_version\" to \"$latest_version\"?"; then
+    wrn "Aborted upgrade $_git_name to latest version (\"$latest_version\")"
+    return
+  fi
+
+  _git_version="$latest_version"
+  suc "Upgrading $_git_name to latest version (\"$latest_version\")"
 }
 
 function set_git_details() {
@@ -331,11 +368,7 @@ function set_git_details() {
   _git_version="$(get_locked_version "$_git_url")"
   # automatically grab the latest published version:
   if [[ "$_git_version" == "null" || "$use_latest_github_version" == "true" ]]; then
-    if ! is_github_url "$_git_url"; then
-      err "Auto version is currently support for GitHub repositories only."
-    fi
-    # TODO: include: get_latest_github_tag
-    _git_version="$(get_latest_github_version "${_git_url}")"
+    set_latest_version
   fi
   # save the latest published version:
   if [[ "$_git_version" == "null" ]]; then
