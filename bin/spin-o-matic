@@ -4,7 +4,7 @@ set -euo pipefail
 SPIN_DURATION_SEC=2
 SPIN_METHOD="quadratic_ease_in"
 IMAGE_MAX_WIDTH_PX=500
-IMAGE_MAX_HEIGHT_PX=500
+IMAGE_MAX_HEIGHT_PX=600
 START_MESSAGES=(
   "Spin the wheel to play!"
   "Let the games begin!"
@@ -206,16 +206,19 @@ function generate_selecting_message() {
 }
 
 function generate_selected_name_with_decorations() {
-  local decoration_length=$(((image_cols - (${#selected_name} + 2)) / 2))
-  local decoration_left_truncated="${DECORATION_LEFT: -$decoration_length}"
-  local decoration_right_truncated="${DECORATION_RIGHT:0:$decoration_length}"
-  local length="$((decoration_length + 1 + ${#selected_name} + 1 + decoration_length))"
+  local name=" ${selected_name} "
+  local name_len="${#name}"
+  local decor_l_len="$(((image_cols - name_len) / 2))"
+  local decor_r_len="$((image_cols - name_len - decor_l_len))"
+  local decor_l_trunc="${DECORATION_LEFT: -$decor_l_len}"
+  local decor_r_trunc="${DECORATION_RIGHT:0:$decor_r_len}"
+  local length="$((decor_l_len + name_len + decor_r_len))"
   local padding="$(generate_padding "$length")"
-  printf "%s%s %s %s%s" \
+  printf "%s%s%s%s%s" \
     "$padding" \
-    "$(rainbow_text "$decoration_left_truncated")" \
-    "$(bold_text "$selected_name")" \
-    "$(rainbow_text "$decoration_right_truncated")" \
+    "$(rainbow_text "$decor_l_trunc")" \
+    "$(bold_text "$name")" \
+    "$(rainbow_text "$decor_r_trunc")" \
     "$padding"
 }
 
