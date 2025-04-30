@@ -440,8 +440,7 @@ function main() {
   load_name_image_map "$contestants_file"
 
   # Extract all names into an array and sort alphabetically:
-  all_names=("${!name_image_map[@]}")
-  all_names=($(printf "%s\n" "${all_names[@]}" | sort))
+  all_names=($(printf "%s\n" "${!name_image_map[@]}" | grep -v '^!' | sort))
   debug "all_names=${all_names[*]}"
 
   # Keep track of the name that have not been selected:
