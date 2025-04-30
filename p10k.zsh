@@ -424,9 +424,9 @@
   typeset -g POWERLEVEL9K_VCS_UNTRACKED_ICON='󰬜 '
 
   # Icons for Git status.
-  typeset -g POWERLEVEL9K_GIT_BRANCH_ICON=$POWERLEVEL9K_VCS_BRANCH_ICON
-  typeset -g POWERLEVEL9K_GIT_TAG_ICON=' '
-  typeset -g POWERLEVEL9K_GIT_CHANGESET_ICON=' '
+  typeset -g POWERLEVEL9K_GIT_REFERENCE_BRANCH_ICON=$POWERLEVEL9K_VCS_BRANCH_ICON
+  typeset -g POWERLEVEL9K_GIT_REFERENCE_TAG_ICON=' '
+  typeset -g POWERLEVEL9K_GIT_REFERENCE_CHANGESET_ICON=' '
   typeset -g POWERLEVEL9K_GIT_COMMITS_BEHIND_ICON=' '
   typeset -g POWERLEVEL9K_GIT_COMMITS_AHEAD_ICON=' '
   typeset -g POWERLEVEL9K_GIT_PUSH_COMMITS_BEHIND_ICON=' '
@@ -440,9 +440,9 @@
   typeset -g POWERLEVEL9K_GIT_WARNING_ICON=''
 
   # Colors for Git status:
-  typeset -g POWERLEVEL9K_GIT_BRANCH_FOREGROUND=10 # green
-  typeset -g POWERLEVEL9K_GIT_TAG_FOREGROUND=10 # green
-  typeset -g POWERLEVEL9K_GIT_CHANGESET_FOREGROUND=10 # green
+  typeset -g POWERLEVEL9K_GIT_REFERENCE_CLEAN=10 # green
+  typeset -g POWERLEVEL9K_GIT_REFERENCE_MODIFIED=11 # yellow
+  typeset -g POWERLEVEL9K_GIT_REFERENCE_CONFLICTED=9 # red
   typeset -g POWERLEVEL9K_GIT_TRACKING_BRANCH_FOREGROUND=10 # green
   typeset -g POWERLEVEL9K_GIT_WIP_FOREGROUND=11 # yellow
   typeset -g POWERLEVEL9K_GIT_COMMITS_BEHIND_FOREGROUND=10 # green
@@ -478,9 +478,9 @@
 
     if (( $1 )); then
       # Styling for up-to-date Git status.
-      local fg_branch="%${POWERLEVEL9K_GIT_BRANCH_FOREGROUND}F"
-      local fg_tag="%${POWERLEVEL9K_GIT_TAG_FOREGROUND}F"
-      local fg_changeset="%${POWERLEVEL9K_GIT_CHANGESET_FOREGROUND}F"
+      local fg_reference_clean="%${POWERLEVEL9K_GIT_REFERENCE_CLEAN}F"
+      local fg_reference_modified="%${POWERLEVEL9K_GIT_REFERENCE_MODIFIED}F"
+      local fg_reference_conflicted="%${POWERLEVEL9K_GIT_REFERENCE_CONFLICTED}F"
       local fg_tracking_branch="%${POWERLEVEL9K_GIT_TRACKING_BRANCH_FOREGROUND}F"
       local fg_wip="%${POWERLEVEL9K_GIT_WIP_FOREGROUND}F"
       local fg_commits_behind="%${POWERLEVEL9K_GIT_COMMITS_BEHIND_FOREGROUND}F"
@@ -496,9 +496,9 @@
       local fg_warning="%${POWERLEVEL9K_GIT_WARNING_FOREGROUND}F"
     else
       # Styling for incomplete and stale Git status.
-      local fg_branch="%${POWERLEVEL9K_GIT_INCOMPLETE_FOREGROUND}F"
-      local fg_tag="%${POWERLEVEL9K_GIT_INCOMPLETE_FOREGROUND}F"
-      local fg_changeset="%${POWERLEVEL9K_GIT_INCOMPLETE_FOREGROUND}F"
+      local fg_reference_clean="%${POWERLEVEL9K_GIT_INCOMPLETE_FOREGROUND}F"
+      local fg_reference_modified="%${POWERLEVEL9K_GIT_INCOMPLETE_FOREGROUND}F"
+      local fg_reference_conflicted="%${POWERLEVEL9K_GIT_INCOMPLETE_FOREGROUND}F"
       local fg_tracking_branch="%${POWERLEVEL9K_GIT_INCOMPLETE_FOREGROUND}F"
       local fg_wip="%${POWERLEVEL9K_GIT_INCOMPLETE_FOREGROUND}F"
       local fg_commits_behind="%${POWERLEVEL9K_GIT_INCOMPLETE_FOREGROUND}F"
@@ -516,32 +516,33 @@
 
     local res
 
+    local fg_reference="$fg_reference_clean"
+
+    if (( VCS_STATUS_NUM_CONFLICTED )); then
+      fg_reference="$fg_reference_conflicted"
+    elif (( VCS_STATUS_NUM_UNSTAGED + VCS_STATUS_NUM_STAGED )); then
+      fg_reference="$fg_reference_modified"
+    fi
+
     if [[ -n $VCS_STATUS_LOCAL_BRANCH ]]; then
       local branch=${(V)VCS_STATUS_LOCAL_BRANCH}
       # If local branch name is at most 32 characters long, show it in full.
       # Otherwise show the first 12 … the last 12.
       # Tip: To always show local branch name in full without truncation, delete the next line.
       (( $#branch > 32 )) && branch[13,-13]="…"  # <-- this line
-      res+="${fg_branch}${(g::)POWERLEVEL9K_GIT_BRANCH_ICON}${branch//\%/%%}"
-    fi
-
-    if [[ -n $VCS_STATUS_TAG
-          # Show tag only if not on a branch.
-          # Tip: To always show tag, delete the next line.
-          && -z $VCS_STATUS_LOCAL_BRANCH  # <-- this line
-        ]]; then
+      res+="${fg_reference}${(g::)POWERLEVEL9K_GIT_REFERENCE_BRANCH_ICON}${branch//\%/%%}"
+    elif [[ -n $VCS_STATUS_TAG ]]; then
       local tag=${(V)VCS_STATUS_TAG}
       # If tag name is at most 32 characters long, show it in full.
       # Otherwise show the first 12 … the last 12.
       # Tip: To always show tag name in full without truncation, delete the next line.
       (( $#tag > 32 )) && tag[13,-13]="…"  # <-- this line
-      res+="${fg_tag}${(g::)POWERLEVEL9K_GIT_TAG_ICON}${tag//\%/%%}"
+      res+="${fg_reference}${(g::)POWERLEVEL9K_GIT_REFERENCE_TAG_ICON}${tag//\%/%%}"
+    else
+      # Display the current Git commit if there is no branch and no tag.
+      # Tip: To always display the current Git commit, delete the next line.
+      res+="${fg_reference}${(g::)POWERLEVEL9K_GIT_REFERENCE_CHANGESET_ICON}${VCS_STATUS_COMMIT[1,8]}"
     fi
-
-    # Display the current Git commit if there is no branch and no tag.
-    # Tip: To always display the current Git commit, delete the next line.
-    [[ -z $VCS_STATUS_LOCAL_BRANCH && -z $VCS_STATUS_TAG ]] &&  # <-- this line
-      res+="${fg_changeset}${(g::)POWERLEVEL9K_GIT_CHANGESET_ICON}${VCS_STATUS_COMMIT[1,8]}"
 
     # Show tracking branch name if it differs from local branch.
     if [[ -n ${VCS_STATUS_REMOTE_BRANCH:#$VCS_STATUS_LOCAL_BRANCH} ]]; then
