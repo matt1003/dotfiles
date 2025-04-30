@@ -16,6 +16,9 @@ START_MESSAGES=(
 SELECTING_LAST_MESSAGES=(
   "And the last..."
 )
+END_MESSAGES=(
+  "Bye-bye!"
+)
 DECORATION_LEFT="¸,ø¤º°\`°º¤ø,¸¸,ø¤º°\`°º¤ø,¸¸,ø¤º°\`°º¤ø,¸¸,ø¤º°\`°º¤ø,¸¸,ø¤º°\`°º¤ø,¸¸,ø¤º°\`°º¤ø,¸¸,"
 DECORATION_RIGHT=",¸¸,ø¤º°\`°º¤ø,¸¸,ø¤º°\`°º¤ø,¸¸,ø¤º°\`°º¤ø,¸¸,ø¤º°\`°º¤ø,¸¸,ø¤º°\`°º¤ø,¸¸,ø¤º°\`°º¤ø,¸"
 RAINBOW_TEXT_COLORS=(91 93 92 96 94 95) # Red, Yellow, Green, Cyan, Blue, Magenta
@@ -222,6 +225,13 @@ function generate_selected_name_with_decorations() {
     "$padding"
 }
 
+function generate_end_message() {
+  local output="${END_MESSAGES[RANDOM % ${#END_MESSAGES[@]}]}"
+  local length="${#output}"
+  local padding="$(generate_padding "$length")"
+  printf "%s%s%s" "$padding" "$output" "$padding"
+}
+
 function selected_image_full_path() {
   full_path "${name_image_map["$selected_name"]}"
 }
@@ -259,6 +269,11 @@ function update_display() {
     local line2="$(generate_selected_name_with_decorations)"
     text+="\n$line1\n\n$line2"
     ;;
+  "end")
+    local line1="$(generate_contestants)"
+    local line2="$(generate_end_message)"
+    text+="\n$line1\n\n$line2"
+    ;;
   *)
     error "Unknown screen: \"${current_screen}\"." >&2
     ;;
@@ -273,6 +288,7 @@ function update_display() {
     image="$(selected_image_full_path)"
     cache_sixel_image "$image"
     ;;
+  "end") ;;
   *)
     error "Unknown screen: \"${current_screen}\"." >&2
     ;;
@@ -495,6 +511,13 @@ function main() {
       remove_name "$selected_name"
     fi
   done
+
+  # End display:
+  current_screen="end"
+  update_display
+
+  # Hold your horses:
+  wait_for_input
 }
 
 if ! command -v perl >/dev/null; then
