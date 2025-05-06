@@ -5,11 +5,15 @@ run() {
   disown
 }
 
-run firefox
-run outlook
-run teams
-run forticlient gui
-run libreoffice ~/Documents/hours.ods
+if [ -z "$TMUX" ]; then
+  run $HOME/bin/tmux-start
+fi
+
+run /snap/bin/firefox
+run $HOME/bin/outlook
+run $HOME/bin/teams
+run /usr/bin/forticlient gui
+run /usr/bin/libreoffice ~/Documents/hours.ods
 
 if [[ "$1" == "update" ]]; then
   update

@@ -215,6 +215,7 @@ declare -A DESKTOP_ENTRIES=(
   ["$LOCAL_APPLICATIONS/Microsoft Teams"]="apps/scalable/teams.svg"
   ["$LOCAL_APPLICATIONS/Outlook (PWA)"]="apps/scalable/ms-outlook.svg"
   # custom
+  ["$DOTFILE_ROOT/startup.desktop"]="apps/scalable/lightworks.svg"
   ["$DOTFILE_ROOT/tmux.desktop"]="apps/scalable/terminix.svg"
 )
 

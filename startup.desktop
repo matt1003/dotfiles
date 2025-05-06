@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=startup
+Exec=@HOME@/bin/startup
+Icon=utilities-terminal
+Type=Application
+Terminal=false
