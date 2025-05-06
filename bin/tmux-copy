@@ -1,0 +1,13 @@
+#!/bin/bash
+
+if [ -t 0 ]; then
+  echo "Usage: $(basename "$0") < input"
+  exit 1
+fi
+
+if ! command -v xclip >/dev/null 2>&1; then
+  echo "Error: xclip not found" >&2
+  exit 2
+fi
+
+sed -z 's/^[[:space:]]*//;s/[[:space:]]*$//' | xclip -selection "${1:-clipboard}"
