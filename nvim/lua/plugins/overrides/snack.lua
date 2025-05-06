@@ -27,14 +27,6 @@ return {
   },
   keys = {
     {
-      "z=",
-      function()
-        Snacks.picker.spelling({ layout = { preset = "select" } })
-      end,
-      mode = { "n" },
-      desc = "Spelling",
-    },
-    {
       "<leader>fw",
       function()
         Snacks.picker.grep()
