@@ -1,5 +1,5 @@
 -- allow the visual put command to be dot-repeatable
-vim.keymap.set("x", "p", '"xc<c-r>0<esc>', { noremap = true, silent = true })
+vim.keymap.set("x", "p", '"_c<c-r>+<esc>', { noremap = true, silent = true })
 
 -- use tab to move through buffers
 vim.keymap.set("n", "<tab>", ":bn<cr>", { noremap = true, silent = true })

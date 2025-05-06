@@ -10,7 +10,7 @@ vim.opt.listchars = { tab = "»―", space = "·", nbsp = "⚬", eol = "↵" }
 vim.opt.scrolloff = 999
 
 -- use the system clipboard
-vim.opt.clipboard = "unnamed,unnamedplus"
+vim.opt.clipboard = "unnamedplus"
 
 -- enable spell checking
 vim.opt.spelllang = "en_us"
