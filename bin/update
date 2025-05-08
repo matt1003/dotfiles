@@ -119,6 +119,7 @@ declare APT_APPS=(
   imagemagick
   minicom
   ncdu
+  pv
   silversearcher-ag
   tree
   ### GUI ###
