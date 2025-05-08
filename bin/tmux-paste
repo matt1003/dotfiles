@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if ! command -v xclip >/dev/null 2>&1; then
+  echo "Error: xclip not found" >&2
+  exit 2
+fi
+
+xclip -o -selection "${1:-clipboard}" | tmux load-buffer - && tmux paste-buffer
