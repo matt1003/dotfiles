@@ -19,8 +19,7 @@ SELECTING_LAST_MESSAGES=(
 END_MESSAGES=(
   "Bye-bye!"
 )
-DECORATION_LEFT="¸,ø¤º°\`°º¤ø,¸¸,ø¤º°\`°º¤ø,¸¸,ø¤º°\`°º¤ø,¸¸,ø¤º°\`°º¤ø,¸¸,ø¤º°\`°º¤ø,¸¸,ø¤º°\`°º¤ø,¸¸,"
-DECORATION_RIGHT=",¸¸,ø¤º°\`°º¤ø,¸¸,ø¤º°\`°º¤ø,¸¸,ø¤º°\`°º¤ø,¸¸,ø¤º°\`°º¤ø,¸¸,ø¤º°\`°º¤ø,¸¸,ø¤º°\`°º¤ø,¸"
+DECORATION="¸,ø¤º°\`°º¤ø,¸"
 RAINBOW_TEXT_COLORS=(91 93 92 96 94 95) # Red, Yellow, Green, Cyan, Blue, Magenta
 DEBUG=false
 
@@ -67,6 +66,10 @@ function esc_clear_scrollback() {
   echo -en "\033[3J"
 }
 
+function esc_goto_position() {
+  echo -en "\033[${1};${2}H"
+}
+
 function esc_format_reset() {
   echo -en "\033[0m"
 }
@@ -91,6 +94,10 @@ function clear_screen_sequence() {
   fi
 }
 
+function goto_start_of_line() {
+  echo -en "$(esc_goto_position $1 1)"
+}
+
 function bold_text() {
   echo -en "$(esc_format_bold)${1}$(esc_format_reset)"
 }
@@ -100,14 +107,24 @@ function faint_text() {
 }
 
 function rainbow_text() {
-  local output="" i=0
+  local text="$1" output="" i=0
   while IFS= read -r -n1 c; do
     [[ -z "$c" ]] && continue # skip empty (like EOF)
     color="${RAINBOW_TEXT_COLORS[i % ${#RAINBOW_TEXT_COLORS[@]}]}"
     output+="$(esc_format_color $color)${c}$(esc_format_reset)"
     ((i++))
-  done <<<"$1"
+  done <<<"$text"
   echo -en "$output"
+}
+
+function sliding_text() {
+  local text="$1"
+  local window="$2"
+  local length="${#text}"
+  local start="$(($length - (${shift_x:-0} % $length)))"
+  local count=$((window / length + 2))
+  local repeated="$(printf "%0.s$text" $(seq 1 $count))"
+  echo -en "${repeated:$start:$window}"
 }
 
 function load_name_image_map() {
@@ -116,10 +133,10 @@ function load_name_image_map() {
   done < <(jq -r 'to_entries[] | "\(.key)=\(.value)"' "$1")
 }
 
-function calculate_image_dimensions() {
+function calculate_dimensions() {
   # define pixels per col/row:
-  local px_per_col=7
-  local px_per_row=15
+  local px_per_col=10
+  local px_per_row=21
   debug "px_per_col=$px_per_col"
   debug "px_per_row=$px_per_row"
 
@@ -158,6 +175,14 @@ function calculate_image_dimensions() {
   image_height_px=$((image_rows * px_per_row))
   debug "image_width_px=$image_width_px"
   debug "image_height_px=$image_height_px"
+
+  # calculate the starting line for the text and image:
+  line1_position=2 # allow one line gap before displaying the first line
+  line2_position=$((($(generate_contestants "len") + display_cols - 1) / display_cols + line1_position + 1))
+  image_position=$((line2_position + 2))
+  debug "line1_position=$line1_position"
+  debug "line2_position=$line2_position"
+  debug "image_position=$image_position"
 }
 
 function generate_padding() {
@@ -185,51 +210,72 @@ function generate_contestants() {
     fi
     output+="$name"
   done
-  local padding="$(generate_padding "$length")"
-  printf "%s%s%s" "$padding" "$output" "$padding"
+  if [[ "${1:-}" == "len" ]]; then
+    printf "%d" $length
+  else
+    local padding="$(generate_padding "$length")"
+    printf "%s%s%s" "$padding" "$output" "$padding"
+  fi
 }
 
 function generate_start_message() {
-  local output="${START_MESSAGES[RANDOM % ${#START_MESSAGES[@]}]}"
+  local output="$selected_start_message"
   local length="${#output}"
-  local padding="$(generate_padding "$length")"
-  printf "%s%s%s" "$padding" "$output" "$padding"
+  if [[ "${1:-}" == "len" ]]; then
+    printf "%d" $length
+  else
+    local padding="$(generate_padding "$length")"
+    printf "%s%s%s" "$padding" "$output" "$padding"
+  fi
 }
 
 function generate_selecting_message() {
   local output
-  if ((${#remaining_names[@]} > 1)); then
-    output="${selected_name:-}"
+  if [[ -z "${selected_name:-}" ]]; then
+    output=""
+  elif ((${#remaining_names[@]} > 1)); then
+    output="${selected_name}"
   else
-    output="${SELECTING_LAST_MESSAGES[RANDOM % ${#SELECTING_LAST_MESSAGES[@]}]}${selected_name:-}"
+    local padded_name="$(printf "%*s%s\n" "${#selected_name}" "" "$selected_name")"
+    output="${selected_last_message} $(sliding_text "$padded_name" "${#selected_name}")"
   fi
   local length="${#output}"
-  local padding="$(generate_padding "$length")"
-  printf "%s%s%s" "$padding" "$output" "$padding"
+  if [[ "${1:-}" == "len" ]]; then
+    printf "%d" $length
+  else
+    local padding="$(generate_padding "$length")"
+    printf "%s%s%s" "$padding" "$output" "$padding"
+  fi
 }
 
 function generate_selected_name_with_decorations() {
   local name=" ${selected_name} "
-  local name_len="${#name}"
-  local decor_l_len="$(((image_cols - name_len) / 2))"
-  local decor_r_len="$((image_cols - name_len - decor_l_len))"
-  local decor_l_trunc="${DECORATION_LEFT: -$decor_l_len}"
-  local decor_r_trunc="${DECORATION_RIGHT:0:$decor_r_len}"
-  local length="$((decor_l_len + name_len + decor_r_len))"
-  local padding="$(generate_padding "$length")"
-  printf "%s%s%s%s%s" \
-    "$padding" \
-    "$(rainbow_text "$decor_l_trunc")" \
-    "$(bold_text "$name")" \
-    "$(rainbow_text "$decor_r_trunc")" \
-    "$padding"
+  local name_length="${#name}"
+  local decoration_left_length="$(((image_cols - name_length) / 2))"
+  local decoration_right_lendth="$((image_cols - name_length - decoration_left_length))"
+  local length="$((decoration_left_length + name_length + decoration_right_lendth))"
+  if [[ "${1:-}" == "len" ]]; then
+    printf "%d" $length
+  else
+    local padding="$(generate_padding "$length")"
+    printf "%s%s%s%s%s" \
+      "$padding" \
+      "$(rainbow_text "$(sliding_text "$DECORATION" "$decoration_left_length")")" \
+      "$(bold_text "$name")" \
+      "$(rainbow_text "$(sliding_text "$DECORATION" "$decoration_right_lendth")")" \
+      "$padding"
+  fi
 }
 
 function generate_end_message() {
-  local output="${END_MESSAGES[RANDOM % ${#END_MESSAGES[@]}]}"
+  local output="$selected_end_message"
   local length="${#output}"
-  local padding="$(generate_padding "$length")"
-  printf "%s%s%s" "$padding" "$output" "$padding"
+  if [[ "${1:-}" == "len" ]]; then
+    printf "%d" $length
+  else
+    local padding="$(generate_padding "$length")"
+    printf "%s%s%s" "$padding" "$output" "$padding"
+  fi
 }
 
 function selected_image_full_path() {
@@ -251,91 +297,102 @@ function display_cached_sixel_image() {
 function update_display() {
   update_in_progress=true
 
-  local text="$(clear_screen_sequence)"
+  local clear="" line1="" line2="" image=""
 
-  case "$current_screen" in
+  case "${current_screen:-start}" in
   "start")
-    local line1="$(generate_contestants)"
-    local line2="$(generate_start_message)"
-    text+="\n$line1\n\n$line2"
+    clear="$(clear_screen_sequence)"
+    line1+="$(goto_start_of_line $line1_position)$(generate_contestants)"
+    line2+="$(goto_start_of_line $line2_position)$(generate_start_message)"
+    image=""
     ;;
   "selecting")
-    local line1="$(generate_contestants)"
-    local line2="$(generate_selecting_message)"
-    text+="\n$line1\n\n$line2"
+    clear="$(clear_screen_sequence)"
+    line1+="$(goto_start_of_line $line1_position)$(generate_contestants)"
+    line2+="$(goto_start_of_line $line2_position)$(generate_selecting_message)"
+    image=""
     ;;
   "selected")
-    local line1="$(generate_contestants)"
-    local line2="$(generate_selected_name_with_decorations)"
-    text+="\n$line1\n\n$line2"
+    clear=""
+    line1+="$(goto_start_of_line $line1_position)$(generate_contestants)"
+    line2+="$(goto_start_of_line $line2_position)$(generate_selected_name_with_decorations)"
+    image="$(selected_image_full_path)"
     ;;
   "end")
-    local line1="$(generate_contestants)"
-    local line2="$(generate_end_message)"
-    text+="\n$line1\n\n$line2"
+    clear="$(clear_screen_sequence)"
+    line1+="$(goto_start_of_line $line1_position)$(generate_contestants)"
+    line2+="$(goto_start_of_line $line2_position)$(generate_end_message)"
+    image=""
     ;;
   *)
     error "Unknown screen: \"${current_screen}\"." >&2
     ;;
   esac
 
-  local image=""
-
-  case "$current_screen" in
-  "start") ;;
-  "selecting") ;;
-  "selected")
-    image="$(selected_image_full_path)"
+  if [ -n "$image" ]; then
     cache_sixel_image "$image"
-    ;;
-  "end") ;;
-  *)
-    error "Unknown screen: \"${current_screen}\"." >&2
-    ;;
-  esac
+  fi
 
   stty -echo # do not echo input text
   tput civis # disable cursor display
 
-  printf "$text"
+  if [[ "${1:-}" == "force-clear-screen" ]]; then
+    printf "$(clear_screen_sequence)"
+  else
+    printf "$clear"
+  fi
 
   if [ -n "$image" ]; then
-    printf "\n\n$(generate_padding "$image_cols")"
+    printf "$(goto_start_of_line $image_position)$(generate_padding "$image_cols")"
     display_cached_sixel_image
   fi
 
+  if [ -n "$line1" ]; then
+    printf "$line1"
+  fi
+
+  if [ -n "$line2" ]; then
+    printf "$line2"
+  fi
+
   if [[ "$update_in_progress" == "resize-occurred-during-update" ]]; then
-    calculate_image_dimensions
-    current_screen="${current_screen:-start}"
-    update_display
+    calculate_dimensions
+    update_display force-clear-screen
   else
     update_in_progress=false
   fi
 }
 
-function update_current_line() {
+function update_line2() {
   update_in_progress=true
 
-  local text="\r"
+  local line2=""
 
-  case "$current_screen" in
-  "start") ;;
-  "selecting")
-    local current_line="$(generate_selecting_message)"
-    text+="$current_line"
+  case "${current_screen:-start}" in
+  "start")
+    # nothing to do
     ;;
-  "selected") ;;
+  "selecting")
+    line2+="$(goto_start_of_line $line2_position)$(generate_selecting_message)"
+    ;;
+  "selected")
+    line2+="$(goto_start_of_line $line2_position)$(generate_selected_name_with_decorations)"
+    ;;
+  "end")
+    # nothing to do
+    ;;
   *)
     error "Unknown screen: \"${current_screen}\"." >&2
     ;;
   esac
 
-  printf "$text"
+  if [ -n "$line2" ]; then
+    printf "$line2"
+  fi
 
   if [[ "$update_in_progress" == "resize-occurred-during-update" ]]; then
-    calculate_image_dimensions
-    current_screen="${current_screen:-start}"
-    update_display
+    calculate_dimensions
+    update_display force-clear-screen
   else
     update_in_progress=false
   fi
@@ -377,21 +434,23 @@ function exponential_ease_in() {
   bc -l <<<"scale=6; e(-10 * (1 - $1) * l(2))"
 }
 
-function spin_names() {
+function line2_selecting_name_animation() {
+  # Loop continuously until SPIN_DURATION_SEC is exceeded:
   local start_time=$(date +%s.%N)
-
   while :; do
-    # Grab a name at random:
+    # Select a name at random:
     selected_name="$(select_random_name)"
+
+    # Update the display with the selected name:
     current_screen="selecting"
-    update_current_line
+    update_line2
 
     # Check for any key press (non-blocking):
     if check_for_input; then
       if [[ "$KEY" == "q" ]]; then
         exit 0
       fi
-      break
+      return 0
     fi
 
     # Determine how long we have been spinning for:
@@ -399,7 +458,6 @@ function spin_names() {
 
     # Abort once the spin duration has been exceeded:
     if (($(bc -l <<<"$elapsed >= $SPIN_DURATION_SEC"))); then
-      sub_second_sleep 0.5 # give a little more time to view the selected name
       break
     fi
 
@@ -412,17 +470,65 @@ function spin_names() {
     # Map eased progress to delay range (fast → slow):
     local delay=$(bc -l <<<"0.02 + (0.25 - 0.02) * $eased")
 
-    # Hold up there a minute!
-    sub_second_sleep "$delay"
+    # Wait the calculated delay before selecting another name:
+    sub_second_sleep $delay
   done
+
+  # Give a little more time to view the selected name:
+  sub_second_sleep 0.5
 }
 
-function last_name() {
-  # Grab the last remaining name:
+function line2_selecting_last_name_animation() {
+  # Select the last remaining name:
   selected_name="$(select_random_name)"
-  current_screen="selecting"
-  update_current_line
-  sub_second_sleep 1.5 # give a little time to view the selected name
+
+  # Loop through the name extruding one character at a time:
+  for ((shift_x = 0; shift_x <= ${#selected_name}; shift_x++)); do
+
+    # Update the display with the selected name:
+    current_screen="selecting"
+    update_line2
+
+    # Check for any key press (non-blocking):
+    if check_for_input; then
+      if [[ "$KEY" == "q" ]]; then
+        exit 0
+      fi
+      return 0
+    fi
+
+    # Wait before extruding the next character:
+    sub_second_sleep 0.2
+  done
+
+  # Give a little more time to view the selected name:
+  sub_second_sleep 0.5
+}
+
+function line2_selected_name_animation() {
+  # Loop continuously until any key is pressed:
+  while :; do
+    # Shift the animation along one character:
+    shift_x=$((${shift_x:-0} + 1))
+
+    # Update the display with the selected name:
+    current_screen="selected"
+    update_line2
+
+    # Check for any key press (non-blocking):
+    if check_for_input; then
+      if [[ "$KEY" == "q" ]]; then
+        exit 0
+      fi
+      if [[ "$KEY" != "s" ]]; then
+        remove_name "$selected_name"
+      fi
+      return 0
+    fi
+
+    # Wait before shifting the animation along one character:
+    sub_second_sleep 0.1
+  done
 }
 
 function on_exit() {
@@ -436,9 +542,8 @@ function on_resize() {
   if ${update_in_progress:-false}; then
     update_in_progress="resize-occurred-during-update"
   else
-    calculate_image_dimensions
-    current_screen="${current_screen:-start}"
-    update_display
+    calculate_dimensions
+    update_display force-clear-screen
   fi
 }
 
@@ -473,8 +578,13 @@ function main() {
   # Cleanup on exit:
   trap on_exit INT TERM EXIT
 
-  # Run image dimensions calculations before starting:
-  calculate_image_dimensions
+  # Run dimensions calculations before starting:
+  calculate_dimensions
+
+  # Pre-select random messages:
+  selected_start_message="${START_MESSAGES[RANDOM % ${#START_MESSAGES[@]}]}"
+  selected_last_message="${SELECTING_LAST_MESSAGES[RANDOM % ${#SELECTING_LAST_MESSAGES[@]}]}"
+  selected_end_message="${END_MESSAGES[RANDOM % ${#END_MESSAGES[@]}]}"
 
   # Start display:
   current_screen="start"
@@ -495,21 +605,14 @@ function main() {
     update_display
     # Selection animation:
     if [ "${#remaining_names[@]}" -gt 1 ]; then
-      spin_names
+      line2_selecting_name_animation
     else
-      last_name
+      line2_selecting_last_name_animation
     fi
     # Selected display:
     current_screen="selected"
     update_display
-    # Hold your horses:
-    wait_for_input
-    if [[ "$KEY" == "q" ]]; then
-      exit 0
-    fi
-    if [[ "$KEY" != "s" ]]; then
-      remove_name "$selected_name"
-    fi
+    line2_selected_name_animation
   done
 
   # End display:
@@ -518,6 +621,9 @@ function main() {
 
   # Hold your horses:
   wait_for_input
+  if [[ "$KEY" == "q" ]]; then
+    exit 0
+  fi
 }
 
 if ! command -v perl >/dev/null; then
