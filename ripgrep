@@ -1,0 +1,20 @@
+# Don't let ripgrep vomit really long lines to my terminal, and show a preview:
+--max-columns=150
+--max-columns-preview
+
+# Search hidden files / directories (e.g. dotfiles) by default:
+--hidden
+
+# Using glob patterns to include/exclude files or folders:
+--glob=!.git/*
+--glob=!node_modules/*
+
+# Set the colors:
+--color=always
+--colors=match:fg:yellow
+
+# Because who cares about case:
+--smart-case
+
+# Dive into symbolic links:
+--follow

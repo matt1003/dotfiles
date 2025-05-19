@@ -13,3 +13,6 @@ fi
 export HISTSIZE=100000
 export SAVEHIST=100000
 export HISTFILE="$HOME/.zsh_history"
+
+# Set ripgrep configuration file:
+export RIPGREP_CONFIG_PATH="$HOME/.ripgrep"

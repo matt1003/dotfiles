@@ -37,13 +37,15 @@ alias u0='minicom -D /dev/ttyUSB0 -C ~/minicom-u0'
 alias u1='minicom -D /dev/ttyUSB1 -C ~/minicom-u1'
 alias u2='minicom -D /dev/ttyUSB2 -C ~/minicom-u2'
 
+alias ag='rg'
+
 ### commands ###
 
 gitk() { command gitk --all "$@" & disown }
 
 goa () { /usr/local/bin/nvim $(git status --short --no-renames --untracked-files=all | awk -F ' ' '{print $2}') ; }
 
-viag() { /usr/local/bin/nvim $(ag -l "$@") }
+viag() { /usr/local/bin/nvim $(rg -l "$@") }
 
 ###############################################################################
 # oh-my-zsh configuration
