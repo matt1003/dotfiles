@@ -16,12 +16,11 @@ if [[ "${1:-}" == "--unschedule" ]]; then
 fi
 
 function set_environment_variables() {
-  if [ -z "${DISPLAY:-}" ]; then
-    export DISPLAY="$(who | grep -o ':[0-9]\+' | head -n 1)"
-  fi
-  if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ]; then
-    export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u)/bus"
-  fi
+  export DISPLAY="$(who | grep -o ':[0-9]\+' | head -n 1)"
+  export XDG_CURRENT_DESKTOP="ubuntu:GNOME"
+  export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+  export XAUTHORITY="${XDG_RUNTIME_DIR}/gdm/Xauthority"
+  export DBUS_SESSION_BUS_ADDRESS="unix:path=${XDG_RUNTIME_DIR}/bus"
 }
 
 src="$HOME/$FIREFOX_PROFILE"
