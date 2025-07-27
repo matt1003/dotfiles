@@ -6,7 +6,7 @@ set -euo pipefail
 ##############################################################################
 
 TARGETS=(
-  apt snap pip npm dot bin git gnome fonts icons lazygit st tmux zsh nvim wallpaper backups
+  apt snap pip npm dot bin git gnome fonts icons lazygit st tmux zsh nvim wallpaper backups pipewire
 )
 
 DEFAULT_TARGETS=(
@@ -728,6 +728,35 @@ function install_backups() {
   for backup in $DOTFILE_ROOT/bin/*-backup; do
     $backup --schedule
   done
+}
+
+function install_pipewire() {
+  # PipeWire replaces PulseAudio and offers better compatibility with Bluetooth headsets,
+  # lower latency, more robust handling of multiple audio streams, and unified audio/video
+  # graph support. NOTE: Ubuntu 24.04 already uses PipeWire instead of PluseAudio.
+  msg "Install PipeWire and Bluetooth support"
+  sudo apt install -y \
+    pipewire \
+    pipewire-audio-client-libraries \
+    pipewire-pulse \
+    libspa-0.2-bluetooth \
+    wireplumber
+  msg "Disable PulseAudio"
+  systemctl --user --now disable pulseaudio.service pulseaudio.socket
+  systemctl --user mask pulseaudio
+  msg "Enable PipeWire and its PulseAudio replacement"
+  systemctl --user --now enable pipewire.service pipewire-pulse.service
+  systemctl --user --now enable wireplumber.service
+  msg "Fix AppArmor/systemd restrictions that break bluetoothd"
+  sudo mkdir -p /etc/systemd/system/bluetooth.service.d/
+  sudo tee /etc/systemd/system/bluetooth.service.d/nosandbox.conf >/dev/null <<EOF
+[Service]
+ReadWritePaths=/var/lib/bluetooth
+EOF
+  msg "Reload and restart bluetoothd with new settings"
+  sudo systemctl daemon-reexec
+  sudo systemctl daemon-reload
+  sudo systemctl restart bluetooth.service
 }
 
 ##############################################################################
