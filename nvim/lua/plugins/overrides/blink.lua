@@ -22,7 +22,8 @@ return {
     },
     -- set <tab> for auto-completion:
     keymap = {
-      preset = "super-tab",
+      ["<Tab>"] = { "select_and_accept", "fallback" },
+      ["<S-Tab>"] = { "select_next", "fallback" },
     },
   },
   init = function()
