@@ -1,4 +1,6 @@
 -- use custom lualine
+local conform = require("conform")
+local icons = require("lazyvim.config").icons
 local Util = require("lazyvim.util")
 
 ------------------------------------------------------------------------------
@@ -68,23 +70,14 @@ vim.api.nvim_set_hl(0, "lualine_a_separator", { fg = colors.gray1, bg = colors.s
 vim.api.nvim_set_hl(0, "lualine_b_separator", { fg = colors.gray2, bg = colors.status_section_b_bg })
 vim.api.nvim_set_hl(0, "lualine_c_separator", { fg = colors.gray3, bg = colors.status_section_c_bg })
 
+vim.api.nvim_set_hl(0, "formatters_and_lsps_active", { fg = colors.green, bg = colors.status_section_b_bg })
+vim.api.nvim_set_hl(0, "formatters_and_lsps_inactive", { fg = colors.status_bg, bg = colors.status_section_b_bg })
+vim.api.nvim_set_hl(0, "formatters_and_lsps_loading", { fg = colors.orange, bg = colors.status_section_b_bg })
+vim.api.nvim_set_hl(0, "formatters_and_lsps_error", { fg = colors.red, bg = colors.status_section_b_bg })
+
 ------------------------------------------------------------------------------
 -- helper functions
 ------------------------------------------------------------------------------
-
-local function merge(t1, t2)
-  local result = {}
-
-  for _, v in pairs(t1) do
-    table.insert(result, v)
-  end
-
-  for _, v in pairs(t2) do
-    table.insert(result, v)
-  end
-
-  return result
-end
 
 local function hl(color)
   return "%#" .. color .. "#"
@@ -233,31 +226,98 @@ end
 -- formatters and lsps component
 ------------------------------------------------------------------------------
 
-local show_formatters_and_lsps_component = false
+local formatters_and_lsps_long_format = false
 
 local function formatters_and_lsps_component()
-  local function get_formatters()
-    return vim.tbl_map(function(formatter)
-      return "󱇨 " .. formatter.name
-    end, require("conform").list_formatters_to_run(vim.api.nvim_get_current_buf()))
+  local function get_formatters(bufnr)
+    local ok, formatters, lsp_formatter = pcall(conform.list_formatters_to_run, bufnr)
+    if ok then
+      return formatters, lsp_formatter
+    end
+    return {}, false
   end
 
-  local function get_lsps()
-    return vim.tbl_map(function(client)
-      return "󰱽 " .. client.name
-    end, vim.lsp.get_clients({ bufnr = vim.api.nvim_get_current_buf() }))
+  local function get_lsps(bufnr)
+    local o, c = {}, {}
+    for _, lsp in ipairs(vim.lsp.get_clients({ bufnr = bufnr })) do
+      (lsp.name == "copilot" and c or o)[#(lsp.name == "copilot" and c or o) + 1] = lsp
+    end
+    return o, c
+  end
+
+  local function extract_names(icon, tbl)
+    return vim.tbl_map(function(x)
+      return icon .. " " .. x.name
+    end, tbl)
+  end
+
+  local function is_formatting_enabled()
+    if vim.b.autoformat ~= nil then
+      return vim.b.autoformat
+    end
+    return vim.g.autoformat
+  end
+
+  local function parse_formatters(formatters, lsp_formatter)
+    local icon = "󱇨"
+    if formatters_and_lsps_long_format then
+      return extract_names(icon, formatters)
+    end
+    local status = "inactive"
+    if is_formatting_enabled() and (#formatters > 0 or lsp_formatter) then
+      status = "active"
+    end
+    return { hl("formatters_and_lsps_" .. status) .. icon }
+  end
+
+  local function parse_lsps(lsps)
+    local icon = "󰱽"
+    if formatters_and_lsps_long_format then
+      return extract_names(icon, lsps)
+    end
+    local status = "inactive"
+    if #lsps > 0 then
+      status = "active"
+    end
+    return { hl("formatters_and_lsps_" .. status) .. icon }
+  end
+
+  local function parse_copilot(lsps)
+    local icon = icons.kinds.Copilot
+    if formatters_and_lsps_long_format then
+      return extract_names(icon, lsps)
+    end
+    local status = "inactive"
+    if #lsps > 0 then
+      local ok, copilot_status_module = pcall(require, "copilot.status")
+      if ok and copilot_status_module.data then
+        if copilot_status_module.data.status == "Normal" then
+          status = "active"
+        elseif copilot_status_module.data.status == "InProgress" then
+          status = "loading"
+        else
+          status = "error"
+        end
+      end
+    end
+    return { hl("formatters_and_lsps_" .. status) .. icon }
   end
 
   local function generate()
-    return table.concat(merge(get_formatters(), get_lsps()), section_b_separator(" | "))
+    local bufnr = vim.api.nvim_get_current_buf()
+    local formatters, lsp_formatter = get_formatters(bufnr)
+    local lsps, copilot = get_lsps(bufnr)
+    local parsed = {}
+    vim.list_extend(parsed, parse_formatters(formatters, lsp_formatter))
+    vim.list_extend(parsed, parse_lsps(lsps))
+    vim.list_extend(parsed, parse_copilot(copilot))
+    return table.concat(parsed, formatters_and_lsps_long_format and section_b_separator(" | ") or " ")
   end
 
   return {
-    function()
-      return generate()
-    end,
-    cond = function()
-      return show_formatters_and_lsps_component
+    generate,
+    on_click = function()
+      formatters_and_lsps_long_format = not formatters_and_lsps_long_format
     end,
   }
 end
@@ -277,9 +337,6 @@ local function filetype_component()
     "filetype",
     colored = false,
     separator = { left = "", right = "" },
-    on_click = function()
-      show_formatters_and_lsps_component = not show_formatters_and_lsps_component
-    end,
     fmt = function(str)
       for _, sub in ipairs(filetype_substitutions) do
         str = str:gsub(sub[1], sub[2])
