@@ -1,7 +1,7 @@
 -- use custom lualine
 local conform = require("conform")
 local icons = require("lazyvim.config").icons
-local Util = require("lazyvim.util")
+local util = require("lazyvim.util")
 
 ------------------------------------------------------------------------------
 -- color scheme
@@ -107,7 +107,7 @@ end
 ------------------------------------------------------------------------------
 
 local function root_directory_component()
-  local config = Util.lualine.root_dir({ color = {}, icon = "󱉭" })
+  local config = util.lualine.root_dir({ color = {}, icon = "󱉭" })
   config.separator = section_b_separator("")
   return config
 end
@@ -129,7 +129,7 @@ end
 
 local function current_file_component()
   return {
-    Util.lualine.pretty_path({ relative = "root", modified_hl = "GruvboxOrangeBold" }),
+    util.lualine.pretty_path({ relative = "root", modified_hl = "GruvboxOrangeBold" }),
     separator = section_c_separator(""),
   }
 end
@@ -139,7 +139,6 @@ end
 ------------------------------------------------------------------------------
 
 local function diff_component()
-  local icons = require("lazyvim.config").icons
   return {
     "diff",
     symbols = {
@@ -166,7 +165,6 @@ end
 ------------------------------------------------------------------------------
 
 local function diagnostics_component()
-  local icons = require("lazyvim.config").icons
   return {
     "diagnostics",
     symbols = {
@@ -216,9 +214,7 @@ local function location_component()
   end
 
   return {
-    function()
-      return generate()
-    end,
+    generate,
   }
 end
 
@@ -395,9 +391,7 @@ local function vibes_component()
   end
 
   return {
-    function()
-      return generate()
-    end,
+    generate,
     on_click = function()
       vim.fn.system("wallpaper")
     end,
