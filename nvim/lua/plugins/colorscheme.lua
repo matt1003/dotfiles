@@ -16,7 +16,8 @@ return {
       overrides = {
         Bold = { bold = true },
         MatchParen = { link = "GruvboxYellowBold" },
-        SpellBad = { link = "GruvboxBlueUnderline" },
+        SpellBad = { link = "GruvboxPurpleUnderline" },
+        SpellCap = { link = "GruvboxPurpleUnderline" },
         Pmenu = { bg = "" },
       },
     },
