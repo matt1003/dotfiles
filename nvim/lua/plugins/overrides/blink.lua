@@ -22,6 +22,7 @@ return {
     },
     -- set <tab> for auto-completion:
     keymap = {
+      ["<CR>"] = { "fallback" },
       ["<Tab>"] = { "select_and_accept", "fallback" },
       ["<S-Tab>"] = { "select_next", "fallback" },
     },
