@@ -11,7 +11,7 @@ launch() {
   fi
 }
 
-session=${1:-work}
+session=${1:-WORK}
 
 if $tmux ls | grep -q "$session"; then
   launch $tmux attach -t $session

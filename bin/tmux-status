@@ -14,7 +14,7 @@ background="$STATUS_BG"
 
 normal_mode_foreground="$STATUS_SECTION_A_FG"
 normal_mode_background="$STATUS_SECTION_A_BG"
-normal_mode_format=" TMUX "
+normal_mode_format=" #S "
 
 zoom_mode_foreground="$STATUS_SECTION_A_FG"
 zoom_mode_background="$RED"
@@ -51,10 +51,6 @@ copy_mode_format=" COPY "
 prefix_mode_foreground="$STATUS_SECTION_A_FG"
 prefix_mode_background="$PURPLE"
 prefix_mode_format="PREFIX"
-
-session_foreground="$STATUS_SECTION_B_FG"
-session_background="$STATUS_SECTION_B_BG"
-session_format=" #S"
 
 window_foreground="$STATUS_SECTION_B_FG"
 window_background="$STATUS_SECTION_B_BG"
@@ -140,17 +136,10 @@ generate_actions_for_each_mode() {
 
 mode_action() {
   local fg=$1 bg=$2 fmt=$3
-  echo "$(ls $bg $STATUS_SECTION_B_BG)$(c $fg $bg bold) $fmt $(rs $bg $STATUS_SECTION_B_BG)"
+  echo "$(ls $bg $STATUS_SECTION_B_BG)$(c $fg $bg bold) $fmt $(rs $bg $STATUS_SECTION_C_BG)"
 }
 
 mode_component="$(generate_actions_for_each_mode mode_action)"
-
-###########
-# session #
-###########
-
-session_component="\
-$(c $session_foreground $session_background) $session_format $(rs $session_background $background)"
 
 ##########
 # window #
@@ -202,7 +191,7 @@ tmux_set status-interval 1
 tmux_set status-style "fg=$foreground,bg=$background"
 
 # left side:
-tmux_set status-left "$mode_component$session_component"
+tmux_set status-left "$mode_component"
 tmux_set status-left-length 150
 
 # right side:
