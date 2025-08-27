@@ -10,12 +10,56 @@ local util = require("lazyvim.util")
 local colors = {
   status_fg = os.getenv("STATUS_FG"),
   status_bg = os.getenv("STATUS_BG"),
-  status_section_a_fg = os.getenv("STATUS_SECTION_A_FG"),
-  status_section_a_bg = os.getenv("STATUS_SECTION_A_BG"),
-  status_section_b_fg = os.getenv("STATUS_SECTION_B_FG"),
-  status_section_b_bg = os.getenv("STATUS_SECTION_B_BG"),
-  status_section_c_fg = os.getenv("STATUS_SECTION_C_FG"),
-  status_section_c_bg = os.getenv("STATUS_SECTION_C_BG"),
+
+  status_section_a_fg_normal = os.getenv("STATUS_SECTION_A_FG"),
+  status_section_a_bg_normal = os.getenv("STATUS_SECTION_A_BG"),
+  status_section_b_fg_normal = os.getenv("STATUS_SECTION_B_FG"),
+  status_section_b_bg_normal = os.getenv("STATUS_SECTION_B_BG"),
+  status_section_c_fg_normal = os.getenv("STATUS_SECTION_C_FG"),
+  status_section_c_bg_normal = os.getenv("STATUS_SECTION_C_BG"),
+
+  status_section_a_fg_insert = os.getenv("STATUS_SECTION_A_FG"),
+  status_section_a_bg_insert = os.getenv("GREEN_100"),
+  status_section_b_fg_insert = os.getenv("GREEN_100"),
+  status_section_b_bg_insert = os.getenv("GREEN_35"),
+  status_section_c_fg_insert = os.getenv("GREEN_85"),
+  status_section_c_bg_insert = os.getenv("GREEN_15"),
+
+  status_section_a_fg_visual = os.getenv("STATUS_SECTION_A_FG"),
+  status_section_a_bg_visual = os.getenv("YELLOW_100"),
+  status_section_b_fg_visual = os.getenv("YELLOW_100"),
+  status_section_b_bg_visual = os.getenv("YELLOW_35"),
+  status_section_c_fg_visual = os.getenv("YELLOW_85"),
+  status_section_c_bg_visual = os.getenv("YELLOW_15"),
+
+  status_section_a_fg_replace = os.getenv("STATUS_SECTION_A_FG"),
+  status_section_a_bg_replace = os.getenv("RED_100"),
+  status_section_b_fg_replace = os.getenv("RED_100"),
+  status_section_b_bg_replace = os.getenv("RED_35"),
+  status_section_c_fg_replace = os.getenv("RED_85"),
+  status_section_c_bg_replace = os.getenv("RED_15"),
+
+  status_section_a_fg_command = os.getenv("STATUS_SECTION_A_FG"),
+  status_section_a_bg_command = os.getenv("BLUE_100"),
+  status_section_b_fg_command = os.getenv("BLUE_100"),
+  status_section_b_bg_command = os.getenv("BLUE_35"),
+  status_section_c_fg_command = os.getenv("BLUE_85"),
+  status_section_c_bg_command = os.getenv("BLUE_15"),
+
+  status_section_a_fg_terminal = os.getenv("STATUS_SECTION_A_FG"),
+  status_section_a_bg_terminal = os.getenv("AQUA_100"),
+  status_section_b_fg_terminal = os.getenv("AQUA_100"),
+  status_section_b_bg_terminal = os.getenv("AQUA_35"),
+  status_section_c_fg_terminal = os.getenv("AQUA_85"),
+  status_section_c_bg_terminal = os.getenv("AQUA_15"),
+
+  status_section_a_fg_inactive = os.getenv("STATUS_SECTION_C_FG"),
+  status_section_a_bg_inactive = os.getenv("STATUS_SECTION_C_BG"),
+  status_section_b_fg_inactive = os.getenv("STATUS_SECTION_C_FG"),
+  status_section_b_bg_inactive = os.getenv("STATUS_SECTION_C_BG"),
+  status_section_c_fg_inactive = os.getenv("STATUS_SECTION_C_FG"),
+  status_section_c_bg_inactive = os.getenv("STATUS_SECTION_C_BG"),
+
   red = os.getenv("RED"),
   green = os.getenv("GREEN"),
   yellow = os.getenv("YELLOW"),
@@ -23,73 +67,63 @@ local colors = {
   purple = os.getenv("PURPLE"),
   aqua = os.getenv("AQUA"),
   orange = os.getenv("ORANGE"),
+
   gray1 = os.getenv("FG2"), -- light
   gray2 = os.getenv("FG4"), -- medium
   gray3 = os.getenv("BG4"), -- dark
 }
 
-local gruvbox = {
-  normal = {
-    a = { fg = colors.status_section_a_fg, bg = colors.status_section_a_bg, gui = "bold" },
-    b = { fg = colors.status_section_b_fg, bg = colors.status_section_b_bg },
-    c = { fg = colors.status_section_c_fg, bg = colors.status_section_c_bg },
-  },
-  insert = {
-    a = { fg = colors.status_section_a_fg, bg = colors.green, gui = "bold" },
-    b = { fg = colors.status_section_b_fg, bg = colors.status_section_b_bg },
-    c = { fg = colors.status_section_c_fg, bg = colors.status_section_c_bg },
-  },
-  visual = {
-    a = { fg = colors.status_section_a_fg, bg = colors.yellow, gui = "bold" },
-    b = { fg = colors.status_section_b_fg, bg = colors.status_section_b_bg },
-    c = { fg = colors.status_section_c_fg, bg = colors.status_section_c_bg },
-  },
-  replace = {
-    a = { fg = colors.status_section_a_fg, bg = colors.red, gui = "bold" },
-    b = { fg = colors.status_section_b_fg, bg = colors.status_section_b_bg },
-    c = { fg = colors.status_section_c_fg, bg = colors.status_section_c_bg },
-  },
-  command = {
-    a = { fg = colors.status_section_a_fg, bg = colors.purple, gui = "bold" },
-    b = { fg = colors.status_section_b_fg, bg = colors.status_section_b_bg },
-    c = { fg = colors.status_section_c_fg, bg = colors.status_section_c_bg },
-  },
-  terminal = {
-    a = { fg = colors.status_section_a_fg, bg = colors.aqua, gui = "bold" },
-    b = { fg = colors.status_section_b_fg, bg = colors.status_section_b_bg },
-    c = { fg = colors.status_section_c_fg, bg = colors.status_section_c_bg },
-  },
-  inactive = {
-    a = { fg = colors.status_section_c_fg, bg = colors.status_section_c_bg, gui = "bold" },
-    b = { fg = colors.status_section_c_fg, bg = colors.status_section_c_bg },
-    c = { fg = colors.status_section_c_fg, bg = colors.status_section_c_bg },
-  },
-}
-
-vim.api.nvim_set_hl(0, "lualine_a_separator", { fg = colors.gray1, bg = colors.status_section_a_bg })
-vim.api.nvim_set_hl(0, "lualine_b_separator", { fg = colors.gray2, bg = colors.status_section_b_bg })
-vim.api.nvim_set_hl(0, "lualine_c_separator", { fg = colors.gray3, bg = colors.status_section_c_bg })
-
-vim.api.nvim_set_hl(0, "formatters_and_lsps_active", { fg = colors.green, bg = colors.status_section_b_bg })
-vim.api.nvim_set_hl(0, "formatters_and_lsps_inactive", { fg = colors.status_bg, bg = colors.status_section_b_bg })
-vim.api.nvim_set_hl(0, "formatters_and_lsps_loading", { fg = colors.orange, bg = colors.status_section_b_bg })
-vim.api.nvim_set_hl(0, "formatters_and_lsps_error", { fg = colors.red, bg = colors.status_section_b_bg })
-
-------------------------------------------------------------------------------
--- helper functions
-------------------------------------------------------------------------------
-
-local function hl(color)
-  return "%#" .. color .. "#"
+local gruvbox = {}
+for _, mode in ipairs({ "normal", "insert", "visual", "replace", "command", "terminal", "inactive" }) do
+  gruvbox[mode] = {}
+  for _, section in ipairs({ "a", "b", "c" }) do
+    gruvbox[mode][section] = {
+      fg = colors[string.format("status_section_%s_fg_%s", section, mode)],
+      bg = colors[string.format("status_section_%s_bg_%s", section, mode)],
+    }
+    if section == "a" then
+      gruvbox[mode][section].gui = "bold"
+    end
+  end
 end
 
-local function section_b_separator(separator)
-  return hl("lualine_b_separator") .. separator .. hl("lualine_b_normal")
+local function create_mode_highlights(tbl, section_key)
+  for mode, sections in pairs(gruvbox) do
+    for hl_name, hl_definition in pairs(tbl) do
+      local combined = vim.tbl_extend("force", sections[section_key], hl_definition)
+      if combined.gui == "bold" then
+        combined.bold = true
+        combined.gui = nil
+      end
+      vim.api.nvim_set_hl(0, string.format("%s_%s", hl_name, mode), combined)
+    end
+  end
 end
 
-local function section_c_separator(separator)
-  return hl("lualine_c_separator") .. separator .. hl("lualine_c_normal")
-end
+create_mode_highlights({
+  formatters_and_lsps_active = { fg = colors.green },
+  formatters_and_lsps_inactive = { fg = colors.status_bg },
+  formatters_and_lsps_loading = { fg = colors.orange },
+  formatters_and_lsps_error = { fg = colors.status_bg },
+}, "b")
+
+create_mode_highlights({
+  lualine_buffers_active = {},
+  lualine_buffers_active_separator = { fg = colors.status_bg },
+  lualine_buffers_active_separator_reversed = { fg = colors.status_bg, reverse = true },
+  lualine_buffers_active_modified = { bg = colors.orange },
+  lualine_buffers_active_modified_separator = { fg = colors.status_bg, bg = colors.orange },
+  lualine_buffers_active_modified_separator_reversed = { fg = colors.status_bg, bg = colors.orange, reverse = true },
+}, "a")
+
+create_mode_highlights({
+  lualine_buffers_inactive = {},
+  lualine_buffers_inactive_separator = { fg = colors.status_bg },
+  lualine_buffers_inactive_separator_reversed = { fg = colors.status_bg, reverse = true },
+  lualine_buffers_inactive_modified = { fg = colors.orange },
+  lualine_buffers_inactive_modified_separator = { fg = colors.status_bg },
+  lualine_buffers_inactive_modified_separator_reversed = { fg = colors.status_bg, reverse = true },
+}, "b")
 
 ------------------------------------------------------------------------------
 -- mode component
@@ -107,9 +141,7 @@ end
 ------------------------------------------------------------------------------
 
 local function root_directory_component()
-  local config = util.lualine.root_dir({ color = {}, icon = "󱉭" })
-  config.separator = section_b_separator("")
-  return config
+  return util.lualine.root_dir({ color = {}, icon = "󱉭" })
 end
 
 ------------------------------------------------------------------------------
@@ -130,7 +162,7 @@ end
 local function current_file_component()
   return {
     util.lualine.pretty_path({ relative = "root", modified_hl = "GruvboxOrangeBold" }),
-    separator = section_c_separator(""),
+    separator = "",
   }
 end
 
@@ -156,7 +188,7 @@ local function diff_component()
         }
       end
     end,
-    separator = section_c_separator(""),
+    separator = "",
   }
 end
 
@@ -173,7 +205,7 @@ local function diagnostics_component()
       info = icons.diagnostics.Info,
       hint = icons.diagnostics.Hint,
     },
-    separator = section_c_separator(""),
+    separator = "",
   }
 end
 

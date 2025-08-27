@@ -229,18 +229,11 @@ return {
       pattern = "neo-tree",
       command = "setlocal nolist nospell scrolloff=0 sidescrolloff=0",
     })
-    vim.api.nvim_set_hl(0, "NeoTreeCursorLine", { bg = "#504945" })
-    vim.api.nvim_set_hl(0, "NeoTreeDirectoryIcon", { link = "GruvboxBlue" })
-    vim.api.nvim_set_hl(0, "NeoTreeDirectoryName", { link = "GruvboxBlue" })
-    vim.api.nvim_set_hl(0, "NeoTreeFileName", { link = "GruvboxFg4" })
-    vim.api.nvim_set_hl(0, "NeoTreeFileNameOpened", { link = "GruvboxFg1" })
     vim.api.nvim_set_hl(0, "NeoTreeGitAdded", { link = "GruvboxGreen" })
     vim.api.nvim_set_hl(0, "NeoTreeGitConflict", { link = "GruvboxRed" })
     vim.api.nvim_set_hl(0, "NeoTreeGitDeleted", { link = "GruvboxRed" })
     vim.api.nvim_set_hl(0, "NeoTreeGitModified", { link = "GruvboxOrange" })
     vim.api.nvim_set_hl(0, "NeoTreeGitRenamed", { link = "GruvboxOrange" })
     vim.api.nvim_set_hl(0, "NeoTreeGitUntracked", { link = "GruvboxPurple" })
-    vim.api.nvim_set_hl(0, "NeoTreeModified", { link = "GruvboxOrange" })
-    vim.api.nvim_set_hl(0, "NeoTreeRootName", { italic = true })
   end,
 }

@@ -2,6 +2,19 @@
 
 # helper functions
 
+if [ -n "$BASH_VERSION" ]; then
+  get_variable_value() {
+    echo "${!1}"
+  }
+elif [ -n "$ZSH_VERSION" ]; then
+  get_variable_value() {
+    echo "${(P)1}"
+  }
+else
+  echo "Unsupported shell" >&2
+  exit 1
+fi
+
 function print_usage_and_exit() {
   local schemes=$(
     IFS='|'
@@ -25,11 +38,48 @@ function print_bold() {
 }
 
 function print_color() {
-  local fg="$1" bg="$2"
-  printf "\e[38;2;%d;%d;%dm\e[48;2;%d;%d;%dm  %-16s%s  \e[0m\n" \
-    $((0x${!fg:1:2})) $((0x${!fg:3:2})) $((0x${!fg:5:2})) \
-    $((0x${!bg:1:2})) $((0x${!bg:3:2})) $((0x${!bg:5:2})) \
-    "$bg" "${!bg}"
+  local fg_var="$1" bg_var="$2"
+
+  local fg_val="$(get_variable_value "$fg_var")"
+  local bg_val="$(get_variable_value "$bg_var")"
+
+  fg_val=${fg_val#"#"}
+  local fg_r=$((16#${fg_val:0:2}))
+  local fg_g=$((16#${fg_val:2:2}))
+  local fg_b=$((16#${fg_val:4:2}))
+
+  bg_val=${bg_val#"#"}
+  local bg_r=$((16#${bg_val:0:2}))
+  local bg_g=$((16#${bg_val:2:2}))
+  local bg_b=$((16#${bg_val:4:2}))
+
+  printf "\e[38;2;%d;%d;%dm\e[48;2;%d;%d;%dm   %-20s#%s   \e[0m\n" \
+    "$fg_r" "$fg_g" "$fg_b" "$bg_r" "$bg_g" "$bg_b" "$bg_var" "$bg_val"
+}
+
+function blend_colors() {
+  local c1=${1#"#"} c2=${2#"#"} p=$3
+
+  # Parse hex to decimal RGB
+  local r1=$((16#${c1:0:2}))
+  local g1=$((16#${c1:2:2}))
+  local b1=$((16#${c1:4:2}))
+
+  local r2=$((16#${c2:0:2}))
+  local g2=$((16#${c2:2:2}))
+  local b2=$((16#${c2:4:2}))
+
+  # Convert percentage to fraction (scale p by 1000 for precision):
+  local scale=1000
+  local t=$(( p * scale / 100 ))
+
+  # Blend channels using integer arithmetic
+  local r=$(( (r1*(scale - t) + r2*t + scale/2) / scale ))
+  local g=$(( (g1*(scale - t) + g2*t + scale/2) / scale ))
+  local b=$(( (b1*(scale - t) + b2*t + scale/2) / scale ))
+
+  # Convert RGB decimal back to hex
+  printf "#%02x%02x%02x" "$r" "$g" "$b"
 }
 
 # process arguments
@@ -229,6 +279,36 @@ elif [[ "$contrast" == "soft" ]]; then
   export FG="$FG1"
 fi
 
+# blended colors
+
+colors_to_blend=(
+  "FG"
+  "RED"
+  "GREEN"
+  "YELLOW"
+  "BLUE"
+  "PURPLE"
+  "AQUA"
+  "ORANGE"
+  "NEUTRAL_RED"
+  "NEUTRAL_GREEN"
+  "NEUTRAL_YELLOW"
+  "NEUTRAL_BLUE"
+  "NEUTRAL_PURPLE"
+  "NEUTRAL_AQUA"
+  "NEUTRAL_ORANGE"
+)
+
+for color_var in "${colors_to_blend[@]}"; do
+  color_val="$(get_variable_value "$color_var")"
+  blend_val="$(get_variable_value "BG")"
+  for percent in $(seq 0 5 100); do
+    blended_var="${color_var}_${percent}"
+    blended_val=$(blend_colors "$blend_val" "$color_val" "$percent")
+    export "$blended_var"="$blended_val"
+  done
+done
+
 # terminal palette
 
 export COLOR_0="$BG"
@@ -282,5 +362,16 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
 
   for color in NEUTRAL_RED NEUTRAL_GREEN NEUTRAL_YELLOW NEUTRAL_BLUE NEUTRAL_PURPLE NEUTRAL_AQUA NEUTRAL_ORANGE; do
     print_color "FG" "$color"
+  done
+
+  for color_var in "${colors_to_blend[@]}"; do
+    for percent in $(seq 0 5 100); do
+      blended_var="${color_var}_${percent}"
+      if [ "$percent" -gt 50 ]; then
+        print_color "BG" "$blended_var"
+      else
+        print_color "FG" "$blended_var"
+      fi
+    done
   done
 fi
