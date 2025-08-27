@@ -23,6 +23,7 @@ vim.api.nvim_create_autocmd({ "WinLeave", "FocusLost" }, {
 
 -- Enable diagnostics pop-up:
 vim.api.nvim_create_autocmd("CursorHold", {
+  group = augroup("DiagnosticsPopup"),
   callback = function()
     vim.diagnostic.open_float(nil, {
       focusable = false,
