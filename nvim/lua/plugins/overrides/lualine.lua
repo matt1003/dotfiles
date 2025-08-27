@@ -3,6 +3,7 @@ local icons = require("lazyvim.config").icons
 local util = require("lazyvim.util")
 
 local Assistants = require("plugins.overrides.lualine.components.assistants")
+local Buffers = require("plugins.overrides.lualine.components.buffers")
 local Location = require("plugins.overrides.lualine.components.location")
 local Vibes = require("plugins.overrides.lualine.components.vibes")
 
@@ -265,28 +266,9 @@ end
 
 local function buffers_component()
   return {
-    "buffers",
-    max_length = function()
-      return vim.o.columns - 10
-    end,
-    symbols = {
-      modified = "",
-      alternate_file = "",
-      directory = "",
-    },
-    filetype_names = {
-      ["lazy"] = "[Lazy]",
-    },
-    buffers_color = {
-      active = { fg = colors.status_section_a_fg, bg = colors.status_section_a_bg, gui = "bold" },
-      active_modified = { fg = colors.status_section_a_fg, bg = colors.orange, gui = "bold" },
-      active_separator = { fg = colors.status_bg, bg = colors.status_section_a_bg },
-      active_modified_separator = { fg = colors.status_bg, bg = colors.orange },
-      inactive = { fg = colors.gray1, bg = colors.status_section_b_bg },
-      inactive_modified = { fg = colors.orange, bg = colors.status_section_b_bg },
-      inactive_separator = { fg = colors.status_bg, bg = colors.status_section_b_bg },
-      inactive_modified_separator = { fg = colors.status_bg, bg = colors.status_section_b_bg },
-    },
+    Buffers,
+    padding = 0,
+    separator = "",
   }
 end
 
@@ -309,7 +291,7 @@ end
 ------------------------------------------------------------------------------
 
 return {
-  "matt1003/lualine.nvim",
+  "nvim-lualine/lualine.nvim",
   lazy = false,
   config = function()
     --vim.o.laststatus = vim.g.lualine_laststatus
