@@ -1,6 +1,6 @@
 -- use custom neo-tree
 return {
-  "matt1003/neo-tree.nvim",
+  "nvim-neo-tree/neo-tree.nvim",
   lazy = false,
   cmd = "Neotree",
   keys = {
@@ -39,6 +39,29 @@ return {
     vim.cmd([[Neotree close]])
   end,
   config = function()
+    local components = require("neo-tree.sources.common.components")
+    local name_component_config = {
+      highlight_opened_files = "all",
+    }
+    local icons_component_config = {
+      folder_closed = "",
+      folder_open = "",
+      folder_empty = "󰉖",
+      folder_empty_open = "󰷏",
+      default = "",
+      provider = function(icon, node, state)
+        if node.type == "file" or node.type == "terminal" then
+          local success, web_devicons = pcall(require, "nvim-web-devicons")
+          local name = node.type == "terminal" and "terminal" or node.name
+          if success then
+            local devicon, hl = web_devicons.get_icon(name)
+            icon.text = devicon or icon.text
+            icon.highlight = hl or icon.highlight
+          end
+        end
+      end,
+    }
+    local modified_component_config = {}
     local function on_move(data)
       Snacks.rename.on_rename_file(data.source, data.destination)
     end
@@ -52,6 +75,17 @@ return {
         use_libuv_file_watcher = true,
         filtered_items = {
           visible = true,
+        },
+        components = {
+          name = function(_, node, state)
+            local name = components.name(name_component_config, node, state)
+            local icon = components.icon(icons_component_config, node, state)
+            local modified = components.modified(modified_component_config, node, state)
+            return {
+              text = icon.text .. name.text,
+              highlight = modified and modified.highlight or name.highlight,
+            }
+          end,
         },
       },
       window = {
@@ -83,10 +117,6 @@ return {
           expander_expanded = "",
           expander_highlight = "NeoTreeExpander",
         },
-        name = {
-          use_git_status_colors = false,
-          highlight_opened_files = "all",
-        },
         git_status = {
           symbols = {
             -- Change type
@@ -102,14 +132,10 @@ return {
             conflict = "󰱞",
           },
         },
-        modified = {
-          symbol = " ",
-        },
       },
       renderers = {
         directory = {
           { "indent" },
-          { "icon" },
           { "current_filter" },
           {
             "container",
@@ -144,7 +170,6 @@ return {
         },
         file = {
           { "indent" },
-          { "icon" },
           {
             "container",
             content = {
@@ -159,7 +184,6 @@ return {
               },
               { "clipboard", zindex = 10 },
               { "bufnr", zindex = 10 },
-              { "modified", zindex = 20, align = "right" },
               {
                 "diagnostics",
                 zindex = 20,
@@ -185,7 +209,6 @@ return {
         },
         terminal = {
           { "indent" },
-          { "icon" },
           { "name" },
           { "bufnr" },
         },
