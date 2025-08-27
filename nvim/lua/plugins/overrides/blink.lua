@@ -13,6 +13,9 @@ return {
           border = "rounded",
         },
       },
+      ghost_text = {
+        enabled = false,
+      },
     },
     -- set rounded border on signature pop-up:
     signature = {
