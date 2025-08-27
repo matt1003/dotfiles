@@ -55,7 +55,7 @@ index 82db849..5858186 100644
   */
 -float alpha = 0.93;
 -float alphaUnfocused = 0.6;
-+float alpha = 0.90;
++float alpha = 0.95;
 +float alphaUnfocused = -1;
  
  /* Terminal colors (16 first used in escape sequence) */
