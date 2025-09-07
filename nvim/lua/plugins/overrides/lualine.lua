@@ -165,7 +165,7 @@ end
 
 local function current_file_component()
   return {
-    util.lualine.pretty_path({ relative = "root", modified_hl = "GruvboxOrangeBold" }),
+    util.lualine.pretty_path({ relative = "cwd", modified_hl = "GruvboxOrangeBold" }),
     separator = "",
   }
 end
