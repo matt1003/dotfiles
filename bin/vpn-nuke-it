@@ -1,20 +1,30 @@
 #!/bin/bash
 
-nuke_it() {
+nuke_interface() {
   echo "Nuking interface: $1"
   sudo ip link delete "$1"
+}
+
+nuke_connection() {
+  sudo nmcli connection delete "$1"
 }
 
 vpn_interfaces=$(ifconfig -a | grep -oE '^vpn[0-9a-f]+')
 
 for iface in $vpn_interfaces; do
   if [[ "$1" == "all" ]]; then
-    nuke_it "$iface"
+    nuke_interface "$iface"
   else
     tx_packets=$(ifconfig "$iface" | grep -oP 'TX packets\s+\K\d+')
     rx_packets=$(ifconfig "$iface" | grep -oP 'TX packets\s+\K\d+')
     if [ "$tx_packets" -eq 0 ] && [ "$rx_packets" -eq 0 ]; then
-      nuke_it "$iface"
+      nuke_interface "$iface"
     fi
   fi
+done
+
+vpn_connections=$(nmcli connection | grep -oE '^vpn[0-9a-f]+')
+
+for conn in $vpn_connections; do
+  nuke_connection "$conn"
 done
