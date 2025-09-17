@@ -133,7 +133,6 @@ declare APT_APPS=(
   microsoft-edge-stable
   solaar
   speedcrunch
-  terminator
   # virtualbox - TODO: this will install an old version, need at least 7.0.26
   ### LazyVim ###
   curl
@@ -182,7 +181,6 @@ declare -A DOT_FILES=(
   [p10k.zsh]=.p10k.zsh
   [ripgrep]=.ripgrep
   [solaar.desktop]=.config/autostart/solaar.desktop
-  [terminator.conf]=.config/terminator/config
   [tmux.conf]=.tmux.conf
   [zshenv]=.zshenv
   [zshrc]=.zshrc
