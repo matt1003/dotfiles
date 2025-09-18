@@ -21,11 +21,17 @@ return {
           border = "rounded",
           header = "",
           prefix = function(diagnostic)
-            return " " .. diagnostic_icons[diagnostic.severity] .. "  ",
-              "DiagnosticFloating" .. vim.diagnostic.severity[diagnostic.severity]
+            local severity = diagnostic.severity or vim.diagnostic.severity.INFO
+            local text = " " .. diagnostic_icons[severity] .. "  "
+            local hl = "DiagnosticFloating" .. vim.diagnostic.severity[severity]
+            return text, hl
           end,
           suffix = function(diagnostic)
-            return " [" .. diagnostic.source:gsub("%.$", "") .. ":" .. diagnostic.code .. "] ", "Comment"
+            local source = diagnostic.source or "unknown"
+            local code = diagnostic.code or "unknown"
+            local text = " [" .. source:gsub("%.$", "") .. ":" .. code .. "] "
+            local hl = "Comment"
+            return text, hl
           end,
         },
       })
