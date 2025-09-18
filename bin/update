@@ -170,6 +170,7 @@ declare PIP_PKGS=(
 # npm
 declare NPM_PKGS=(
   neovim
+  tree-sitter-cli
 )
 
 # dot
