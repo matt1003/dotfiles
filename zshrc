@@ -30,7 +30,7 @@ fi
 
 ### aliases ###
 
-alias vi='/usr/local/bin/nvim'
+alias vi='( fnm use default > /dev/null && /usr/local/bin/nvim )'
 alias nvim='echo use vi!'
 
 alias u0='minicom -D /dev/ttyUSB0 -C ~/minicom-u0'
@@ -84,45 +84,6 @@ if [ -r "$HOME/.p10k.zsh" ]; then
 fi
 
 ###############################################################################
-# node version manager
-###############################################################################
-
-export NVM_DIR="$HOME/.nvm"
-
-#
-# Automatically detect and switch to the correct node version based on
-# the first `.nvmrc` file found by walking up the directory tree.
-#
-load-nvmrc() {
-  local nvmrc_path node_version
-
-  # walk up the directory tree looking for the first `.nvmrc` file:
-  nvmrc_path="$(nvm_find_nvmrc)"
-
-  if [[ -n "$nvmrc_path" ]]; then
-    # `.nvmrc` found, read the required version:
-    node_version="$(<"$nvmrc_path")"
-  else
-    # `.nvmrc` not found, read the default version:
-    node_version="$(nvm version default)"
-  fi
-
-  # trim whitespace just in case:
-  node_version="${node_version#"${node_version%%[![:space:]]*}"}"
-  node_version="${node_version%"${node_version##*[![:space:]]}"}"
-
-  # install the required node version:
-  if [[ "$(nvm version "$node_version")" == "N/A" ]]; then
-    nvm install "$node_version"
-  fi
-
-  # use the required node version:
-  if [[ "$(nvm current)" != "$node_version" ]]; then
-    nvm use "$node_version" >/dev/null
-  fi
-}
-
-###############################################################################
 # startup
 ###############################################################################
 
@@ -134,19 +95,12 @@ alias ll='ls --group-directories-first --time-style=long-iso -hl'
 alias la='ls --group-directories-first --time-style=long-iso -hlA'
 alias lt='ls --group-directories-first --time-style=long-iso -hlAt'
 
-# load node version manager
-if [ -s "$NVM_DIR/nvm.sh" ]; then
-  source "$NVM_DIR/nvm.sh"
+# load fast node manager
+if [ -d "$HOME/.local/share/fnm" ]; then
+  export PATH="$HOME/.local/share/fnm:$PATH"
+  # setup auto-switching node versions
+  eval "$(fnm env --shell zsh --use-on-cd --version-file-strategy=recursive)" >/dev/null
+  # enable fnm tab completions
+  eval "$(fnm completions --shell zsh)"
 fi
 
-# load node version manager bash completion
-if [ -s "$NVM_DIR/bash_completion" ]; then
-  source "$NVM_DIR/bash_completion"
-fi
-
-# trigger node version detection/switching on change directory
-autoload -U add-zsh-hook
-add-zsh-hook chpwd load-nvmrc
-
-# trigger node version detection/switching on the current directory
-load-nvmrc
