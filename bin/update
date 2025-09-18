@@ -6,7 +6,7 @@ set -euo pipefail
 ##############################################################################
 
 TARGETS=(
-  apt snap pip npm dot bin git gnome fonts icons lazygit st tmux zsh nvim wallpaper backups pipewire
+  apt snap pip nvm npm dot bin git gnome fonts icons lazygit st tmux zsh nvim wallpaper backups pipewire
 )
 
 DEFAULT_TARGETS=(
@@ -17,6 +17,7 @@ declare -A TARGET_DESCRIPTION=(
   [apt]="install/update apt packages"
   [snap]="install/update snap packages"
   [pip]="install/update python packages"
+  [nvm]="install/update node version manager"
   [npm]="install/update node packages"
   [dot]="install dotfiles"
   [bin]="install binaries"
@@ -105,6 +106,7 @@ DOWNLOAD_DIR="$HOME/.install"
 
 FONTS_DIR="$HOME/.fonts"
 ICONS_DIR="$HOME/.icons"
+NVM_DIR="$HOME/.nvm"
 
 FONTS_SET="DejaVuSansMNerdFont"
 ICONS_SET="Gruvbox-Plus-Light"
@@ -141,8 +143,6 @@ declare APT_APPS=(
   git
   gzip
   luarocks
-  nodejs
-  npm
   tar
   python3
   python3-pip
@@ -543,10 +543,28 @@ function install_pip() {
   done
 }
 
+function install_nvm() {
+  set +u
+  # install nvm:
+  msg "nvm: install"
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh | bash
+  source "$NVM_DIR/nvm.sh"
+  # install latest node lts and set as the default:
+  lts_version=$(nvm ls-remote --lts | grep -Eo 'v[0-9]+\.[0-9]+\.[0-9]+' | tail -1)
+  msg "nvm: installing node $lts_version (LTS) and setting as default"
+  nvm install "$lts_version"
+  nvm alias default "$lts_version"
+  set -u
+}
+
 function install_npm() {
   msg "npm: install"
+  # make sure we’re using the default node version before installing global packages:
+  source "$NVM_DIR/nvm.sh"
+  nvm use default
+  # install node packages globally under default:
   for pkg in "${NPM_PKGS[@]}"; do
-    sudo npm install -g "$pkg"
+    npm install -g "$pkg"
   done
 }
 
