@@ -30,7 +30,6 @@ fi
 
 ### aliases ###
 
-alias vi='( fnm use default > /dev/null && /usr/local/bin/nvim )'
 alias nvim='echo use vi!'
 
 alias u0='minicom -D /dev/ttyUSB0 -C ~/minicom-u0'
@@ -41,11 +40,13 @@ alias ag='rg'
 
 ### commands ###
 
+vi() { (fnm use default > /dev/null && /usr/local/bin/nvim "$@") }
+
 gitk() { command gitk --all "$@" & disown }
 
 goa () { /usr/local/bin/nvim $(git status --short --no-renames --untracked-files=all | awk -F ' ' '{print $2}') ; }
 
-viag() { /usr/local/bin/nvim $(rg -l "$@") }
+viag() { /usr/local/bin/nvim $(rg --color=never -l "$@") }
 
 ###############################################################################
 # oh-my-zsh configuration
