@@ -61,7 +61,7 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 HYPHEN_INSENSITIVE="true"
 
 # enable command auto-correction
-ENABLE_CORRECTION="true"
+ENABLE_CORRECTION="false"
 
 # disable username and host from window name
 ZSH_THEME_TERM_TITLE_IDLE="zsh"
