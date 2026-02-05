@@ -195,7 +195,7 @@ GIT_DIFFTOOL=meld
 # gnome
 declare -A GNOME_EXTENSIONS=(
   ["https://github.com/home-sweet-gnome/dash-to-panel.git"]="dash-to-panel@jderose9.github.com:make zip-file:true"
-  ["https://github.com/KEIII/gnome-shell-panel-date-format.git"]="panel-date-format@keiii.github.com:make:dconf write /org/gnome/shell/extensions/panel-date-format/format \"$(<"$DOTFILE_ROOT/panel-date-format")\""
+  ["https://github.com/KEIII/gnome-shell-panel-date-format.git"]="panel-date-format@keiii.github.com:make:dconf write /org/gnome/shell/extensions/panel-date-format/format \"$(<"$DOTFILE_ROOT/panel-date-format/config")\""
 )
 
 # fonts
@@ -603,10 +603,12 @@ function install_gnome() {
       gnome-extensions install --force "${ext_name}.zip"
     )
   done
+  # TODO: Remove this hackery:
+  cp "$DOTFILE_ROOT/panel-date-format/extension.js" "$HOME/.local/share/gnome-shell/extensions/panel-date-format@keiii.github.com/extension.js"
   # reset gnome
   msg "gnome extentions: restarting gnome shell"
   restart_gnome_shell
-  # install each extension
+  # configure each extension
   for ext in "${!GNOME_EXTENSIONS[@]}"; do
     IFS=":" read -r ext_name make_cmd config_cmd <<<"${GNOME_EXTENSIONS[$ext]}"
     # configure:
