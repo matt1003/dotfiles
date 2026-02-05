@@ -1,0 +1,8 @@
+#!/bin/bash
+
+bluez_cards=$(pactl list cards short | grep bluez_card | awk '{print $2}')
+
+for card in $bluez_cards; do
+  echo "Forcing $card from to a2dp-sink"
+  pactl set-card-profile "$card" a2dp-sink
+done
