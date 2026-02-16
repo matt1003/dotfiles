@@ -6,7 +6,6 @@ return {
       width = 0.4,
     },
     headers = {
-
       user = "## User ",
       assistant = "##   Copilot ",
       tool = "##  Tool",
