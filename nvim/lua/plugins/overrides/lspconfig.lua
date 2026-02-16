@@ -6,7 +6,7 @@ local diagnostic_icons = {
 }
 return {
   "neovim/nvim-lspconfig",
-  opts = function()
+  opts = function(_, opts)
     vim.schedule(function()
       vim.diagnostic.config({
         virtual_text = {
@@ -36,5 +36,13 @@ return {
         },
       })
     end)
+    -- The tailwind LSP has bit of a habit of eating 100% CPU+MEM when processing
+    -- typescript files. The following avoids this issue by limiting tailwind LSP
+    -- to Vue only...
+    opts.setup = opts.setup or {}
+    opts.setup.tailwindcss = function(_, server_opts)
+      server_opts.filetypes = { "vue" }
+    end
+    return opts
   end,
 }
